@@ -1,0 +1,131 @@
+// js/config.js
+
+console.log('Config loaded');
+
+// --- CONSTANTS ---
+const SUPABASE_URL = 'https://gzfzpkllhkuefmsktgor.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6Znpwa2xsaGt1ZWZtc2t0Z29yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxODA1OTUsImV4cCI6MjA3OTc1NjU5NX0.5gEU1AGANpYId9I8IXI90iSxYALXc0_oCGo9-wPjtq8';
+
+// --- GLOBAL STATE ---
+// We attach these to window so they are accessible by other scripts and HTML attributes
+window.supabaseClient = null;
+window.equipments = [];
+window.currentUser = null;
+window.currentFilter = 'all'; // all, available, borrowed, my-items, returns
+window.currentCategory = 'all'; // all, Camera, Lens, Audio, Lighting, Accessory
+window.currentLang = 'th';
+window.isDark = false;
+
+// --- TRANSLATIONS ---
+window.translations = {
+    th: {
+        overview: 'ภาพรวม',
+        backToBrowse: 'กลับหน้าหลัก',
+        searchPlaceholder: 'ค้นหาอุปกรณ์...',
+        all: 'ทั้งหมด',
+        available: 'ว่าง',
+        borrowed: 'ถูกยืม',
+        activeTransactions: 'รายการยืมที่กำลังดำเนินการ',
+        equipment: 'อุปกรณ์',
+        borrower: 'ผู้ยืม',
+        date: 'วันที่',
+        status: 'สถานะ',
+        action: 'ดำเนินการ',
+        borrow: 'ยืมอุปกรณ์',
+        edit: 'แก้ไข',
+        addEquipment: '+ เพิ่มอุปกรณ์',
+        logout: 'ออกจากระบบ',
+        totalEquipments: 'อุปกรณ์ทั้งหมด',
+        borrowTitle: 'ยืนยันการยืม',
+        pleaseEnterName: 'กรุณาระบุชื่อผู้ยืม',
+        successBorrow: 'ยืมอุปกรณ์สำเร็จ',
+        successReturn: 'คืนอุปกรณ์สำเร็จ',
+        successAdd: 'เพิ่มอุปกรณ์สำเร็จ',
+        successUpdate: 'อัพเดทข้อมูลสำเร็จ',
+        errorUpdate: 'เกิดข้อผิดพลาดในการอัพเดท',
+        errorSave: 'เกิดข้อผิดพลาดในการบันทึก',
+        errorGeneral: 'เกิดข้อผิดพลาด',
+        returnNotify: 'รับคืน',
+        outOfStock: 'ของหมด',
+        myItems: 'ของฉัน',
+        returns: 'แจ้งคืน',
+        youHave: 'คุณมี:',
+        startDate: 'เริ่ม',
+        endDate: 'สิ้นสุด',
+        overdue: 'คืนล่าช้า',
+        myBorrowings: 'ของที่ฉันยืม',
+        noActiveBorrowings: 'ไม่มีรายการยืม',
+        dueDate: 'คืนภายใน',
+        borrowedOn: 'ยืมเมื่อ',
+        alreadyBooked: 'อุปกรณ์ถูกจองแล้ว',
+        category: 'ประเภท',
+        allCategories: 'ทั้งหมด'
+    },
+    en: {
+        overview: 'Overview',
+        backToBrowse: 'Back to Browse',
+        searchPlaceholder: 'Search equipment...',
+        all: 'All',
+        available: 'Available',
+        borrowed: 'Borrowed',
+        activeTransactions: 'Active Transactions',
+        equipment: 'Equipment',
+        borrower: 'Borrower',
+        date: 'Date',
+        status: 'Status',
+        action: 'Action',
+        borrow: 'Borrow',
+        edit: 'Edit',
+        addEquipment: '+ Add Equipment',
+        logout: 'Logout',
+        totalEquipments: 'Total Equipments',
+        borrowTitle: 'Confirm Borrow',
+        pleaseEnterName: 'Please enter borrower name',
+        successBorrow: 'Borrowed successfully',
+        successReturn: 'Returned successfully',
+        successAdd: 'Added successfully',
+        successUpdate: 'Updated successfully',
+        errorUpdate: 'Error updating',
+        errorSave: 'Error saving',
+        errorGeneral: 'An error occurred',
+        returnNotify: 'Return',
+        outOfStock: 'Out of Stock',
+        myItems: 'My Items',
+        returns: 'Returns',
+        youHave: 'You have:',
+        startDate: 'Start',
+        endDate: 'End',
+        overdue: 'Overdue',
+        myBorrowings: 'My Borrowings',
+        noActiveBorrowings: 'No active borrowings',
+        dueDate: 'Due',
+        borrowedOn: 'Borrowed on',
+        alreadyBooked: 'Equipment already booked',
+        category: 'Category',
+        allCategories: 'All'
+    }
+};
+
+// --- INITIALIZATION HELPERS ---
+window.initSupabase = function () {
+    if (SUPABASE_URL.startsWith('YOUR') || SUPABASE_KEY.startsWith('YOUR')) {
+        console.warn('Configuration Needed');
+        document.getElementById('loginSection').classList.remove('hidden');
+        document.getElementById('loginSection').innerHTML = `
+             <div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+                 <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md dark:bg-gray-800 text-center">
+                     <h2 class="text-2xl font-bold text-red-500 mb-4">Configuration Needed</h2>
+                     <p class="text-gray-600 dark:text-gray-300 mb-4">Please set SUPABASE_URL and SUPABASE_KEY in js/config.js</p>
+                 </div>
+             </div>
+         `;
+        return false;
+    }
+    try {
+        window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        return true;
+    } catch (e) {
+        console.error("Supabase init failed", e);
+        return false;
+    }
+};
