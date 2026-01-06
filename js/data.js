@@ -5,95 +5,125 @@ console.log('Data loaded');
 // --- Data Fetching ---
 
 window.fetchEquipments = async function () {
-    if (!window.supabaseClient) return;
+    if (!window.supabaseClient) {
+        console.warn('Supabase client not initialized');
+        return;
+    }
 
     // Show skeleton loading state
     if (typeof window.showSkeletonLoading === 'function') {
         window.showSkeletonLoading();
     }
 
-    // Fetch equipments
-    const { data: equipData, error: equipError } = await window.supabaseClient
-        .from('equipments')
-        .select('*')
-        .order('id');
+    try {
+        // Fetch equipments
+        const { data: equipData, error: equipError } = await window.supabaseClient
+            .from('equipments')
+            .select('*')
+            .order('id');
 
-    if (equipError) {
-        console.error('Error fetching equipments:', equipError);
-        window.showToast(window.translations[window.currentLang].errorGeneral, 'error');
-        return;
-    }
+        if (equipError) {
+            console.error('Error fetching equipments:', equipError);
+            window.showToast(window.translations[window.currentLang]?.errorGeneral || 'เกิดข้อผิดพลาด', 'error');
+            return;
+        }
 
-    // Fetch active transactions for borrowed items (checking overlaps)
-    const startVal = document.getElementById('startDate').value;
-    const endVal = document.getElementById('endDate').value;
+        if (!equipData) {
+            console.warn('No equipment data returned');
+            window.equipments = [];
+            window.renderEquipments();
+            return;
+        }
 
-    const today = new Date();
-    const defaultStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const defaultEnd = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate(), 23, 59, 59);
+        // Fetch active transactions for borrowed items (checking overlaps)
+        const startInput = document.getElementById('startDate');
+        const endInput = document.getElementById('endDate');
+        const startVal = startInput ? startInput.value : '';
+        const endVal = endInput ? endInput.value : '';
 
-    const selectedStart = startVal ? new Date(startVal + 'T00:00:00') : defaultStart;
-    const selectedEnd = endVal ? new Date(endVal + 'T23:59:59') : defaultEnd;
+        const today = new Date();
+        const defaultStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const defaultEnd = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate(), 23, 59, 59);
 
-    let transactionsMap = {};
+        const selectedStart = startVal ? new Date(startVal + 'T00:00:00') : defaultStart;
+        const selectedEnd = endVal ? new Date(endVal + 'T23:59:59') : defaultEnd;
 
-    const { data: transData, error: transError } = await window.supabaseClient
-        .from('transactions')
-        .select('equipment_id, borrower_name, borrow_date, start_date, end_date')
-        .eq('status', 'active');
+        let transactionsMap = {};
 
-    if (!transError && transData) {
-        transData.forEach(t => {
-            const tStartRaw = new Date(t.start_date || t.borrow_date);
-            const tEndRaw = t.end_date ? new Date(t.end_date) : new Date(tStartRaw.getTime() + 86400000);
+        const { data: transData, error: transError } = await window.supabaseClient
+            .from('transactions')
+            .select('equipment_id, borrower_name, borrow_date, start_date, end_date')
+            .eq('status', 'active');
 
-            const tStart = new Date(tStartRaw.getFullYear(), tStartRaw.getMonth(), tStartRaw.getDate(), 0, 0, 0);
-            const tEnd = new Date(tEndRaw.getFullYear(), tEndRaw.getMonth(), tEndRaw.getDate(), 23, 59, 59);
+        if (!transError && transData) {
+            transData.forEach(t => {
+                const tStartRaw = new Date(t.start_date || t.borrow_date);
+                const tEndRaw = t.end_date ? new Date(t.end_date) : new Date(tStartRaw.getTime() + 86400000);
 
-            if (tStart < selectedEnd && tEnd > selectedStart) {
-                if (!transactionsMap[t.equipment_id]) {
-                    transactionsMap[t.equipment_id] = [];
+                const tStart = new Date(tStartRaw.getFullYear(), tStartRaw.getMonth(), tStartRaw.getDate(), 0, 0, 0);
+                const tEnd = new Date(tEndRaw.getFullYear(), tEndRaw.getMonth(), tEndRaw.getDate(), 23, 59, 59);
+
+                if (tStart < selectedEnd && tEnd > selectedStart) {
+                    if (!transactionsMap[t.equipment_id]) {
+                        transactionsMap[t.equipment_id] = [];
+                    }
+                    transactionsMap[t.equipment_id].push(t);
                 }
-                transactionsMap[t.equipment_id].push(t);
-            }
+            });
+        }
+
+        // Merge data
+        window.equipments = equipData.map(e => {
+            const activeTrans = transactionsMap[e.id];
+            const isUnavailable = activeTrans && activeTrans.length > 0;
+
+            return {
+                ...e,
+                status: isUnavailable ? 'borrowed' : 'available',
+                transaction: isUnavailable ? activeTrans[0] : null
+            };
         });
+
+        window.renderEquipments();
+    } catch (err) {
+        console.error('fetchEquipments exception:', err);
+        window.showToast('เกิดข้อผิดพลาดในการโหลดข้อมูล', 'error');
     }
-
-    // Merge data
-    window.equipments = equipData.map(e => {
-        const activeTrans = transactionsMap[e.id];
-        const isUnavailable = activeTrans && activeTrans.length > 0;
-
-        return {
-            ...e,
-            status: isUnavailable ? 'borrowed' : 'available',
-            transaction: isUnavailable ? activeTrans[0] : null
-        };
-    });
-
-    window.renderEquipments();
 };
 
 window.fetchReturnData = async function () {
+    if (!window.supabaseClient) {
+        console.warn('Supabase client not initialized');
+        return;
+    }
+
     // Show skeleton loading state for table
     if (typeof window.showTableSkeletonLoading === 'function') {
         window.showTableSkeletonLoading();
     }
     window.setLoading(true);
-    const { data, error } = await window.supabaseClient
-        .from('transactions')
-        .select(`*, equipments ( name, image_url, type )`)
-        .eq('status', 'active')
-        .order('borrow_date', { ascending: false });
 
-    window.setLoading(false);
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('transactions')
+            .select(`*, equipments ( name, image_url, type )`)
+            .eq('status', 'active')
+            .order('borrow_date', { ascending: false });
 
-    if (error) {
-        console.error(error);
-        return;
+        window.setLoading(false);
+
+        if (error) {
+            console.error('Error fetching return data:', error);
+            window.showToast(window.translations[window.currentLang]?.errorGeneral || 'เกิดข้อผิดพลาด', 'error');
+            return;
+        }
+
+        window.renderReturnTable(data || []);
+    } catch (err) {
+        console.error('fetchReturnData exception:', err);
+        window.setLoading(false);
+        window.showToast('เกิดข้อผิดพลาดในการโหลดข้อมูล', 'error');
     }
-
-    window.renderReturnTable(data);
 };
 
 window.fetchOverviewData = async function () {
@@ -291,44 +321,65 @@ window.confirmReturn = async function () {
 };
 
 window.saveEquipment = async function () {
-    const originalName = document.getElementById('manageOriginalName').value;
-    const name = document.getElementById('manageName').value;
-    const type = document.getElementById('manageType').value;
-    const image = document.getElementById('manageImage').value;
-    const quantity = parseInt(document.getElementById('manageQuantity').value);
+    const t = window.translations[window.currentLang];
 
-    if (!name || !image) {
-        alert('Please fill all fields');
-        return;
-    }
+    try {
+        const originalName = document.getElementById('manageOriginalName')?.value || '';
+        const name = document.getElementById('manageName')?.value?.trim() || '';
+        const type = document.getElementById('manageType')?.value || '';
+        const image = document.getElementById('manageImage')?.value?.trim() || '';
+        const quantityEl = document.getElementById('manageQuantity');
+        const quantity = quantityEl ? parseInt(quantityEl.value) || 1 : 1;
 
-    const payload = { name, type, image_url: image };
-    let error = null;
-
-    if (originalName) {
-        const { error: updateError } = await window.supabaseClient
-            .from('equipments')
-            .update(payload)
-            .eq('name', originalName);
-        error = updateError;
-    } else {
-        const itemsToInsert = [];
-        for (let i = 0; i < quantity; i++) {
-            itemsToInsert.push({ ...payload, status: 'available' });
+        // Validation
+        if (!name) {
+            window.showToast('กรุณาระบุชื่ออุปกรณ์', 'error');
+            return;
         }
-        const { error: insertError } = await window.supabaseClient
-            .from('equipments')
-            .insert(itemsToInsert);
-        error = insertError;
-    }
+        if (!image) {
+            window.showToast('กรุณาระบุ URL รูปภาพ', 'error');
+            return;
+        }
+        if (!type) {
+            window.showToast('กรุณาเลือกประเภทอุปกรณ์', 'error');
+            return;
+        }
 
-    if (error) {
-        console.error('Save error:', error);
-        window.showToast(window.translations[window.currentLang].errorSave, 'error');
-        return;
-    }
+        const payload = { name, type, image_url: image };
+        let error = null;
 
-    window.closeModal('manageModal');
-    window.showToast(originalName ? window.translations[window.currentLang].successUpdate : window.translations[window.currentLang].successAdd, 'success');
-    window.fetchEquipments();
+        if (originalName) {
+            const { error: updateError } = await window.supabaseClient
+                .from('equipments')
+                .update(payload)
+                .eq('name', originalName);
+            error = updateError;
+        } else {
+            if (quantity < 1 || quantity > 100) {
+                window.showToast('จำนวนต้องอยู่ระหว่าง 1-100', 'error');
+                return;
+            }
+            const itemsToInsert = [];
+            for (let i = 0; i < quantity; i++) {
+                itemsToInsert.push({ ...payload, status: 'available' });
+            }
+            const { error: insertError } = await window.supabaseClient
+                .from('equipments')
+                .insert(itemsToInsert);
+            error = insertError;
+        }
+
+        if (error) {
+            console.error('Save error:', error);
+            window.showToast(t?.errorSave || 'เกิดข้อผิดพลาดในการบันทึก', 'error');
+            return;
+        }
+
+        window.closeModal('manageModal');
+        window.showToast(originalName ? (t?.successUpdate || 'อัปเดตสำเร็จ') : (t?.successAdd || 'เพิ่มสำเร็จ'), 'success');
+        window.fetchEquipments();
+    } catch (err) {
+        console.error('saveEquipment exception:', err);
+        window.showToast('เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'error');
+    }
 };
