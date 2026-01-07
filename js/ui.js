@@ -257,12 +257,15 @@ window.showMainApp = function () {
     }
 
     const addBtn = document.getElementById('addBtn');
+    const mobileOverviewBtn = document.getElementById('mobileOverviewBtn');
+
     if (window.currentUser.role === 'admin') {
         addBtn.classList.remove('hidden');
         if (mobileAddBtn) mobileAddBtn.classList.remove('hidden');
         // Show overview button for admin
         const overviewBtn = document.getElementById('overviewBtn');
         if (overviewBtn) overviewBtn.classList.remove('hidden');
+        if (mobileOverviewBtn) mobileOverviewBtn.classList.remove('hidden');
         const myItemsBtn = document.getElementById('btn-my-items');
         if (myItemsBtn) {
             myItemsBtn.setAttribute('onclick', "filterStatus('returns')");
@@ -276,6 +279,7 @@ window.showMainApp = function () {
         // Hide overview button for regular users
         const overviewBtn = document.getElementById('overviewBtn');
         if (overviewBtn) overviewBtn.classList.add('hidden');
+        if (mobileOverviewBtn) mobileOverviewBtn.classList.add('hidden');
         const returnsBtn = document.getElementById('btn-returns');
         if (returnsBtn) {
             returnsBtn.setAttribute('onclick', "filterStatus('my-items')");
