@@ -260,6 +260,9 @@ window.showMainApp = function () {
     if (window.currentUser.role === 'admin') {
         addBtn.classList.remove('hidden');
         if (mobileAddBtn) mobileAddBtn.classList.remove('hidden');
+        // Show overview button for admin
+        const overviewBtn = document.getElementById('overviewBtn');
+        if (overviewBtn) overviewBtn.classList.remove('hidden');
         const myItemsBtn = document.getElementById('btn-my-items');
         if (myItemsBtn) {
             myItemsBtn.setAttribute('onclick', "filterStatus('returns')");
@@ -270,6 +273,9 @@ window.showMainApp = function () {
     } else {
         addBtn.classList.add('hidden');
         if (mobileAddBtn) mobileAddBtn.classList.add('hidden');
+        // Hide overview button for regular users
+        const overviewBtn = document.getElementById('overviewBtn');
+        if (overviewBtn) overviewBtn.classList.add('hidden');
         const returnsBtn = document.getElementById('btn-returns');
         if (returnsBtn) {
             returnsBtn.setAttribute('onclick', "filterStatus('my-items')");
@@ -325,10 +331,17 @@ window.toggleTheme = function () {
 
 window.initTheme = function () {
     const savedTheme = localStorage.getItem('theme');
+    const icon = document.getElementById('themeIcon');
+
     if (savedTheme === 'dark') {
         window.isDark = true;
         document.documentElement.classList.add('dark');
-        document.getElementById('themeIcon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />';
+        if (icon) icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />';
+    } else {
+        window.isDark = false;
+        document.documentElement.classList.remove('dark');
+        // Set moon icon for light mode
+        if (icon) icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />';
     }
 };
 
