@@ -264,7 +264,10 @@ window.showMainApp = function () {
         if (mobileAddBtn) mobileAddBtn.classList.remove('hidden');
         // Show overview button for admin
         const overviewBtn = document.getElementById('overviewBtn');
-        if (overviewBtn) overviewBtn.classList.remove('hidden');
+        if (overviewBtn) {
+            overviewBtn.classList.remove('hidden');
+            overviewBtn.classList.add('md:block');
+        }
         if (mobileOverviewBtn) mobileOverviewBtn.classList.remove('hidden');
         const myItemsBtn = document.getElementById('btn-my-items');
         if (myItemsBtn) {
@@ -278,7 +281,10 @@ window.showMainApp = function () {
         if (mobileAddBtn) mobileAddBtn.classList.add('hidden');
         // Hide overview button for regular users
         const overviewBtn = document.getElementById('overviewBtn');
-        if (overviewBtn) overviewBtn.classList.add('hidden');
+        if (overviewBtn) {
+            overviewBtn.classList.add('hidden');
+            overviewBtn.classList.remove('md:block');
+        }
         if (mobileOverviewBtn) mobileOverviewBtn.classList.add('hidden');
         const returnsBtn = document.getElementById('btn-returns');
         if (returnsBtn) {
