@@ -345,6 +345,14 @@
                         class="hidden px-4 py-2 text-sm font-medium text-brand-yellow hover:bg-gray-800 rounded-lg transition-colors border border-brand-yellow/30"
                         data-i18n="overview">ภาพรวม</button>
 
+                    <!-- Pending Requests Button (Admin Only) -->
+                    <button onclick="openPendingRequestsModal()" id="pendingRequestsBtn"
+                        class="hidden relative px-4 py-2 text-sm font-medium text-orange-400 hover:bg-gray-800 rounded-lg transition-colors border border-orange-400/30">
+                        📋 คำขอรออนุมัติ
+                        <span id="pendingBadge"
+                            class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                    </button>
+
                     <button onclick="openManageModal()" id="addBtn"
                         class="hidden px-4 py-2 bg-brand-pink hover:bg-pink-600 text-white text-sm font-bold rounded-lg shadow-md transition-colors shadow-pink-900/20"
                         data-i18n="addEquipment">+ เพิ่มอุปกรณ์</button>
@@ -779,6 +787,33 @@
                     class="w-full py-3 px-4 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-xl hover:shadow-lg transition-all duration-200">
                     ✓ ยืนยันส่งคำขอ
                 </button>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Pending Requests Modal (Admin) -->
+    <div id="pendingRequestsModal"
+        class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden">
+            <!-- Header -->
+            <div
+                class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-orange-500 to-orange-600">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    📋 คำขอรออนุมัติ
+                </h2>
+                <button onclick="closePendingRequestsModal()"
+                    class="p-2 hover:bg-white/20 rounded-lg transition-colors text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Requests List -->
+            <div id="pendingRequestsList" class="p-4 max-h-[60vh] overflow-y-auto">
+                <!-- Requests rendered by JS -->
             </div>
         </div>
     </div>

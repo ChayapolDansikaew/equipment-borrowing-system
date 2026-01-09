@@ -162,3 +162,148 @@ window.submitBorrowRequest = function () {
         }
     }
 };
+
+// ============== ADMIN FUNCTIONS ==============
+
+// เปิด Pending Requests Modal
+window.openPendingRequestsModal = function () {
+    const modal = document.getElementById('pendingRequestsModal');
+    if (modal) {
+        renderPendingRequests();
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+};
+
+// ปิด Pending Requests Modal
+window.closePendingRequestsModal = function () {
+    const modal = document.getElementById('pendingRequestsModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+};
+
+// Render pending requests for admin
+function renderPendingRequests() {
+    const container = document.getElementById('pendingRequestsList');
+    if (!container) return;
+
+    const pendingRequests = window.requests.getPendingRequests();
+
+    if (pendingRequests.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-lg font-medium">ไม่มีคำขอที่รออนุมัติ</p>
+            </div>
+        `;
+        updatePendingBadge(0);
+        return;
+    }
+
+    let totalPending = 0;
+    container.innerHTML = pendingRequests.map(request => {
+        const pendingItems = request.items.filter(item => item.status === 'pending');
+        totalPending += pendingItems.length;
+
+        const dateRange = `${formatDate(request.startDate)} - ${formatDate(request.endDate)}`;
+
+        return `
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 mb-4">
+                <!-- Request Header -->
+                <div class="flex items-center justify-between mb-3 pb-3 border-b border-gray-200 dark:border-gray-600">
+                    <div>
+                        <p class="font-bold text-gray-900 dark:text-white">${request.userName}</p>
+                        <p class="text-xs text-gray-500">📅 ${dateRange}</p>
+                        ${request.note ? `<p class="text-xs text-gray-400 mt-1">📝 ${request.note}</p>` : ''}
+                    </div>
+                    <span class="px-2 py-1 bg-orange-100 text-orange-600 text-xs font-bold rounded-full">${pendingItems.length} รอดำเนินการ</span>
+                </div>
+                
+                <!-- Items -->
+                <div class="space-y-2">
+                    ${request.items.map(item => {
+            if (item.status !== 'pending') {
+                const statusBadge = item.status === 'approved'
+                    ? '<span class="px-2 py-0.5 bg-green-100 text-green-600 text-xs rounded-full">อนุมัติแล้ว</span>'
+                    : '<span class="px-2 py-0.5 bg-red-100 text-red-600 text-xs rounded-full">ปฏิเสธแล้ว</span>';
+                return `
+                                <div class="flex items-center gap-3 p-2 bg-white dark:bg-gray-800 rounded-lg opacity-60">
+                                    <img src="${item.image}" alt="${item.name}" class="w-10 h-10 object-cover rounded">
+                                    <span class="flex-1 text-sm">${item.name}</span>
+                                    ${statusBadge}
+                                </div>
+                            `;
+            }
+            return `
+                            <div class="flex items-center gap-3 p-2 bg-white dark:bg-gray-800 rounded-lg">
+                                <img src="${item.image}" alt="${item.name}" class="w-10 h-10 object-cover rounded">
+                                <span class="flex-1 text-sm font-medium">${item.name}</span>
+                                <div class="flex gap-1">
+                                    <button onclick="approveItem('${request.id}', '${item.id}')" 
+                                        class="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 transition-colors">
+                                        ✓ อนุมัติ
+                                    </button>
+                                    <button onclick="rejectItem('${request.id}', '${item.id}')" 
+                                        class="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-lg hover:bg-red-600 transition-colors">
+                                        ✗ ปฏิเสธ
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+        }).join('')}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    updatePendingBadge(totalPending);
+}
+
+// Format date helper
+function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+}
+
+// Update pending badge
+function updatePendingBadge(count) {
+    const badge = document.getElementById('pendingBadge');
+    if (badge) {
+        badge.textContent = count;
+        badge.classList.toggle('hidden', count === 0);
+    }
+}
+
+// Approve an item
+window.approveItem = function (requestId, itemId) {
+    const success = window.requests.updateItemStatus(requestId, itemId, 'approved');
+    if (success) {
+        window.showToast?.('อนุมัติสำเร็จ', 'success');
+        renderPendingRequests();
+    }
+};
+
+// Reject an item
+window.rejectItem = function (requestId, itemId) {
+    const reason = prompt('เหตุผลที่ปฏิเสธ (ไม่บังคับ):');
+    const success = window.requests.updateItemStatus(requestId, itemId, 'rejected', reason || '');
+    if (success) {
+        window.showToast?.('ปฏิเสธคำขอแล้ว', 'info');
+        renderPendingRequests();
+    }
+};
+
+// Initialize pending badge on page load
+window.initPendingBadge = function () {
+    if (window.currentUser?.role === 'admin') {
+        const pendingRequests = window.requests.getPendingRequests();
+        const totalPending = pendingRequests.reduce((sum, req) =>
+            sum + req.items.filter(item => item.status === 'pending').length, 0
+        );
+        updatePendingBadge(totalPending);
+    }
+};

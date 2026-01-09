@@ -291,6 +291,9 @@ window.showMainApp = function () {
             myItemsBtn.textContent = window.translations[window.currentLang].returns;
             myItemsBtn.id = 'btn-returns';
         }
+        // Show pending requests button for admin
+        const pendingBtn = document.getElementById('pendingRequestsBtn');
+        if (pendingBtn) pendingBtn.classList.remove('hidden');
     } else {
         addBtn.classList.add('hidden');
         if (mobileAddBtn) mobileAddBtn.classList.add('hidden');
@@ -308,6 +311,9 @@ window.showMainApp = function () {
             returnsBtn.textContent = window.translations[window.currentLang].myItems;
             returnsBtn.id = 'btn-my-items';
         }
+        // Hide pending requests button for regular users
+        const pendingBtn = document.getElementById('pendingRequestsBtn');
+        if (pendingBtn) pendingBtn.classList.add('hidden');
     }
 
     // Show cart button for all logged in users
@@ -316,6 +322,9 @@ window.showMainApp = function () {
         cartBtn.classList.remove('hidden');
         window.cart?.load();
     }
+
+    // Initialize pending badge for admin
+    window.initPendingBadge?.();
 
     window.fetchEquipments();
 };
