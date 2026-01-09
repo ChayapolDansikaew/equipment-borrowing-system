@@ -23,6 +23,10 @@ window.cart = {
             existing.quantity = quantity;
             if (quantity <= 0) {
                 this.removeByName(name);
+                // Refresh UI after removal
+                if (typeof window.renderEquipments === 'function') {
+                    window.renderEquipments();
+                }
                 return;
             }
         } else {
