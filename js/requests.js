@@ -37,13 +37,13 @@ window.requests = {
         return newRequest;
     },
 
-    // อัปเดตสถานะ item ใน request (สำหรับ admin)
-    updateItemStatus(requestId, itemId, status, rejectionReason = '') {
+    // อัปเดตสถานะ item ใน request (สำหรับ admin) - ใช้ name แทน id
+    updateItemStatus(requestId, itemName, status, rejectionReason = '') {
         const requests = this.getAll();
         const request = requests.find(r => r.id === requestId);
 
         if (request) {
-            const item = request.items.find(i => i.id === itemId);
+            const item = request.items.find(i => i.name === itemName);
             if (item) {
                 item.status = status;
                 item.approvedAt = new Date().toISOString();
@@ -243,11 +243,11 @@ function renderPendingRequests() {
                                 <img src="${item.image}" alt="${item.name}" class="w-10 h-10 object-cover rounded">
                                 <span class="flex-1 text-sm font-medium">${item.name}</span>
                                 <div class="flex gap-1">
-                                    <button onclick="approveItem('${request.id}', '${item.id}')" 
+                                    <button onclick="approveItem('${request.id}', '${item.name}')" 
                                         class="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 transition-colors">
                                         ✓ อนุมัติ
                                     </button>
-                                    <button onclick="rejectItem('${request.id}', '${item.id}')" 
+                                    <button onclick="rejectItem('${request.id}', '${item.name}')" 
                                         class="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-lg hover:bg-red-600 transition-colors">
                                         ✗ ปฏิเสธ
                                     </button>
@@ -279,18 +279,21 @@ function updatePendingBadge(count) {
 }
 
 // Approve an item
-window.approveItem = function (requestId, itemId) {
-    const success = window.requests.updateItemStatus(requestId, itemId, 'approved');
+window.approveItem = function (requestId, itemName) {
+    const success = window.requests.updateItemStatus(requestId, itemName, 'approved');
     if (success) {
         window.showToast?.('อนุมัติสำเร็จ', 'success');
         renderPendingRequests();
+    } else {
+        window.showToast?.('ไม่สามารถอนุมัติได้', 'error');
     }
 };
 
 // Reject an item
-window.rejectItem = function (requestId, itemId) {
+window.rejectItem = function (requestId, itemName) {
     const reason = prompt('เหตุผลที่ปฏิเสธ (ไม่บังคับ):');
-    const success = window.requests.updateItemStatus(requestId, itemId, 'rejected', reason || '');
+    if (reason === null) return; // User cancelled
+    const success = window.requests.updateItemStatus(requestId, itemName, 'rejected', reason || '');
     if (success) {
         window.showToast?.('ปฏิเสธคำขอแล้ว', 'info');
         renderPendingRequests();
