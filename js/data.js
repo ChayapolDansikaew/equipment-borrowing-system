@@ -329,7 +329,7 @@ window.saveEquipment = async function () {
         const type = document.getElementById('manageType')?.value || '';
         const image = document.getElementById('manageImage')?.value?.trim() || '';
         const quantityEl = document.getElementById('manageQuantity');
-        const quantity = quantityEl ? parseInt(quantityEl.value) || 1 : 1;
+        const newQuantity = quantityEl ? parseInt(quantityEl.value) || 1 : 1;
 
         // Validation
         if (!name) {
@@ -344,23 +344,64 @@ window.saveEquipment = async function () {
             window.showToast('กรุณาเลือกประเภทอุปกรณ์', 'error');
             return;
         }
+        if (newQuantity < 0 || newQuantity > 100) {
+            window.showToast('จำนวนต้องอยู่ระหว่าง 0-100', 'error');
+            return;
+        }
 
         const payload = { name, type, image_url: image };
         let error = null;
 
         if (originalName) {
+            // EDITING: Handle quantity changes
+            const currentItems = window.equipments.filter(e => e.name === originalName);
+            const currentQuantity = currentItems.length;
+            const quantityDiff = newQuantity - currentQuantity;
+
+            // Update existing items first
             const { error: updateError } = await window.supabaseClient
                 .from('equipments')
                 .update(payload)
                 .eq('name', originalName);
-            error = updateError;
+
+            if (updateError) {
+                error = updateError;
+            } else if (quantityDiff > 0) {
+                // Need to ADD more units
+                const itemsToInsert = [];
+                for (let i = 0; i < quantityDiff; i++) {
+                    itemsToInsert.push({ ...payload, status: 'available' });
+                }
+                const { error: insertError } = await window.supabaseClient
+                    .from('equipments')
+                    .insert(itemsToInsert);
+                error = insertError;
+            } else if (quantityDiff < 0) {
+                // Need to REMOVE units (only available ones)
+                const availableItems = currentItems.filter(item => item.status === 'available');
+                const toRemove = Math.min(Math.abs(quantityDiff), availableItems.length);
+
+                if (toRemove < Math.abs(quantityDiff)) {
+                    window.showToast(`สามารถลบได้เฉพาะอุปกรณ์ที่ว่าง (ลบได้ ${toRemove} จาก ${Math.abs(quantityDiff)} ชิ้น)`, 'warning');
+                }
+
+                if (toRemove > 0) {
+                    const idsToDelete = availableItems.slice(0, toRemove).map(item => item.id);
+                    const { error: deleteError } = await window.supabaseClient
+                        .from('equipments')
+                        .delete()
+                        .in('id', idsToDelete);
+                    error = deleteError;
+                }
+            }
         } else {
-            if (quantity < 1 || quantity > 100) {
-                window.showToast('จำนวนต้องอยู่ระหว่าง 1-100', 'error');
+            // ADDING NEW
+            if (newQuantity < 1) {
+                window.showToast('จำนวนต้องอย่างน้อย 1 ชิ้น', 'error');
                 return;
             }
             const itemsToInsert = [];
-            for (let i = 0; i < quantity; i++) {
+            for (let i = 0; i < newQuantity; i++) {
                 itemsToInsert.push({ ...payload, status: 'available' });
             }
             const { error: insertError } = await window.supabaseClient

@@ -589,16 +589,27 @@ window.openManageModal = function (groupName = null) {
     const typeInput = document.getElementById('manageType');
     const imageInput = document.getElementById('manageImage');
     const qtyGroup = document.getElementById('manageQuantityGroup');
+    const qtyLabel = document.getElementById('manageQuantityLabel');
+    const qtyHint = document.getElementById('manageQuantityHint');
 
     if (groupName) {
-        const group = window.equipments.find(e => e.name === groupName);
-        if (!group) return;
+        // Find all items with this name to get total count
+        const itemsWithName = window.equipments.filter(e => e.name === groupName);
+        const totalCount = itemsWithName.length;
+        const firstItem = itemsWithName[0];
+        if (!firstItem) return;
+
         document.getElementById('manageModalTitle').textContent = t.edit + ' ' + groupName;
-        nameInput.value = group.name;
-        typeInput.value = group.type;
-        imageInput.value = group.image_url;
+        nameInput.value = firstItem.name;
+        typeInput.value = firstItem.type;
+        imageInput.value = firstItem.image_url;
         document.getElementById('manageOriginalName').value = groupName;
-        qtyGroup.classList.add('hidden');
+
+        // Show quantity for editing
+        document.getElementById('manageQuantity').value = totalCount;
+        if (qtyLabel) qtyLabel.textContent = 'จำนวนทั้งหมด (Total Quantity)';
+        if (qtyHint) qtyHint.textContent = `ปัจจุบันมี ${totalCount} ชิ้น - ปรับเพิ่ม/ลดได้`;
+        qtyGroup.classList.remove('hidden');
     } else {
         document.getElementById('manageModalTitle').textContent = t.addEquipment;
         nameInput.value = '';
@@ -606,6 +617,8 @@ window.openManageModal = function (groupName = null) {
         imageInput.value = '';
         document.getElementById('manageQuantity').value = 1;
         document.getElementById('manageOriginalName').value = '';
+        if (qtyLabel) qtyLabel.textContent = 'Quantity';
+        if (qtyHint) qtyHint.textContent = 'Creates multiple items with the same name';
         qtyGroup.classList.remove('hidden');
     }
     window.openModal('manageModal');
