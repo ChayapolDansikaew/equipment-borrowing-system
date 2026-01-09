@@ -586,6 +586,18 @@ window.initDates = function () {
     document.getElementById('endDate').value = format(tomorrow);
     document.getElementById('startDate').addEventListener('change', window.fetchEquipments);
     document.getElementById('endDate').addEventListener('change', window.fetchEquipments);
+
+    // Search input with debounce
+    let searchTimeout;
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                window.renderEquipments();
+            }, 300); // 300ms debounce
+        });
+    }
 };
 
 // Mobile Menu Functions
