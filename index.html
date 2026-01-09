@@ -360,11 +360,10 @@
                 <div
                     class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-xl shadow-gray-200/20 dark:shadow-black/20 p-4 md:p-6 mb-6">
 
-                    <!-- Single Row Layout -->
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
-
-                        <!-- Search Input - Takes 4 columns -->
-                        <div class="lg:col-span-4 relative">
+                    <!-- Row 1: Search & Dates -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                        <!-- Search Input -->
+                        <div class="lg:col-span-1">
                             <label
                                 class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block">ค้นหา</label>
                             <div class="relative">
@@ -380,46 +379,54 @@
                             </div>
                         </div>
 
-                        <!-- Date Pickers - Takes 3 columns -->
-                        <div class="lg:col-span-3 flex gap-3">
-                            <div class="flex-1">
-                                <label
-                                    class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block"
-                                    data-i18n="startDate">เริ่ม</label>
-                                <input type="date" id="startDate"
-                                    class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-white focus:outline-none focus:border-brand-yellow focus:ring-4 focus:ring-brand-yellow/20 transition-all duration-200 cursor-pointer">
-                            </div>
-                            <div class="flex-1">
-                                <label
-                                    class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block"
-                                    data-i18n="endDate">สิ้นสุด</label>
-                                <input type="date" id="endDate"
-                                    class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-white focus:outline-none focus:border-brand-yellow focus:ring-4 focus:ring-brand-yellow/20 transition-all duration-200 cursor-pointer">
-                            </div>
+                        <!-- Start Date -->
+                        <div>
+                            <label
+                                class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block"
+                                data-i18n="startDate">เริ่ม</label>
+                            <input type="date" id="startDate"
+                                class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-white focus:outline-none focus:border-brand-yellow focus:ring-4 focus:ring-brand-yellow/20 transition-all duration-200 cursor-pointer">
                         </div>
 
-                        <!-- Status Filter Buttons - Takes 3 columns -->
-                        <div class="lg:col-span-3">
+                        <!-- End Date -->
+                        <div>
+                            <label
+                                class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block"
+                                data-i18n="endDate">สิ้นสุด</label>
+                            <input type="date" id="endDate"
+                                class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-white focus:outline-none focus:border-brand-yellow focus:ring-4 focus:ring-brand-yellow/20 transition-all duration-200 cursor-pointer">
+                        </div>
+                    </div>
+
+                    <!-- Divider -->
+                    <div
+                        class="h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-600 to-transparent mb-4">
+                    </div>
+
+                    <!-- Row 2: Status & Category -->
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                        <!-- Status Filter Buttons -->
+                        <div class="flex-1">
                             <label
                                 class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block">สถานะ</label>
-                            <div class="flex gap-1.5">
+                            <div class="flex gap-2 flex-wrap">
                                 <button onclick="filterStatus('all')" id="btn-all"
-                                    class="filter-btn flex-1 px-3 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-brand-black to-gray-800 text-brand-yellow shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200 whitespace-nowrap"
+                                    class="filter-btn px-4 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-brand-black to-gray-800 text-brand-yellow shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200 whitespace-nowrap"
                                     data-i18n="all">ทั้งหมด</button>
                                 <button onclick="filterStatus('available')" id="btn-available"
-                                    class="filter-btn flex-1 px-3 py-2.5 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/30 dark:hover:text-green-400 border border-transparent hover:border-green-300 transition-all duration-200 whitespace-nowrap"
+                                    class="filter-btn px-4 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/30 dark:hover:text-green-400 border border-gray-200 dark:border-gray-600 hover:border-green-300 transition-all duration-200 whitespace-nowrap"
                                     data-i18n="available">ว่าง</button>
                                 <button onclick="filterStatus('borrowed')" id="btn-borrowed"
-                                    class="filter-btn flex-1 px-3 py-2.5 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-900/30 dark:hover:text-orange-400 border border-transparent hover:border-orange-300 transition-all duration-200 whitespace-nowrap"
+                                    class="filter-btn px-4 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-900/30 dark:hover:text-orange-400 border border-gray-200 dark:border-gray-600 hover:border-orange-300 transition-all duration-200 whitespace-nowrap"
                                     data-i18n="borrowed">ถูกยืม</button>
                                 <button onclick="filterStatus('my-items')" id="btn-my-items"
-                                    class="filter-btn flex-1 px-3 py-2.5 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 border border-transparent hover:border-blue-300 transition-all duration-200 whitespace-nowrap"
+                                    class="filter-btn px-4 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 border border-gray-200 dark:border-gray-600 hover:border-blue-300 transition-all duration-200 whitespace-nowrap"
                                     data-i18n="myItems">ของฉัน</button>
                             </div>
                         </div>
 
-                        <!-- Category Filter - Takes 2 columns -->
-                        <div class="lg:col-span-2">
+                        <!-- Category Filter -->
+                        <div class="w-full md:w-48">
                             <label
                                 class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block"
                                 data-i18n="category">ประเภท</label>
