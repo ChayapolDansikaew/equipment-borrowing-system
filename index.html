@@ -358,84 +358,89 @@
             <div id="controlsSection" class="container mx-auto px-4 md:px-6 pt-6 pb-4">
                 <!-- Main Controls Card -->
                 <div
-                    class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-xl shadow-gray-200/20 dark:shadow-black/20 p-4 md:p-6 mb-6">
+                    class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-xl shadow-gray-200/20 dark:shadow-black/20 p-4 md:p-6 mb-6">
 
-                    <!-- Top Row: Search & Dates -->
-                    <div class="flex flex-col lg:flex-row gap-4 mb-5">
-                        <!-- Search Input -->
-                        <div class="relative flex-1">
-                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
+                    <!-- Single Row Layout -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
+
+                        <!-- Search Input - Takes 4 columns -->
+                        <div class="lg:col-span-4 relative">
+                            <label
+                                class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block">ค้นหา</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-brand-yellow" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </div>
+                                <input type="text" id="searchInput" placeholder="ค้นหาอุปกรณ์..."
+                                    class="w-full pl-12 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-brand-yellow focus:ring-4 focus:ring-brand-yellow/20 transition-all duration-200">
                             </div>
-                            <input type="text" id="searchInput" placeholder="ค้นหาอุปกรณ์..."
-                                class="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-brand-yellow focus:ring-4 focus:ring-brand-yellow/20 transition-all duration-200">
                         </div>
 
-                        <!-- Date Pickers -->
-                        <div class="flex gap-3 flex-shrink-0">
-                            <div class="flex flex-col">
+                        <!-- Date Pickers - Takes 3 columns -->
+                        <div class="lg:col-span-3 flex gap-3">
+                            <div class="flex-1">
                                 <label
-                                    class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider"
+                                    class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block"
                                     data-i18n="startDate">เริ่ม</label>
                                 <input type="date" id="startDate"
-                                    class="px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-white focus:outline-none focus:border-brand-yellow focus:ring-4 focus:ring-brand-yellow/20 transition-all duration-200 cursor-pointer">
+                                    class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-white focus:outline-none focus:border-brand-yellow focus:ring-4 focus:ring-brand-yellow/20 transition-all duration-200 cursor-pointer">
                             </div>
-                            <div class="flex flex-col">
+                            <div class="flex-1">
                                 <label
-                                    class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider"
+                                    class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block"
                                     data-i18n="endDate">สิ้นสุด</label>
                                 <input type="date" id="endDate"
-                                    class="px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-white focus:outline-none focus:border-brand-yellow focus:ring-4 focus:ring-brand-yellow/20 transition-all duration-200 cursor-pointer">
+                                    class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-white focus:outline-none focus:border-brand-yellow focus:ring-4 focus:ring-brand-yellow/20 transition-all duration-200 cursor-pointer">
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Divider -->
-                    <div
-                        class="h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-600 to-transparent mb-5">
-                    </div>
-
-                    <!-- Bottom Row: Filters & Category -->
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <!-- Status Filter Buttons -->
-                        <div class="flex gap-2 flex-wrap">
-                            <button onclick="filterStatus('all')" id="btn-all"
-                                class="filter-btn px-5 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-brand-black to-gray-800 text-brand-yellow shadow-lg shadow-gray-900/20 hover:shadow-xl hover:scale-105 transition-all duration-200 whitespace-nowrap"
-                                data-i18n="all">ทั้งหมด</button>
-                            <button onclick="filterStatus('available')" id="btn-available"
-                                class="filter-btn px-5 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/30 dark:hover:text-green-400 border-2 border-transparent hover:border-green-200 dark:hover:border-green-800 transition-all duration-200 whitespace-nowrap"
-                                data-i18n="available">ว่าง</button>
-                            <button onclick="filterStatus('borrowed')" id="btn-borrowed"
-                                class="filter-btn px-5 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-900/30 dark:hover:text-orange-400 border-2 border-transparent hover:border-orange-200 dark:hover:border-orange-800 transition-all duration-200 whitespace-nowrap"
-                                data-i18n="borrowed">ถูกยืม</button>
-                            <button onclick="filterStatus('my-items')" id="btn-my-items"
-                                class="filter-btn px-5 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 border-2 border-transparent hover:border-blue-200 dark:hover:border-blue-800 transition-all duration-200 whitespace-nowrap"
-                                data-i18n="myItems">ของฉัน</button>
+                        <!-- Status Filter Buttons - Takes 3 columns -->
+                        <div class="lg:col-span-3">
+                            <label
+                                class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block">สถานะ</label>
+                            <div class="flex gap-1.5">
+                                <button onclick="filterStatus('all')" id="btn-all"
+                                    class="filter-btn flex-1 px-3 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-brand-black to-gray-800 text-brand-yellow shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200 whitespace-nowrap"
+                                    data-i18n="all">ทั้งหมด</button>
+                                <button onclick="filterStatus('available')" id="btn-available"
+                                    class="filter-btn flex-1 px-3 py-2.5 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/30 dark:hover:text-green-400 border border-transparent hover:border-green-300 transition-all duration-200 whitespace-nowrap"
+                                    data-i18n="available">ว่าง</button>
+                                <button onclick="filterStatus('borrowed')" id="btn-borrowed"
+                                    class="filter-btn flex-1 px-3 py-2.5 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-900/30 dark:hover:text-orange-400 border border-transparent hover:border-orange-300 transition-all duration-200 whitespace-nowrap"
+                                    data-i18n="borrowed">ถูกยืม</button>
+                                <button onclick="filterStatus('my-items')" id="btn-my-items"
+                                    class="filter-btn flex-1 px-3 py-2.5 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 border border-transparent hover:border-blue-300 transition-all duration-200 whitespace-nowrap"
+                                    data-i18n="myItems">ของฉัน</button>
+                            </div>
                         </div>
 
-                        <!-- Category Filter -->
-                        <div
-                            class="flex items-center gap-3 bg-gray-50 dark:bg-gray-700 rounded-xl px-4 py-2 border-2 border-gray-100 dark:border-gray-600">
-                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
-                                </path>
-                            </svg>
-                            <span class="text-sm font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap"
-                                data-i18n="category">ประเภท</span>
-                            <select id="categoryFilter" onchange="filterByCategory(this.value)"
-                                class="bg-transparent text-sm font-bold text-gray-700 dark:text-white focus:outline-none cursor-pointer pr-2">
-                                <option value="all" data-i18n="allCategories">ทั้งหมด</option>
-                                <option value="Camera">📷 Camera</option>
-                                <option value="Lens">🔍 Lens</option>
-                                <option value="Audio">🎙️ Audio</option>
-                                <option value="Lighting">💡 Lighting</option>
-                                <option value="Accessory">🎒 Accessory</option>
-                            </select>
+                        <!-- Category Filter - Takes 2 columns -->
+                        <div class="lg:col-span-2">
+                            <label
+                                class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block"
+                                data-i18n="category">ประเภท</label>
+                            <div
+                                class="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 rounded-xl px-3 py-2.5 border-2 border-gray-200 dark:border-gray-600">
+                                <svg class="w-4 h-4 text-brand-yellow flex-shrink-0" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                                    </path>
+                                </svg>
+                                <select id="categoryFilter" onchange="filterByCategory(this.value)"
+                                    class="flex-1 bg-transparent text-sm font-bold text-gray-700 dark:text-white focus:outline-none cursor-pointer min-w-0">
+                                    <option value="all" data-i18n="allCategories">ทั้งหมด</option>
+                                    <option value="Camera">📷 Camera</option>
+                                    <option value="Lens">🔍 Lens</option>
+                                    <option value="Audio">🎙️ Audio</option>
+                                    <option value="Lighting">💡 Lighting</option>
+                                    <option value="Accessory">🎒 Accessory</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
