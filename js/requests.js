@@ -278,14 +278,79 @@ function updatePendingBadge(count) {
     }
 }
 
-// Approve an item
-window.approveItem = function (requestId, itemName) {
-    const success = window.requests.updateItemStatus(requestId, itemName, 'approved');
-    if (success) {
-        window.showToast?.('อนุมัติสำเร็จ', 'success');
-        renderPendingRequests();
-    } else {
-        window.showToast?.('ไม่สามารถอนุมัติได้', 'error');
+// Approve an item - สร้าง transactions จริงใน Supabase
+window.approveItem = async function (requestId, itemName) {
+    // Get the request to find details
+    const requests = window.requests.getAll();
+    const request = requests.find(r => r.id === requestId);
+    if (!request) {
+        window.showToast?.('ไม่พบคำขอ', 'error');
+        return;
+    }
+
+    const item = request.items.find(i => i.name === itemName);
+    if (!item) {
+        window.showToast?.('ไม่พบอุปกรณ์', 'error');
+        return;
+    }
+
+    const quantity = item.quantity || 1;
+
+    // Find available equipment units with this name
+    const availableUnits = window.equipments.filter(e =>
+        e.name === itemName && e.status === 'available'
+    );
+
+    if (availableUnits.length < quantity) {
+        window.showToast?.(`มีอุปกรณ์ว่างไม่พอ (ว่าง ${availableUnits.length}/${quantity})`, 'error');
+        return;
+    }
+
+    // Get units to borrow
+    const unitsToBorrow = availableUnits.slice(0, quantity);
+
+    try {
+        // Create transactions for each unit
+        for (const unit of unitsToBorrow) {
+            // Update equipment status
+            const { error: updateError } = await window.supabaseClient
+                .from('equipments')
+                .update({ status: 'borrowed' })
+                .eq('id', unit.id);
+
+            if (updateError) {
+                console.error('Update error:', updateError);
+                continue;
+            }
+
+            // Insert transaction
+            const { error: insertError } = await window.supabaseClient
+                .from('transactions')
+                .insert([{
+                    equipment_id: unit.id,
+                    borrower_name: request.userName,
+                    status: 'active',
+                    start_date: new Date(request.startDate + 'T00:00:00').toISOString(),
+                    end_date: new Date(request.endDate + 'T23:59:59').toISOString()
+                }]);
+
+            if (insertError) {
+                console.error('Insert error:', insertError);
+            }
+        }
+
+        // Update request status in localStorage
+        const success = window.requests.updateItemStatus(requestId, itemName, 'approved');
+
+        if (success) {
+            window.showToast?.(`อนุมัติ ${itemName} (${quantity} ชิ้น) สำเร็จ`, 'success');
+            renderPendingRequests();
+            // Refresh equipment list
+            window.fetchEquipments?.();
+        }
+    } catch (err) {
+        console.error('Approve error:', err);
+        window.showToast?.('เกิดข้อผิดพลาดในการอนุมัติ', 'error');
     }
 };
 
