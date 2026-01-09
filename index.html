@@ -319,7 +319,8 @@
 
                     <!-- Cart Button -->
                     <button onclick="openCartModal()" id="cartBtn"
-                        class="hidden relative p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300 hover:text-brand-yellow">
+                        class="hidden relative p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300 hover:text-brand-yellow"
+                        title="ตะกร้า">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
@@ -329,43 +330,55 @@
                             class="hidden absolute -top-1 -right-1 bg-brand-pink text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">0</span>
                     </button>
 
-                    <!-- My Requests Button (User Only) -->
+                    <!-- My Requests Button (icon style) -->
                     <button onclick="openMyRequestsModal()" id="myRequestsBtn"
-                        class="hidden relative px-3 py-2 text-sm font-medium text-blue-400 hover:bg-gray-800 rounded-lg transition-colors border border-blue-400/30">
-                        📄 คำขอของฉัน
+                        class="hidden relative p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300 hover:text-blue-400"
+                        title="คำขอของฉัน">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            </path>
+                        </svg>
                     </button>
 
+                    <!-- Divider -->
+                    <div class="hidden md:block w-px h-6 bg-gray-700"></div>
+
+                    <!-- Admin Section -->
+                    <button onclick="toggleOverview()" id="overviewBtn"
+                        class="hidden px-3 py-1.5 text-sm font-medium text-brand-yellow hover:bg-gray-800 rounded-lg transition-colors"
+                        data-i18n="overview">📊 ภาพรวม</button>
+
+                    <!-- Pending Requests Button (Admin Only) -->
+                    <button onclick="openPendingRequestsModal()" id="pendingRequestsBtn"
+                        class="hidden relative px-3 py-1.5 text-sm font-medium text-orange-400 hover:bg-gray-800 rounded-lg transition-colors">
+                        📋 รออนุมัติ
+                        <span id="pendingBadge"
+                            class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                    </button>
+
+                    <button onclick="openManageModal()" id="addBtn"
+                        class="hidden px-3 py-1.5 bg-brand-pink hover:bg-pink-600 text-white text-sm font-bold rounded-lg shadow-md transition-colors"
+                        data-i18n="addEquipment">+ เพิ่ม</button>
+
+                    <!-- Divider -->
+                    <div class="hidden md:block w-px h-6 bg-gray-700"></div>
+
+                    <!-- Utilities -->
                     <button onclick="toggleLanguage()"
-                        class="p-2 rounded-lg hover:bg-gray-800 transition-colors font-bold text-sm text-gray-300 w-8 text-center"
+                        class="p-2 rounded-lg hover:bg-gray-800 transition-colors font-bold text-xs text-gray-400 w-8 text-center"
                         id="langDisplay">TH</button>
-                    <!-- Theme Toggle Hidden for simplicity in new design unless requested, but keeping code functional -->
                     <button onclick="toggleTheme()"
-                        class="p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300">
+                        class="p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-400">
                         <svg id="themeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                         </svg>
                     </button>
 
-                    <button onclick="toggleOverview()" id="overviewBtn"
-                        class="hidden px-4 py-2 text-sm font-medium text-brand-yellow hover:bg-gray-800 rounded-lg transition-colors border border-brand-yellow/30"
-                        data-i18n="overview">ภาพรวม</button>
-
-                    <!-- Pending Requests Button (Admin Only) -->
-                    <button onclick="openPendingRequestsModal()" id="pendingRequestsBtn"
-                        class="hidden relative px-4 py-2 text-sm font-medium text-orange-400 hover:bg-gray-800 rounded-lg transition-colors border border-orange-400/30">
-                        📋 คำขอรออนุมัติ
-                        <span id="pendingBadge"
-                            class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">0</span>
-                    </button>
-
-                    <button onclick="openManageModal()" id="addBtn"
-                        class="hidden px-4 py-2 bg-brand-pink hover:bg-pink-600 text-white text-sm font-bold rounded-lg shadow-md transition-colors shadow-pink-900/20"
-                        data-i18n="addEquipment">+ เพิ่มอุปกรณ์</button>
-
                     <!-- Desktop Logout Button -->
                     <button onclick="handleLogout()" id="logoutBtn"
-                        class="hidden md:block p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300 hover:text-red-400"
+                        class="hidden md:block p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-400 hover:text-red-400"
                         title="ออกจากระบบ">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
