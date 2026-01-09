@@ -307,3 +307,90 @@ window.initPendingBadge = function () {
         updatePendingBadge(totalPending);
     }
 };
+
+// ============== USER FUNCTIONS ==============
+
+// เปิด My Requests Modal
+window.openMyRequestsModal = function () {
+    const modal = document.getElementById('myRequestsModal');
+    if (modal) {
+        renderMyRequests();
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+};
+
+// ปิด My Requests Modal
+window.closeMyRequestsModal = function () {
+    const modal = document.getElementById('myRequestsModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+};
+
+// Render user's own requests
+function renderMyRequests() {
+    const container = document.getElementById('myRequestsList');
+    if (!container) return;
+
+    const myRequests = window.requests.getMyRequests();
+
+    if (myRequests.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <p class="text-lg font-medium">ยังไม่มีคำขอยืม</p>
+                <p class="text-sm">เลือกอุปกรณ์และส่งคำขอเพื่อเริ่มต้น</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = myRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map(request => {
+        const dateRange = `${formatDate(request.startDate)} - ${formatDate(request.endDate)}`;
+        const createdDate = new Date(request.createdAt).toLocaleDateString('th-TH', {
+            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+
+        return `
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 mb-4">
+                <!-- Request Header -->
+                <div class="flex items-center justify-between mb-3 pb-3 border-b border-gray-200 dark:border-gray-600">
+                    <div>
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white">📅 ${dateRange}</p>
+                        <p class="text-xs text-gray-400">ส่งเมื่อ: ${createdDate}</p>
+                        ${request.note ? `<p class="text-xs text-gray-500 mt-1">📝 ${request.note}</p>` : ''}
+                    </div>
+                </div>
+                
+                <!-- Items -->
+                <div class="space-y-2">
+                    ${request.items.map(item => {
+            let statusBadge, statusBg;
+            if (item.status === 'approved') {
+                statusBadge = '<span class="px-2 py-0.5 bg-green-100 text-green-600 text-xs font-bold rounded-full">✓ อนุมัติแล้ว</span>';
+                statusBg = '';
+            } else if (item.status === 'rejected') {
+                statusBadge = '<span class="px-2 py-0.5 bg-red-100 text-red-600 text-xs font-bold rounded-full">✗ ถูกปฏิเสธ</span>';
+                statusBg = 'opacity-60';
+            } else {
+                statusBadge = '<span class="px-2 py-0.5 bg-orange-100 text-orange-600 text-xs font-bold rounded-full animate-pulse">⏳ รออนุมัติ</span>';
+                statusBg = '';
+            }
+            return `
+                            <div class="flex items-center gap-3 p-2 bg-white dark:bg-gray-800 rounded-lg ${statusBg}">
+                                <img src="${item.image}" alt="${item.name}" class="w-10 h-10 object-cover rounded">
+                                <span class="flex-1 text-sm font-medium">${item.name}</span>
+                                ${statusBadge}
+                            </div>
+                            ${item.status === 'rejected' && item.rejectionReason ? `<p class="text-xs text-red-400 ml-13 pl-12">เหตุผล: ${item.rejectionReason}</p>` : ''}
+                        `;
+        }).join('')}
+                </div>
+            </div>
+        `;
+    }).join('');
+}

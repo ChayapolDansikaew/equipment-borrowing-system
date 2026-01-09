@@ -323,6 +323,10 @@ window.showMainApp = function () {
         window.cart?.load();
     }
 
+    // Show my requests button for all logged in users
+    const myRequestsBtn = document.getElementById('myRequestsBtn');
+    if (myRequestsBtn) myRequestsBtn.classList.remove('hidden');
+
     // Initialize pending badge for admin
     window.initPendingBadge?.();
 
