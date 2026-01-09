@@ -65,10 +65,25 @@ window.renderEquipments = function () {
             ? `<div class="absolute top-2 right-2 px-2 py-1 bg-brand-pink text-white text-xs font-bold rounded-full shadow-md z-10">${t.youHave} ${group.borrowedByUser}</div>`
             : '';
 
+        // Check if item is already in cart
+        const firstAvailableItem = group.availableItems[0];
+        const isInCart = firstAvailableItem && window.cart?.has(firstAvailableItem.id);
+
         // REDESIGN: Button Styles
-        const btnClass = isOutOfStock
-            ? 'bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:text-gray-600'
-            : 'bg-brand-yellow text-black hover:bg-yellow-400 shadow-lg shadow-yellow-500/20';
+        let btnClass, btnText, btnAction;
+        if (isOutOfStock) {
+            btnClass = 'bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:text-gray-600';
+            btnText = t.outOfStock;
+            btnAction = '';
+        } else if (isInCart) {
+            btnClass = 'bg-green-500 text-white cursor-default';
+            btnText = '✓ อยู่ในตะกร้าแล้ว';
+            btnAction = '';
+        } else {
+            btnClass = 'bg-brand-yellow text-black hover:bg-yellow-400 shadow-lg shadow-yellow-500/20';
+            btnText = '🛒 ใส่ตะกร้า';
+            btnAction = `onclick="addToCart('${firstAvailableItem?.id}')"`;
+        }
 
         return `
         <div class="bg-white rounded-xl overflow-hidden group border border-gray-100 hover:shadow-xl transition-all duration-300 dark:bg-gray-800 dark:border-gray-700">
@@ -84,10 +99,10 @@ window.renderEquipments = function () {
                 <p class="text-xs font-bold text-brand-pink uppercase tracking-wide mb-1">${group.type}</p>
                 <h3 class="font-bold text-lg mb-4 text-brand-black dark:text-white">${group.name}</h3>
                 
-                <button onclick="openBorrowModal('${group.availableItems[0]?.id}', '${group.name}')" 
+                <button ${btnAction}
                     class="w-full py-2.5 rounded-lg font-bold uppercase text-sm tracking-wider transition-all transform active:scale-95 ${btnClass}"
-                    ${isOutOfStock ? 'disabled' : ''}>
-                    ${isOutOfStock ? t.outOfStock : t.borrow}
+                    ${isOutOfStock || isInCart ? 'disabled' : ''}>
+                    ${btnText}
                 </button>
             </div>
         </div>
@@ -293,6 +308,13 @@ window.showMainApp = function () {
             returnsBtn.textContent = window.translations[window.currentLang].myItems;
             returnsBtn.id = 'btn-my-items';
         }
+    }
+
+    // Show cart button for all logged in users
+    const cartBtn = document.getElementById('cartBtn');
+    if (cartBtn) {
+        cartBtn.classList.remove('hidden');
+        window.cart?.load();
     }
 
     window.fetchEquipments();

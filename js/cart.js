@@ -1,0 +1,152 @@
+// Cart Module - จัดการตะกร้าอุปกรณ์
+window.cart = {
+    items: [],
+
+    // โหลด cart จาก localStorage
+    load() {
+        const saved = localStorage.getItem('equipmentCart');
+        this.items = saved ? JSON.parse(saved) : [];
+        this.updateBadge();
+    },
+
+    // บันทึก cart ลง localStorage
+    save() {
+        localStorage.setItem('equipmentCart', JSON.stringify(this.items));
+        this.updateBadge();
+    },
+
+    // เพิ่มอุปกรณ์ลงตะกร้า
+    add(equipment) {
+        if (this.items.find(item => item.id === equipment.id)) {
+            window.showToast?.('อุปกรณ์นี้อยู่ในตะกร้าแล้ว', 'warning');
+            return false;
+        }
+
+        this.items.push({
+            id: equipment.id,
+            name: equipment.name,
+            image: equipment.image,
+            category: equipment.category,
+            addedAt: new Date().toISOString()
+        });
+
+        this.save();
+        window.showToast?.(`เพิ่ม ${equipment.name} ลงตะกร้าแล้ว`, 'success');
+        return true;
+    },
+
+    // ลบอุปกรณ์ออกจากตะกร้า
+    remove(equipmentId) {
+        const index = this.items.findIndex(item => item.id === equipmentId);
+        if (index > -1) {
+            const removed = this.items.splice(index, 1)[0];
+            this.save();
+            window.showToast?.(`ลบ ${removed.name} ออกจากตะกร้าแล้ว`, 'info');
+        }
+    },
+
+    // ล้างตะกร้า
+    clear() {
+        this.items = [];
+        this.save();
+    },
+
+    // อัปเดต badge จำนวน
+    updateBadge() {
+        const badge = document.getElementById('cartBadge');
+        const count = this.items.length;
+
+        if (badge) {
+            badge.textContent = count;
+            badge.classList.toggle('hidden', count === 0);
+        }
+    },
+
+    // ตรวจสอบว่าอุปกรณ์อยู่ในตะกร้าหรือไม่
+    has(equipmentId) {
+        return this.items.some(item => item.id === equipmentId);
+    },
+
+    // จำนวนอุปกรณ์ในตะกร้า
+    get count() {
+        return this.items.length;
+    }
+};
+
+// เปิด Cart Modal
+window.openCartModal = function () {
+    const modal = document.getElementById('cartModal');
+    if (modal) {
+        renderCartItems();
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+};
+
+// ปิด Cart Modal
+window.closeCartModal = function () {
+    const modal = document.getElementById('cartModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+};
+
+// Render รายการในตะกร้า
+function renderCartItems() {
+    const container = document.getElementById('cartItemsList');
+    if (!container) return;
+
+    if (window.cart.items.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                <p class="text-lg font-medium">ตะกร้าว่างเปล่า</p>
+                <p class="text-sm">เลือกอุปกรณ์ที่ต้องการยืม</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = window.cart.items.map(item => `
+        <div class="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
+            <img src="${item.image}" alt="${item.name}" class="w-16 h-16 object-cover rounded-lg">
+            <div class="flex-1 min-w-0">
+                <h4 class="font-semibold text-gray-900 dark:text-white truncate">${item.name}</h4>
+                <p class="text-sm text-gray-500 dark:text-gray-400">${item.category}</p>
+            </div>
+            <button onclick="window.cart.remove('${item.id}'); renderCartItems();" 
+                class="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+            </button>
+        </div>
+    `).join('');
+}
+
+// เพิ่มอุปกรณ์ลงตะกร้า (เรียกจาก UI)
+window.addToCart = function (equipmentId) {
+    const equipment = window.equipments?.find(eq => eq.id === equipmentId);
+    if (equipment) {
+        const success = window.cart.add({
+            id: equipment.id,
+            name: equipment.name,
+            image: equipment.image_url,
+            category: equipment.type
+        });
+        // Refresh UI ถ้าจำเป็น
+        if (success && typeof window.renderEquipments === 'function') {
+            window.renderEquipments();
+        }
+    } else {
+        window.showToast?.('ไม่พบอุปกรณ์', 'error');
+    }
+};
+
+// โหลด cart เมื่อ DOM พร้อม
+document.addEventListener('DOMContentLoaded', () => {
+    window.cart.load();
+});
