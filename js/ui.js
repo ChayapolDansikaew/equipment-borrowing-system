@@ -386,15 +386,18 @@ window.showToast = function (message, type = 'info') {
 window.filterStatus = function (status) {
     window.currentFilter = status;
 
+    // Reset all buttons to inactive state
     document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.remove('bg-brand-black', 'text-brand-yellow', 'shadow-lg');
-        btn.classList.add('bg-gray-100', 'text-gray-600');
+        btn.classList.remove('bg-gradient-to-r', 'from-brand-black', 'to-gray-800', 'text-brand-yellow', 'shadow-lg', 'shadow-gray-900/20');
+        btn.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-gray-600', 'dark:text-gray-300');
     });
+
+    // Set active button
     const activeId = status === 'returns' ? 'btn-returns' : (status === 'my-items' ? 'btn-my-items' : `btn-${status}`);
     const activeBtn = document.getElementById(activeId);
     if (activeBtn) {
-        activeBtn.classList.remove('bg-gray-100', 'text-gray-600');
-        activeBtn.classList.add('bg-brand-black', 'text-brand-yellow', 'shadow-lg');
+        activeBtn.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'text-gray-600', 'dark:text-gray-300');
+        activeBtn.classList.add('bg-gradient-to-r', 'from-brand-black', 'to-gray-800', 'text-brand-yellow', 'shadow-lg', 'shadow-gray-900/20');
     }
 
     const browse = document.getElementById('browseSection');
