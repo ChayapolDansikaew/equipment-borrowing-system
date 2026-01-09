@@ -1,4 +1,4 @@
-// Cart Module - จัดการตะกร้าอุปกรณ์
+// Cart Module - จัดการตะกร้าอุปกรณ์ (Group-based with quantity)
 window.cart = {
     items: [],
 
@@ -15,29 +15,39 @@ window.cart = {
         this.updateBadge();
     },
 
-    // เพิ่มอุปกรณ์ลงตะกร้า
-    add(equipment) {
-        if (this.items.find(item => item.id === equipment.id)) {
-            window.showToast?.('อุปกรณ์นี้อยู่ในตะกร้าแล้ว', 'warning');
-            return false;
+    // เพิ่ม/อัปเดตอุปกรณ์ในตะกร้า (ตามชื่อ group)
+    addOrUpdate(name, image, category, quantity) {
+        const existing = this.items.find(item => item.name === name);
+
+        if (existing) {
+            existing.quantity = quantity;
+            if (quantity <= 0) {
+                this.removeByName(name);
+                return;
+            }
+        } else {
+            if (quantity <= 0) return;
+            this.items.push({
+                name: name,
+                image: image,
+                category: category,
+                quantity: quantity,
+                addedAt: new Date().toISOString()
+            });
         }
 
-        this.items.push({
-            id: equipment.id,
-            name: equipment.name,
-            image: equipment.image,
-            category: equipment.category,
-            addedAt: new Date().toISOString()
-        });
-
         this.save();
-        window.showToast?.(`เพิ่ม ${equipment.name} ลงตะกร้าแล้ว`, 'success');
-        return true;
+        window.showToast?.(`${name} (${quantity} ชิ้น) ในตะกร้า`, 'success');
+
+        // Refresh UI
+        if (typeof window.renderEquipments === 'function') {
+            window.renderEquipments();
+        }
     },
 
-    // ลบอุปกรณ์ออกจากตะกร้า
-    remove(equipmentId) {
-        const index = this.items.findIndex(item => item.id === equipmentId);
+    // ลบอุปกรณ์ออกจากตะกร้า (ตามชื่อ)
+    removeByName(name) {
+        const index = this.items.findIndex(item => item.name === name);
         if (index > -1) {
             const removed = this.items.splice(index, 1)[0];
             this.save();
@@ -51,25 +61,30 @@ window.cart = {
         this.save();
     },
 
-    // อัปเดต badge จำนวน
+    // อัปเดต badge จำนวน (รวมจำนวน quantity)
     updateBadge() {
         const badge = document.getElementById('cartBadge');
-        const count = this.items.length;
+        const totalItems = this.items.reduce((sum, item) => sum + item.quantity, 0);
 
         if (badge) {
-            badge.textContent = count;
-            badge.classList.toggle('hidden', count === 0);
+            badge.textContent = totalItems;
+            badge.classList.toggle('hidden', totalItems === 0);
         }
     },
 
-    // ตรวจสอบว่าอุปกรณ์อยู่ในตะกร้าหรือไม่
-    has(equipmentId) {
-        return this.items.some(item => item.id === equipmentId);
+    // หาอุปกรณ์ตามชื่อ
+    getByName(name) {
+        return this.items.find(item => item.name === name);
     },
 
-    // จำนวนอุปกรณ์ในตะกร้า
+    // จำนวนรายการในตะกร้า (ไม่รวม quantity)
     get count() {
         return this.items.length;
+    },
+
+    // จำนวนรวมทั้งหมด (รวม quantity)
+    get totalQuantity() {
+        return this.items.reduce((sum, item) => sum + item.quantity, 0);
     }
 };
 
@@ -92,7 +107,7 @@ window.closeCartModal = function () {
     }
 };
 
-// Render รายการในตะกร้า
+// Render รายการในตะกร้า (ใหม่ - รองรับ quantity)
 function renderCartItems() {
     const container = document.getElementById('cartItemsList');
     if (!container) return;
@@ -117,33 +132,69 @@ function renderCartItems() {
                 <h4 class="font-semibold text-gray-900 dark:text-white truncate">${item.name}</h4>
                 <p class="text-sm text-gray-500 dark:text-gray-400">${item.category}</p>
             </div>
-            <button onclick="window.cart.remove('${item.id}'); renderCartItems();" 
-                class="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                </svg>
-            </button>
+            <div class="flex items-center gap-2">
+                <span class="px-3 py-1 bg-brand-yellow text-black font-bold rounded-lg text-sm">${item.quantity} ชิ้น</span>
+                <button onclick="window.cart.removeByName('${item.name}'); renderCartItems(); window.renderEquipments?.();" 
+                    class="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
+            </div>
         </div>
     `).join('');
 }
 
-// เพิ่มอุปกรณ์ลงตะกร้า (เรียกจาก UI)
-window.addToCart = function (equipmentId) {
-    const equipment = window.equipments?.find(eq => eq.id === equipmentId);
-    if (equipment) {
-        const success = window.cart.add({
-            id: equipment.id,
-            name: equipment.name,
-            image: equipment.image_url,
-            category: equipment.type
-        });
-        // Refresh UI ถ้าจำเป็น
-        if (success && typeof window.renderEquipments === 'function') {
-            window.renderEquipments();
-        }
-    } else {
-        window.showToast?.('ไม่พบอุปกรณ์', 'error');
+// ============== QUANTITY MODAL ==============
+
+let currentQuantityData = {};
+
+// เปิด Quantity Modal
+window.openQuantityModal = function (name, image, category, maxQty) {
+    const modal = document.getElementById('quantityModal');
+    if (!modal) return;
+
+    // Store data for confirm
+    currentQuantityData = { name, image, category, maxQty };
+
+    // Get current quantity in cart (if any)
+    const existingItem = window.cart.getByName(name);
+    const currentQty = existingItem ? existingItem.quantity : 1;
+
+    // Update modal content
+    document.getElementById('qtyModalName').textContent = name;
+    document.getElementById('qtyModalImage').src = image;
+    document.getElementById('qtyModalMax').textContent = maxQty;
+    document.getElementById('qtyInput').value = currentQty;
+    document.getElementById('qtyInput').max = maxQty;
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+};
+
+// ปิด Quantity Modal
+window.closeQuantityModal = function () {
+    const modal = document.getElementById('quantityModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
     }
+};
+
+// เพิ่ม/ลดจำนวน
+window.adjustQuantity = function (delta) {
+    const input = document.getElementById('qtyInput');
+    const newVal = Math.max(0, Math.min(currentQuantityData.maxQty, parseInt(input.value) + delta));
+    input.value = newVal;
+};
+
+// ยืนยันจำนวน
+window.confirmQuantity = function () {
+    const quantity = parseInt(document.getElementById('qtyInput').value);
+    const { name, image, category } = currentQuantityData;
+
+    window.cart.addOrUpdate(name, image, category, quantity);
+    closeQuantityModal();
 };
 
 // โหลด cart เมื่อ DOM พร้อม

@@ -65,9 +65,9 @@ window.renderEquipments = function () {
             ? `<div class="absolute top-2 right-2 px-2 py-1 bg-brand-pink text-white text-xs font-bold rounded-full shadow-md z-10">${t.youHave} ${group.borrowedByUser}</div>`
             : '';
 
-        // Check if item is already in cart
-        const firstAvailableItem = group.availableItems[0];
-        const isInCart = firstAvailableItem && window.cart?.has(firstAvailableItem.id);
+        // Check if item group is already in cart (by name, not unit ID)
+        const cartItem = window.cart?.getByName(group.name);
+        const isInCart = !!cartItem;
 
         // REDESIGN: Button Styles
         let btnClass, btnText, btnAction;
@@ -76,13 +76,13 @@ window.renderEquipments = function () {
             btnText = t.outOfStock;
             btnAction = '';
         } else if (isInCart) {
-            btnClass = 'bg-green-500 text-white cursor-default';
-            btnText = '✓ อยู่ในตะกร้าแล้ว';
-            btnAction = '';
+            btnClass = 'bg-green-500 text-white cursor-pointer hover:bg-green-600';
+            btnText = `✓ ในตะกร้า (${cartItem.quantity})`;
+            btnAction = `onclick="openQuantityModal('${group.name}', '${group.image_url}', '${group.type}', ${group.available})"`;
         } else {
             btnClass = 'bg-brand-yellow text-black hover:bg-yellow-400 shadow-lg shadow-yellow-500/20';
             btnText = '🛒 ใส่ตะกร้า';
-            btnAction = `onclick="addToCart('${firstAvailableItem?.id}')"`;
+            btnAction = `onclick="openQuantityModal('${group.name}', '${group.image_url}', '${group.type}', ${group.available})"`;
         }
 
         return `
@@ -101,7 +101,7 @@ window.renderEquipments = function () {
                 
                 <button ${btnAction}
                     class="w-full py-2.5 rounded-lg font-bold uppercase text-sm tracking-wider transition-all transform active:scale-95 ${btnClass}"
-                    ${isOutOfStock || isInCart ? 'disabled' : ''}>
+                    ${isOutOfStock ? 'disabled' : ''}>
                     ${btnText}
                 </button>
             </div>
