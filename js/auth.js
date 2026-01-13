@@ -120,3 +120,22 @@ window.fillDemoAccount = function (username, password) {
         passwordInput.classList.remove('ring-2', 'ring-brand-yellow');
     }, 500);
 };
+
+// =====================================================
+// CHULA SSO LOGIN
+// =====================================================
+
+// SSO Configuration
+const SSO_CONFIG = {
+    baseUrl: 'https://account.it.chula.ac.th',
+    callbackUrl: window.location.origin + '/callback.html'
+};
+
+// Redirect to Chula SSO login page
+window.loginWithChulaSso = function () {
+    const serviceUrl = encodeURIComponent(SSO_CONFIG.callbackUrl);
+    const ssoLoginUrl = `${SSO_CONFIG.baseUrl}/login?service=${serviceUrl}`;
+
+    console.log('Redirecting to Chula SSO:', ssoLoginUrl);
+    window.location.href = ssoLoginUrl;
+};

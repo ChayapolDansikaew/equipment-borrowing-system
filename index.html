@@ -200,9 +200,22 @@
                         </button>
                     </div>
 
+                    <!-- Chula SSO Login -->
+                    <div class="mt-6 pt-6 border-t border-gray-100">
+                        <p class="text-center text-xs text-brand-grey font-medium mb-3">หรือเข้าสู่ระบบด้วย</p>
+                        <button onclick="loginWithChulaSso()"
+                            class="w-full flex items-center justify-center gap-3 py-3 bg-[#E71973] hover:bg-[#C91565] text-white font-bold rounded-xl shadow-lg transition-all transform active:scale-[0.98]">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+                            </svg>
+                            เข้าสู่ระบบด้วย Chula SSO
+                        </button>
+                    </div>
+
                     <!-- Demo Accounts Hint -->
-                    <div class="mt-8 pt-6 border-t border-gray-100">
-                        <p class="text-center text-xs text-brand-grey font-medium mb-3">บัญชีทดลองใช้งาน</p>
+                    <div class="mt-6 pt-6 border-t border-gray-100">
+                        <p class="text-center text-xs text-brand-grey font-medium mb-3">บัญชีทดลองใช้งาน (Demo)</p>
                         <div class="grid grid-cols-2 gap-3">
                             <button onclick="fillDemoAccount('admin', 'admin123')"
                                 class="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl transition-colors group">

@@ -74,7 +74,7 @@
     <script>
         // =====================================================
         // SSO CALLBACK HANDLER
-        // This page receives the token from Chula SSO
+        // This page receives the ticket from Chula SSO
         // =====================================================
 
         async function handleSSOCallback() {
@@ -84,41 +84,45 @@
             const errorMessage = document.getElementById('errorMessage');
 
             try {
-                // Get token from URL parameters
-                // Adjust this based on how Chula SSO sends the token
+                // Get ticket from URL parameters
+                // Chula SSO sends ticket as ?ticket=xxx
                 const urlParams = new URLSearchParams(window.location.search);
-                const token = urlParams.get('token') || urlParams.get('access_token') || urlParams.get('code');
+                const ticket = urlParams.get('ticket');
 
-                // Also check hash fragment (some OAuth flows use this)
-                const hashParams = new URLSearchParams(window.location.hash.substring(1));
-                const hashToken = hashParams.get('token') || hashParams.get('access_token');
-
-                const authToken = token || hashToken;
-
-                if (!authToken) {
-                    throw new Error('ไม่พบ Token จาก SSO');
+                if (!ticket) {
+                    throw new Error('ไม่พบ Ticket จาก SSO');
                 }
 
-                // =====================================================
-                // TODO: Validate token with your backend or Chula SSO API
-                // For now, we'll decode and store it
-                // =====================================================
+                console.log('Received SSO ticket, validating...');
 
-                // Example: Decode JWT token to get user info
-                // const payload = JSON.parse(atob(authToken.split('.')[1]));
+                // Call our backend API to validate the ticket
+                const response = await fetch(`/api/sso-validate?ticket=${encodeURIComponent(ticket)}`);
+                const data = await response.json();
 
-                // For demo, we'll create a user object
-                // Replace this with actual token validation
+                if (!response.ok) {
+                    throw new Error(data.content || 'ไม่สามารถยืนยันตัวตนได้');
+                }
+
+                console.log('SSO validation success:', data);
+
+                // Create user object from SSO response
+                // SSO returns: uid, username, gecos (full name), email, roles, ouid (student/employee id)
                 const userData = {
-                    username: 'SSO User', // Get from token
-                    role: 'user', // Determine from token or database
-                    token: authToken,
-                    loginTime: new Date().toISOString()
+                    id: data.uid || data.ouid,
+                    username: data.username || data.email,
+                    fullName: data.gecos || data.username,
+                    email: data.email,
+                    role: data.roles?.includes('student') ? 'user' :
+                        data.roles?.includes('faculty') ? 'admin' : 'user',
+                    ouid: data.ouid, // student_id or employee_id
+                    ssoRoles: data.roles,
+                    loginTime: new Date().toISOString(),
+                    loginMethod: 'chula_sso'
                 };
 
                 // Store user session
                 localStorage.setItem('currentUser', JSON.stringify(userData));
-                localStorage.setItem('ssoToken', authToken);
+                localStorage.setItem('ssoTicket', ticket);
 
                 // Show success state
                 loadingState.classList.add('hidden');
