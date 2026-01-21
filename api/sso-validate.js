@@ -37,7 +37,8 @@ export default async function handler(req, res) {
         }
 
         // Call Chula SSO serviceValidation API
-        const validationUrl = `${ssoBaseUrl}/serviceValidation`;
+        // Pass ticket as BOTH query param and header (as per docs)
+        const validationUrl = `${ssoBaseUrl}/serviceValidation?ticket=${encodeURIComponent(ticket)}`;
         console.log('Calling SSO validation URL:', validationUrl);
 
         const response = await fetch(validationUrl, {
@@ -61,10 +62,11 @@ export default async function handler(req, res) {
             data = JSON.parse(responseText);
         } catch (parseError) {
             console.error('Failed to parse SSO response as JSON:', parseError);
+            console.error('Raw response:', responseText);
             return res.status(500).json({
                 type: 'error',
                 content: 'Invalid response from SSO server',
-                debug: responseText.substring(0, 200)
+                debug: responseText.substring(0, 300)
             });
         }
 
@@ -85,3 +87,4 @@ export default async function handler(req, res) {
         });
     }
 }
+
