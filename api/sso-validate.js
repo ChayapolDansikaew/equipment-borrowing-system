@@ -37,13 +37,15 @@ export default async function handler(req, res) {
         }
 
         // Call Chula SSO serviceValidation API
-        // Pass ticket as BOTH query param and header (as per docs)
+        // Try POST method with headers and query param
         const validationUrl = `${ssoBaseUrl}/serviceValidation?ticket=${encodeURIComponent(ticket)}`;
         console.log('Calling SSO validation URL:', validationUrl);
+        console.log('Using AppId:', appId);
 
         const response = await fetch(validationUrl, {
-            method: 'GET',
+            method: 'POST',
             headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
                 'DeeAppId': appId,
                 'DeeAppSecret': appSecret,
                 'DeeTicket': ticket
