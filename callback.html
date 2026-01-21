@@ -52,7 +52,9 @@
                 </svg>
             </div>
             <h1 class="text-2xl font-bold text-white mb-2">เกิดข้อผิดพลาด</h1>
-            <p id="errorMessage" class="text-gray-400 mb-6">ไม่สามารถเข้าสู่ระบบได้</p>
+            <p id="errorMessage" class="text-gray-400 mb-4">ไม่สามารถเข้าสู่ระบบได้</p>
+            <pre id="debugInfo"
+                class="hidden text-left text-xs text-gray-500 bg-gray-800 p-3 rounded-lg mb-4 max-w-md overflow-auto max-h-40"></pre>
             <a href="/"
                 class="px-6 py-3 bg-yellow-400 text-black font-bold rounded-lg hover:bg-yellow-300 transition-colors">
                 กลับหน้าหลัก
@@ -100,6 +102,12 @@
                 const data = await response.json();
 
                 if (!response.ok) {
+                    // Show debug info if available
+                    if (data.debug) {
+                        const debugInfo = document.getElementById('debugInfo');
+                        debugInfo.textContent = 'Debug: ' + data.debug;
+                        debugInfo.classList.remove('hidden');
+                    }
                     throw new Error(data.content || 'ไม่สามารถยืนยันตัวตนได้');
                 }
 
