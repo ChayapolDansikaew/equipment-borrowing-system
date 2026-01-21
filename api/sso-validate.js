@@ -26,16 +26,19 @@ export default async function handler(req, res) {
         const appSecret = process.env.CHULA_SSO_APP_SECRET;
         const ssoBaseUrl = process.env.CHULA_SSO_BASE_URL || 'https://account.it.chula.ac.th';
 
+        console.log('SSO Config:', { appId: appId ? 'SET' : 'MISSING', appSecret: appSecret ? 'SET' : 'MISSING', ssoBaseUrl });
+
         if (!appId || !appSecret) {
             console.error('Missing SSO credentials in environment variables');
             return res.status(500).json({
                 type: 'error',
-                content: 'SSO configuration error'
+                content: 'SSO configuration error - missing credentials'
             });
         }
 
         // Call Chula SSO serviceValidation API
         const validationUrl = `${ssoBaseUrl}/serviceValidation`;
+        console.log('Calling SSO validation URL:', validationUrl);
 
         const response = await fetch(validationUrl, {
             method: 'GET',
@@ -46,7 +49,24 @@ export default async function handler(req, res) {
             }
         });
 
-        const data = await response.json();
+        console.log('SSO Response Status:', response.status);
+
+        // Get response as text first to handle non-JSON responses
+        const responseText = await response.text();
+        console.log('SSO Response Body:', responseText.substring(0, 500));
+
+        // Try to parse as JSON
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('Failed to parse SSO response as JSON:', parseError);
+            return res.status(500).json({
+                type: 'error',
+                content: 'Invalid response from SSO server',
+                debug: responseText.substring(0, 200)
+            });
+        }
 
         if (response.ok) {
             // Success - return user info
@@ -57,10 +77,11 @@ export default async function handler(req, res) {
         }
 
     } catch (error) {
-        console.error('SSO Validation Error:', error);
+        console.error('SSO Validation Error:', error.message, error.stack);
         return res.status(500).json({
             type: 'error',
-            content: 'Internal server error during SSO validation'
+            content: 'Internal server error during SSO validation',
+            debug: error.message
         });
     }
 }
