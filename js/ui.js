@@ -80,7 +80,7 @@ window.renderEquipments = function () {
             btnText = `✓ ในตะกร้า (${cartItem.quantity})`;
             btnAction = `onclick="openQuantityModal('${group.name}', '${group.image_url}', '${group.type}', ${group.available})"`;
         } else {
-            btnClass = 'bg-brand-yellow text-black hover:bg-yellow-400 shadow-lg shadow-yellow-500/20';
+            btnClass = 'bg-brand-yellow text-black hover:bg-brand-pink hover:text-white shadow-lg shadow-brand-magenta/20';
             btnText = '🛒 ใส่ตะกร้า';
             btnAction = `onclick="openQuantityModal('${group.name}', '${group.image_url}', '${group.type}', ${group.available})"`;
         }

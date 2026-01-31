@@ -6,6 +6,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>กำลังเข้าสู่ระบบ... | Equipment Borrowing System</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            black: '#000000',
+                            yellow: '#FFF078',
+                            pink: '#FF4191',
+                            magenta: '#E90074'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -56,7 +72,7 @@
             <pre id="debugInfo"
                 class="hidden text-left text-xs text-gray-500 bg-gray-800 p-3 rounded-lg mb-4 max-w-md overflow-auto max-h-40"></pre>
             <a href="/"
-                class="px-6 py-3 bg-yellow-400 text-black font-bold rounded-lg hover:bg-yellow-300 transition-colors">
+                class="px-6 py-3 bg-brand-yellow text-black font-bold rounded-lg hover:bg-brand-pink hover:text-white transition-colors">
                 กลับหน้าหลัก
             </a>
         </div>

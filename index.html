@@ -25,8 +25,9 @@
                     colors: {
                         brand: {
                             black: '#000000',
-                            yellow: '#FFD100',
-                            pink: '#DE5C8E',
+                            yellow: '#FFF078',
+                            pink: '#FF4191',
+                            magenta: '#E90074',
                             grey: '#58595B',
                             lightgrey: '#F3F4F6'
                         }
@@ -134,7 +135,7 @@
                 <!-- Header -->
                 <div class="bg-brand-black text-center py-8 px-6">
                     <div
-                        class="w-16 h-16 rounded-2xl bg-brand-yellow flex items-center justify-center text-brand-black font-bold text-2xl mx-auto mb-4 shadow-lg shadow-yellow-500/30">
+                        class="w-16 h-16 rounded-2xl bg-brand-yellow flex items-center justify-center text-brand-black font-bold text-2xl mx-auto mb-4 shadow-lg shadow-brand-magenta/30">
                         EQ
                     </div>
                     <h1 class="text-2xl font-bold text-white">Equipment Borrowing</h1>
@@ -187,7 +188,7 @@
 
                         <!-- Login Button -->
                         <button onclick="handleLogin()" id="loginBtn"
-                            class="w-full py-3.5 bg-brand-yellow text-brand-black font-bold rounded-xl shadow-lg shadow-yellow-500/30 hover:bg-yellow-400 hover:shadow-yellow-500/40 transition-all transform active:scale-[0.98] text-sm uppercase tracking-wider mt-2">
+                            class="w-full py-3.5 bg-brand-yellow text-brand-black font-bold rounded-xl shadow-lg shadow-brand-magenta/30 hover:bg-brand-pink hover:text-white transition-all transform active:scale-[0.98] text-sm uppercase tracking-wider mt-2">
                             <span id="loginBtnText">เข้าสู่ระบบ</span>
                             <svg id="loginSpinner" class="hidden animate-spin h-5 w-5 mx-auto text-brand-black"
                                 fill="none" viewBox="0 0 24 24">
@@ -204,7 +205,7 @@
                     <div class="mt-6 pt-6 border-t border-gray-100">
                         <p class="text-center text-xs text-brand-grey font-medium mb-3">หรือเข้าสู่ระบบด้วย</p>
                         <button onclick="loginWithChulaSso()"
-                            class="w-full flex items-center justify-center gap-3 py-3 bg-[#E71973] hover:bg-[#C91565] text-white font-bold rounded-xl shadow-lg transition-all transform active:scale-[0.98]">
+                            class="w-full flex items-center justify-center gap-3 py-3 bg-brand-magenta hover:bg-brand-pink text-white font-bold rounded-xl shadow-lg transition-all transform active:scale-[0.98]">
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                 <path
                                     d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
@@ -589,7 +590,7 @@
                                 ไม่มีรายการยืม</h3>
                             <p class="text-sm text-gray-400">คุณยังไม่ได้ยืมอุปกรณ์ใดๆ ในขณะนี้</p>
                             <button onclick="filterStatus('all')"
-                                class="mt-6 px-6 py-2 bg-brand-yellow text-brand-black font-bold rounded-lg hover:bg-yellow-400 transition-colors">
+                                class="mt-6 px-6 py-2 bg-brand-yellow text-brand-black font-bold rounded-lg hover:bg-brand-pink hover:text-white transition-colors">
                                 เลือกยืมอุปกรณ์
                             </button>
                         </div>
@@ -640,7 +641,7 @@
                     <button onclick="closeModal('borrowModal')"
                         class="px-4 py-2 rounded-lg text-gray-500 hover:bg-gray-100 font-bold transition-colors dark:text-gray-400 dark:hover:bg-gray-700">Cancel</button>
                     <button onclick="confirmBorrow()"
-                        class="px-4 py-2 rounded-lg bg-brand-yellow text-brand-black font-bold hover:bg-yellow-400 shadow-lg shadow-yellow-500/20 transition-all">Confirm</button>
+                        class="px-4 py-2 rounded-lg bg-brand-yellow text-brand-black font-bold hover:bg-brand-pink hover:text-white shadow-lg shadow-brand-magenta/20 transition-all">Confirm</button>
                 </div>
                 <input type="hidden" id="borrowItemId">
             </div>
@@ -772,7 +773,7 @@
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden">
             <!-- Header -->
             <div
-                class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-brand-yellow to-yellow-400">
+                class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-brand-yellow to-brand-pink">
                 <h2 class="text-lg font-bold text-black">เลือกจำนวน</h2>
                 <button onclick="closeQuantityModal()" class="p-1 hover:bg-black/10 rounded-lg transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
