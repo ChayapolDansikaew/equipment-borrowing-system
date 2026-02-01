@@ -77,20 +77,20 @@ window.renderEquipments = function () {
             btnAction = '';
         } else if (isInCart) {
             btnClass = 'bg-green-500 text-white cursor-pointer hover:bg-green-600';
-            btnText = `✓ ในตะกร้า (${cartItem.quantity})`;
+            btnText = `<svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> ในตะกร้า (${cartItem.quantity})`;
             btnAction = `onclick="openQuantityModal('${group.name}', '${group.image_url}', '${group.type}', ${group.available})"`;
         } else {
-            btnClass = 'bg-brand-yellow text-black hover:bg-yellow-400 shadow-md';
-            btnText = '🛒 ใส่ตะกร้า';
+            btnClass = 'bg-brand-yellow text-black hover:bg-yellow-400 shadow-md cursor-pointer';
+            btnText = '<svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg> ใส่ตะกร้า';
             btnAction = `onclick="openQuantityModal('${group.name}', '${group.image_url}', '${group.type}', ${group.available})"`;
         }
 
         return `
-        <div class="bg-white rounded-xl overflow-hidden group border border-gray-100 hover:shadow-xl transition-all duration-300 dark:bg-gray-800 dark:border-gray-700">
+        <div class="bg-white rounded-xl overflow-hidden group border border-gray-100 hover:shadow-xl transition-all duration-300 dark:bg-gray-800 dark:border-gray-700 cursor-pointer">
             <div class="relative h-48 overflow-hidden bg-gray-50">
                 ${editBtn}
                 ${userBadge}
-                <img src="${group.image_url}" alt="${group.name}" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500">
+                <img src="${group.image_url}" alt="${group.name} - ${group.type}" loading="lazy" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500">
                 <div class="absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md ${statusColor}" style="${group.borrowedByUser > 0 ? 'top: 2.5rem;' : ''}">
                     ${statusText}
                 </div>

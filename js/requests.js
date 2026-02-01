@@ -244,12 +244,12 @@ function renderPendingRequests() {
                                 <span class="flex-1 text-sm font-medium">${item.name}</span>
                                 <div class="flex gap-1">
                                     <button onclick="approveItem('${request.id}', '${item.name}')" 
-                                        class="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 transition-colors">
-                                        ✓ อนุมัติ
+                                        class="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 transition-colors cursor-pointer">
+                                        อนุมัติ
                                     </button>
                                     <button onclick="rejectItem('${request.id}', '${item.name}')" 
-                                        class="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-lg hover:bg-red-600 transition-colors">
-                                        ✗ ปฏิเสธ
+                                        class="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-lg hover:bg-red-600 transition-colors cursor-pointer">
+                                        ปฏิเสธ
                                     </button>
                                 </div>
                             </div>
@@ -446,13 +446,13 @@ function renderMyRequests() {
                     ${request.items.map(item => {
             let statusBadge, statusBg;
             if (item.status === 'approved') {
-                statusBadge = '<span class="px-2 py-0.5 bg-green-100 text-green-600 text-xs font-bold rounded-full">✓ อนุมัติแล้ว</span>';
+                statusBadge = '<span class="px-2 py-0.5 bg-green-100 text-green-600 text-xs font-bold rounded-full">อนุมัติแล้ว</span>';
                 statusBg = '';
             } else if (item.status === 'rejected') {
-                statusBadge = '<span class="px-2 py-0.5 bg-red-100 text-red-600 text-xs font-bold rounded-full">✗ ถูกปฏิเสธ</span>';
+                statusBadge = '<span class="px-2 py-0.5 bg-red-100 text-red-600 text-xs font-bold rounded-full">ถูกปฏิเสธ</span>';
                 statusBg = 'opacity-60';
             } else {
-                statusBadge = '<span class="px-2 py-0.5 bg-orange-100 text-orange-600 text-xs font-bold rounded-full animate-pulse">⏳ รออนุมัติ</span>';
+                statusBadge = '<span class="px-2 py-0.5 bg-orange-100 text-orange-600 text-xs font-bold rounded-full animate-pulse">รออนุมัติ</span>';
                 statusBg = '';
             }
             return `

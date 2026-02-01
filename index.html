@@ -113,10 +113,50 @@
             background: inherit;
             opacity: 0.5;
         }
+
+        /* Accessibility: Focus states */
+        button:focus-visible,
+        a:focus-visible,
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible {
+            outline: 2px solid #FFD100;
+            outline-offset: 2px;
+        }
+
+        /* Accessibility: Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Skip to main content link */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #FFD100;
+            color: #000;
+            padding: 8px 16px;
+            z-index: 100;
+            font-weight: 600;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
     </style>
 </head>
 
 <body class="bg-gray-50 text-brand-black transition-colors duration-300 dark:bg-gray-900 dark:text-gray-100">
+    <!-- Skip Link for Keyboard Navigation -->
+    <a href="#mainContent" class="skip-link">ข้ามไปยังเนื้อหาหลัก</a>
 
     <!-- Login Section -->
     <div id="loginSection"
@@ -357,14 +397,25 @@
                     <div class="hidden md:block w-px h-6 bg-gray-700"></div>
 
                     <!-- Admin Section -->
-                    <button onclick="toggleOverview()" id="overviewBtn"
-                        class="hidden px-3 py-1.5 text-sm font-medium text-brand-yellow hover:bg-gray-800 rounded-lg transition-colors"
-                        data-i18n="overview">📊 ภาพรวม</button>
+                    class="hidden px-3 py-1.5 text-sm font-medium text-brand-yellow hover:bg-gray-800 rounded-lg
+                    transition-colors flex items-center gap-1.5"
+                    data-i18n="overview">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                        </path>
+                    </svg>
+                    ภาพรวม
+                    </button>
 
-                    <!-- Pending Requests Button (Admin Only) -->
                     <button onclick="openPendingRequestsModal()" id="pendingRequestsBtn"
-                        class="hidden relative px-3 py-1.5 text-sm font-medium text-orange-400 hover:bg-gray-800 rounded-lg transition-colors">
-                        📋 รออนุมัติ
+                        class="hidden relative px-3 py-1.5 text-sm font-medium text-orange-400 hover:bg-gray-800 rounded-lg transition-colors flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                            </path>
+                        </svg>
+                        รออนุมัติ
                         <span id="pendingBadge"
                             class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">0</span>
                     </button>
@@ -484,11 +535,11 @@
                             <select id="categoryFilter" onchange="filterByCategory(this.value)"
                                 class="w-full bg-gray-50 dark:bg-gray-700 text-sm font-bold text-gray-700 dark:text-white rounded-xl px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 focus:outline-none focus:border-brand-yellow focus:ring-4 focus:ring-brand-yellow/20 cursor-pointer transition-all duration-200">
                                 <option value="all" data-i18n="allCategories">ทั้งหมด</option>
-                                <option value="Camera">📷 Camera</option>
-                                <option value="Lens">🔍 Lens</option>
-                                <option value="Audio">🎙️ Audio</option>
-                                <option value="Lighting">💡 Lighting</option>
-                                <option value="Accessory">🎒 Accessory</option>
+                                <option value="Camera">Camera</option>
+                                <option value="Lens">Lens</option>
+                                <option value="Audio">Audio</option>
+                                <option value="Lighting">Lighting</option>
+                                <option value="Accessory">Accessory</option>
                             </select>
                         </div>
                     </div>
@@ -497,13 +548,16 @@
 
             <!-- Browse Section (Grid) -->
             <div id="browseSection" class="container mx-auto px-6 pb-8">
-                <!-- Equipment Grid -->
-                <div id="equipmentGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    <!-- Cards will be injected here -->
-                    <div class="col-span-full text-center py-12 text-gray-400">
-                        Loading equipments...
+                <!-- Main Content anchor for skip link -->
+                <main id="mainContent" tabindex="-1">
+                    <!-- Equipment Grid -->
+                    <div id="equipmentGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        <!-- Cards will be injected here -->
+                        <div class="col-span-full text-center py-12 text-gray-400">
+                            Loading equipments...
+                        </div>
                     </div>
-                </div>
+                </main>
             </div>
 
             <!-- Admin Return Section (Hidden by default) -->
@@ -823,7 +877,12 @@
             <div
                 class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-brand-black to-gray-800">
                 <h2 class="text-xl font-bold text-brand-yellow flex items-center gap-2">
-                    📋 ส่งคำขอยืม
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                        </path>
+                    </svg>
+                    ส่งคำขอยืม
                 </h2>
                 <button onclick="closeRequestForm()"
                     class="p-2 hover:bg-gray-700 rounded-lg transition-colors text-white">
@@ -867,8 +926,11 @@
             <!-- Footer -->
             <div class="p-4 border-t border-gray-200 dark:border-gray-700">
                 <button onclick="submitBorrowRequest()"
-                    class="w-full py-3 px-4 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-xl hover:shadow-lg transition-all duration-200">
-                    ✓ ยืนยันส่งคำขอ
+                    class="w-full py-3 px-4 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-xl hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    ยืนยันส่งคำขอ
                 </button>
             </div>
         </div>
@@ -883,7 +945,12 @@
             <div
                 class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-orange-500 to-orange-600">
                 <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                    📋 คำขอรออนุมัติ
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                        </path>
+                    </svg>
+                    คำขอรออนุมัติ
                 </h2>
                 <button onclick="closePendingRequestsModal()"
                     class="p-2 hover:bg-white/20 rounded-lg transition-colors text-white">
