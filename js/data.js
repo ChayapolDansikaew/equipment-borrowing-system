@@ -436,8 +436,8 @@ window.fetchAllUsers = async function () {
     try {
         const { data, error } = await window.supabaseClient
             .from('users')
-            .select('id, username, role, created_at')
-            .order('created_at', { ascending: false });
+            .select('id, username, role')
+            .order('id', { ascending: true });
 
         if (error) {
             console.error('Error fetching users:', error);
