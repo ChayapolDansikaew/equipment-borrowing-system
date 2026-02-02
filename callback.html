@@ -151,8 +151,9 @@
                     const response = await fetch('/js/config.js');
                     const configText = await response.text();
                     const urlMatch = configText.match(/SUPABASE_URL\s*=\s*['"]([^'"]+)['"]/);
-                    const keyMatch = configText.match(/SUPABASE_ANON_KEY\s*=\s*['"]([^'"]+)['"]/);
+                    const keyMatch = configText.match(/SUPABASE_KEY\s*=\s*['"]([^'"]+)['"]/);
 
+                    console.log('Config loaded, URL found:', !!urlMatch, 'Key found:', !!keyMatch);
                     if (urlMatch && keyMatch) {
                         const supabaseUrl = urlMatch[1];
                         const supabaseKey = keyMatch[1];
