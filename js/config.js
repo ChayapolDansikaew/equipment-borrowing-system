@@ -6,6 +6,13 @@ console.log('Config loaded');
 const SUPABASE_URL = 'https://gzfzpkllhkuefmsktgor.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6Znpwa2xsaGt1ZWZtc2t0Z29yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxODA1OTUsImV4cCI6MjA3OTc1NjU5NX0.5gEU1AGANpYId9I8IXI90iSxYALXc0_oCGo9-wPjtq8';
 
+// --- EmailJS Config ---
+// TODO: ผู้ใช้ต้องกรอก credentials หลังสมัครที่ https://emailjs.com
+const EMAILJS_PUBLIC_KEY = 'YOUR_EMAILJS_PUBLIC_KEY'; // ดูจาก EmailJS Dashboard > Account > Public Key
+const EMAILJS_SERVICE_ID = 'YOUR_SERVICE_ID'; // สร้างจาก Email Services
+const EMAILJS_APPROVAL_TEMPLATE = 'YOUR_APPROVAL_TEMPLATE_ID'; // Template สำหรับแจ้งอนุมัติ
+const EMAILJS_REMINDER_TEMPLATE = 'YOUR_REMINDER_TEMPLATE_ID'; // Template สำหรับเตือนคืน
+
 // --- GLOBAL STATE ---
 // We attach these to window so they are accessible by other scripts and HTML attributes
 window.supabaseClient = null;

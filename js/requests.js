@@ -347,6 +347,10 @@ window.approveItem = async function (requestId, itemName) {
             renderPendingRequests();
             // Refresh equipment list
             window.fetchEquipments?.();
+
+            // Send approval email notification
+            const approvedItem = { name: itemName, quantity: quantity };
+            window.sendApprovalEmail?.(request, [approvedItem]);
         }
     } catch (err) {
         console.error('Approve error:', err);
@@ -478,3 +482,119 @@ window.deleteMyRequest = function (requestId) {
     window.showToast?.('ลบคำขอแล้ว', 'info');
     renderMyRequests();
 };
+
+// --- Email Notification Functions ---
+
+// Initialize EmailJS
+window.initEmailJS = function () {
+    if (typeof emailjs !== 'undefined' && EMAILJS_PUBLIC_KEY && !EMAILJS_PUBLIC_KEY.startsWith('YOUR_')) {
+        emailjs.init(EMAILJS_PUBLIC_KEY);
+        console.log('EmailJS initialized');
+        return true;
+    }
+    console.log('EmailJS not configured - email notifications disabled');
+    return false;
+};
+
+// ส่ง email แจ้งเมื่ออนุมัติคำขอ
+window.sendApprovalEmail = async function (request, approvedItems) {
+    // ตรวจสอบว่า EmailJS configured หรือยัง
+    if (!EMAILJS_PUBLIC_KEY || EMAILJS_PUBLIC_KEY.startsWith('YOUR_')) {
+        console.log('EmailJS not configured - skipping email');
+        return false;
+    }
+
+    if (!EMAILJS_SERVICE_ID || EMAILJS_SERVICE_ID.startsWith('YOUR_')) {
+        console.log('EmailJS Service ID not configured');
+        return false;
+    }
+
+    if (!EMAILJS_APPROVAL_TEMPLATE || EMAILJS_APPROVAL_TEMPLATE.startsWith('YOUR_')) {
+        console.log('EmailJS Approval Template not configured');
+        return false;
+    }
+
+    try {
+        // สร้าง email ของผู้ใช้จาก username (สำหรับ Chula SSO)
+        let toEmail = request.userName;
+        if (!toEmail.includes('@')) {
+            toEmail = request.userName + '@student.chula.ac.th';
+        }
+
+        // Format items list
+        const itemsList = approvedItems.map(item => `• ${item.name} (x${item.quantity})`).join('\n');
+
+        // Template parameters (ต้องตรงกับ template ใน EmailJS)
+        const templateParams = {
+            to_name: request.userName,
+            to_email: toEmail,
+            items: itemsList,
+            items_html: approvedItems.map(item => `<li>${item.name} (x${item.quantity})</li>`).join(''),
+            start_date: new Date(request.startDate).toLocaleDateString('th-TH'),
+            return_date: new Date(request.endDate).toLocaleDateString('th-TH'),
+            approved_by: window.currentUser?.username || 'Admin',
+            request_id: request.id
+        };
+
+        const response = await emailjs.send(
+            EMAILJS_SERVICE_ID,
+            EMAILJS_APPROVAL_TEMPLATE,
+            templateParams
+        );
+
+        console.log('Approval email sent:', response);
+        window.showToast?.('ส่ง email แจ้งเตือนแล้ว', 'success');
+        return true;
+    } catch (error) {
+        console.error('Failed to send approval email:', error);
+        // Don't show error to user - email is optional
+        return false;
+    }
+};
+
+// ส่ง email เตือนก่อนครบกำหนดคืน
+window.sendReminderEmail = async function (transaction, daysUntilDue) {
+    if (!EMAILJS_PUBLIC_KEY || EMAILJS_PUBLIC_KEY.startsWith('YOUR_')) {
+        return false;
+    }
+
+    if (!EMAILJS_REMINDER_TEMPLATE || EMAILJS_REMINDER_TEMPLATE.startsWith('YOUR_')) {
+        return false;
+    }
+
+    try {
+        let toEmail = transaction.borrower;
+        if (!toEmail.includes('@')) {
+            toEmail = transaction.borrower + '@student.chula.ac.th';
+        }
+
+        const whenText = daysUntilDue === 0 ? 'วันนี้ / today' :
+            daysUntilDue === 1 ? 'พรุ่งนี้ / tomorrow' :
+                `ใน ${daysUntilDue} วัน / in ${daysUntilDue} days`;
+
+        const templateParams = {
+            to_name: transaction.borrower,
+            to_email: toEmail,
+            items: transaction.equipment_name,
+            return_date: new Date(transaction.return_date).toLocaleDateString('th-TH'),
+            when: whenText
+        };
+
+        const response = await emailjs.send(
+            EMAILJS_SERVICE_ID,
+            EMAILJS_REMINDER_TEMPLATE,
+            templateParams
+        );
+
+        console.log('Reminder email sent:', response);
+        return true;
+    } catch (error) {
+        console.error('Failed to send reminder email:', error);
+        return false;
+    }
+};
+
+// Initialize EmailJS on load
+document.addEventListener('DOMContentLoaded', () => {
+    window.initEmailJS();
+});
