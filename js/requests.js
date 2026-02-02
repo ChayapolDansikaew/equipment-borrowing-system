@@ -220,7 +220,15 @@ function renderPendingRequests() {
                         <p class="text-xs text-gray-500">📅 ${dateRange}</p>
                         ${request.note ? `<p class="text-xs text-gray-400 mt-1">📝 ${request.note}</p>` : ''}
                     </div>
-                    <span class="px-2 py-1 bg-orange-100 text-orange-600 text-xs font-bold rounded-full">${pendingItems.length} รอดำเนินการ</span>
+                    <div class="flex items-center gap-2">
+                        ${pendingItems.length > 1 ? `
+                            <button onclick="approveAllItems('${request.id}')" 
+                                class="px-3 py-1.5 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 transition-colors cursor-pointer">
+                                ✓ อนุมัติทั้งหมด
+                            </button>
+                        ` : ''}
+                        <span class="px-2 py-1 bg-orange-100 text-orange-600 text-xs font-bold rounded-full">${pendingItems.length} รอดำเนินการ</span>
+                    </div>
                 </div>
                 
                 <!-- Items -->
@@ -366,6 +374,88 @@ window.rejectItem = function (requestId, itemName) {
     if (success) {
         window.showToast?.('ปฏิเสธคำขอแล้ว', 'info');
         renderPendingRequests();
+    }
+};
+
+// Approve ALL pending items in a request - sends only ONE email
+window.approveAllItems = async function (requestId) {
+    const requests = window.requests.getAll();
+    const request = requests.find(r => r.id === requestId);
+    if (!request) {
+        window.showToast?.('ไม่พบคำขอ', 'error');
+        return;
+    }
+
+    const pendingItems = request.items.filter(i => i.status === 'pending');
+    if (pendingItems.length === 0) {
+        window.showToast?.('ไม่มีรายการรออนุมัติ', 'info');
+        return;
+    }
+
+    // Confirm action
+    if (!confirm(`ต้องการอนุมัติทั้งหมด ${pendingItems.length} รายการ?`)) {
+        return;
+    }
+
+    const approvedItems = [];
+    let successCount = 0;
+
+    try {
+        for (const item of pendingItems) {
+            const itemName = item.name;
+            const quantity = item.quantity || 1;
+
+            // Find available equipment units
+            const availableUnits = window.equipments.filter(e =>
+                e.name === itemName && e.status === 'available'
+            );
+
+            if (availableUnits.length < quantity) {
+                window.showToast?.(`${itemName}: มีไม่พอ (ว่าง ${availableUnits.length}/${quantity})`, 'error');
+                continue;
+            }
+
+            const unitsToBorrow = availableUnits.slice(0, quantity);
+
+            // Create transactions
+            for (const unit of unitsToBorrow) {
+                const { error: updateError } = await window.supabaseClient
+                    .from('equipments')
+                    .update({ status: 'borrowed' })
+                    .eq('id', unit.id);
+
+                if (updateError) continue;
+
+                await window.supabaseClient
+                    .from('transactions')
+                    .insert([{
+                        equipment_id: unit.id,
+                        borrower_name: request.userName,
+                        status: 'active',
+                        start_date: new Date(request.startDate + 'T00:00:00').toISOString(),
+                        end_date: new Date(request.endDate + 'T23:59:59').toISOString()
+                    }]);
+            }
+
+            // Update localStorage
+            window.requests.updateItemStatus(requestId, itemName, 'approved');
+            approvedItems.push({ name: itemName, quantity: quantity });
+            successCount++;
+        }
+
+        if (successCount > 0) {
+            window.showToast?.(`อนุมัติ ${successCount} รายการสำเร็จ`, 'success');
+            renderPendingRequests();
+            window.fetchEquipments?.();
+
+            // Send ONE email for all approved items
+            if (approvedItems.length > 0) {
+                window.sendApprovalEmail?.(request, approvedItems);
+            }
+        }
+    } catch (err) {
+        console.error('Approve all error:', err);
+        window.showToast?.('เกิดข้อผิดพลาด', 'error');
     }
 };
 
