@@ -294,6 +294,9 @@ window.showMainApp = function () {
         // Show pending requests button for admin
         const pendingBtn = document.getElementById('pendingRequestsBtn');
         if (pendingBtn) pendingBtn.classList.remove('hidden');
+        // Show user management button for admin
+        const userMgmtBtn = document.getElementById('userManagementBtn');
+        if (userMgmtBtn) userMgmtBtn.classList.remove('hidden');
     } else {
         addBtn.classList.add('hidden');
         if (mobileAddBtn) mobileAddBtn.classList.add('hidden');
@@ -685,3 +688,93 @@ document.addEventListener('click', function (e) {
         }
     }
 });
+
+// --- User Management Functions ---
+
+window.allUsers = [];
+
+window.openUserManagementModal = async function () {
+    const modal = document.getElementById('userManagementModal');
+    const usersList = document.getElementById('usersList');
+
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    // Show loading
+    usersList.innerHTML = '<div class="text-center py-8 text-gray-400">กำลังโหลด...</div>';
+
+    // Fetch users
+    window.allUsers = await window.fetchAllUsers();
+    window.renderUsersList(window.allUsers);
+};
+
+window.closeUserManagementModal = function () {
+    const modal = document.getElementById('userManagementModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+};
+
+window.renderUsersList = function (users) {
+    const usersList = document.getElementById('usersList');
+
+    if (!users || users.length === 0) {
+        usersList.innerHTML = `
+            <div class="text-center py-8 text-gray-400">
+                ไม่พบผู้ใช้
+            </div>
+        `;
+        return;
+    }
+
+    usersList.innerHTML = users.map(user => {
+        const isAdmin = user.role === 'admin';
+        const roleColor = isAdmin ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-600';
+        const toggleBtnClass = isAdmin
+            ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            : 'bg-purple-500 text-white hover:bg-purple-600';
+        const toggleBtnText = isAdmin ? 'ลดเป็น User' : 'เลื่อนเป็น Admin';
+
+        return `
+            <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl mb-2">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold">
+                        ${user.username.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-800 dark:text-white">${user.username}</p>
+                        <span class="px-2 py-0.5 text-xs font-bold rounded-full ${roleColor}">
+                            ${user.role}
+                        </span>
+                    </div>
+                </div>
+                <button onclick="toggleUserRole(${user.id}, '${user.role}')"
+                    class="px-3 py-1.5 text-sm font-bold rounded-lg transition-colors cursor-pointer ${toggleBtnClass}">
+                    ${toggleBtnText}
+                </button>
+            </div>
+        `;
+    }).join('');
+};
+
+window.filterUsers = function (query) {
+    const filtered = window.allUsers.filter(user =>
+        user.username.toLowerCase().includes(query.toLowerCase())
+    );
+    window.renderUsersList(filtered);
+};
+
+window.toggleUserRole = async function (userId, currentRole) {
+    const newRole = currentRole === 'admin' ? 'user' : 'admin';
+
+    const success = await window.updateUserRole(userId, newRole);
+
+    if (success) {
+        // Refresh the list
+        window.allUsers = await window.fetchAllUsers();
+        window.renderUsersList(window.allUsers);
+    }
+};

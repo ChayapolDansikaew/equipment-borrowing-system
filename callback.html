@@ -129,20 +129,81 @@
 
                 console.log('SSO validation success:', data);
 
-                // Create user object from SSO response
+                // Create initial user object from SSO response
                 // SSO returns: uid, username, gecos (full name), email, roles, ouid (student/employee id)
-                const userData = {
+                const ssoRole = data.roles?.includes('student') ? 'user' :
+                    data.roles?.includes('faculty') ? 'admin' : 'user';
+
+                let userData = {
                     id: data.uid || data.ouid,
                     username: data.username || data.email,
                     fullName: data.gecos || data.username,
                     email: data.email,
-                    role: data.roles?.includes('student') ? 'user' :
-                        data.roles?.includes('faculty') ? 'admin' : 'user',
+                    role: ssoRole,
                     ouid: data.ouid, // student_id or employee_id
                     ssoRoles: data.roles,
                     loginTime: new Date().toISOString(),
                     loginMethod: 'chula_sso'
                 };
+
+                // Sync user to database and get actual role
+                try {
+                    const response = await fetch('/js/config.js');
+                    const configText = await response.text();
+                    const urlMatch = configText.match(/SUPABASE_URL\s*=\s*['"]([^'"]+)['"]/);
+                    const keyMatch = configText.match(/SUPABASE_ANON_KEY\s*=\s*['"]([^'"]+)['"]/);
+
+                    if (urlMatch && keyMatch) {
+                        const supabaseUrl = urlMatch[1];
+                        const supabaseKey = keyMatch[1];
+
+                        // Check if user exists in database
+                        const checkResponse = await fetch(
+                            `${supabaseUrl}/rest/v1/users?username=eq.${encodeURIComponent(userData.username)}&select=id,username,role`,
+                            {
+                                headers: {
+                                    'apikey': supabaseKey,
+                                    'Authorization': `Bearer ${supabaseKey}`
+                                }
+                            }
+                        );
+                        const existingUsers = await checkResponse.json();
+
+                        if (existingUsers && existingUsers.length > 0) {
+                            // User exists - use role from database
+                            console.log('User found in database:', existingUsers[0]);
+                            userData.role = existingUsers[0].role;
+                            userData.dbId = existingUsers[0].id;
+                        } else {
+                            // Create new user in database
+                            const createResponse = await fetch(
+                                `${supabaseUrl}/rest/v1/users`,
+                                {
+                                    method: 'POST',
+                                    headers: {
+                                        'apikey': supabaseKey,
+                                        'Authorization': `Bearer ${supabaseKey}`,
+                                        'Content-Type': 'application/json',
+                                        'Prefer': 'return=representation'
+                                    },
+                                    body: JSON.stringify({
+                                        username: userData.username,
+                                        password: 'sso_user',
+                                        role: ssoRole
+                                    })
+                                }
+                            );
+                            const newUser = await createResponse.json();
+                            console.log('New user created:', newUser);
+                            if (newUser && newUser[0]) {
+                                userData.dbId = newUser[0].id;
+                            }
+                        }
+                    }
+                } catch (syncError) {
+                    console.warn('Could not sync user to database:', syncError);
+                    // Continue with SSO role if sync fails
+                }
 
                 // Store user session
                 localStorage.setItem('currentUser', JSON.stringify(userData));

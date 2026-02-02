@@ -424,3 +424,105 @@ window.saveEquipment = async function () {
         window.showToast('เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'error');
     }
 };
+
+// --- User Management ---
+
+window.fetchAllUsers = async function () {
+    if (!window.supabaseClient) {
+        console.warn('Supabase client not initialized');
+        return [];
+    }
+
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('users')
+            .select('id, username, role, created_at')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching users:', error);
+            return [];
+        }
+
+        return data || [];
+    } catch (err) {
+        console.error('fetchAllUsers exception:', err);
+        return [];
+    }
+};
+
+window.updateUserRole = async function (userId, newRole) {
+    if (!window.supabaseClient) {
+        console.warn('Supabase client not initialized');
+        return false;
+    }
+
+    try {
+        const { error } = await window.supabaseClient
+            .from('users')
+            .update({ role: newRole })
+            .eq('id', userId);
+
+        if (error) {
+            console.error('Error updating user role:', error);
+            window.showToast('เกิดข้อผิดพลาดในการอัปเดต', 'error');
+            return false;
+        }
+
+        window.showToast(`เปลี่ยน role เป็น ${newRole} สำเร็จ`, 'success');
+        return true;
+    } catch (err) {
+        console.error('updateUserRole exception:', err);
+        window.showToast('เกิดข้อผิดพลาด', 'error');
+        return false;
+    }
+};
+
+window.syncUserToDatabase = async function (userData) {
+    if (!window.supabaseClient) {
+        console.warn('Supabase client not initialized');
+        return null;
+    }
+
+    try {
+        // Check if user exists
+        const { data: existingUser, error: fetchError } = await window.supabaseClient
+            .from('users')
+            .select('id, username, role')
+            .eq('username', userData.username)
+            .single();
+
+        if (fetchError && fetchError.code !== 'PGRST116') {
+            // PGRST116 = no rows returned (user doesn't exist)
+            console.error('Error checking existing user:', fetchError);
+        }
+
+        if (existingUser) {
+            // User exists - return their role from database
+            console.log('User exists in database:', existingUser);
+            return existingUser;
+        }
+
+        // User doesn't exist - create new user
+        const { data: newUser, error: insertError } = await window.supabaseClient
+            .from('users')
+            .insert([{
+                username: userData.username,
+                password: 'sso_user', // Placeholder for SSO users
+                role: userData.role || 'user'
+            }])
+            .select()
+            .single();
+
+        if (insertError) {
+            console.error('Error creating user:', insertError);
+            return null;
+        }
+
+        console.log('New user created:', newUser);
+        return newUser;
+    } catch (err) {
+        console.error('syncUserToDatabase exception:', err);
+        return null;
+    }
+};
