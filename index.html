@@ -725,7 +725,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
-                            <p class="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase">Overdue</p>
+                            <p class="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase" data-i18n="overdue">
+                                คืนล่าช้า</p>
                         </div>
                         <p id="statOverdue" class="text-3xl font-bold text-red-500">-</p>
                     </div>
@@ -745,7 +746,7 @@
                                 </svg>
                             </div>
                             <div>
-                                <p class="text-gray-500 dark:text-gray-400 text-xs">Today</p>
+                                <p class="text-gray-500 dark:text-gray-400 text-xs" data-i18n="today">วันนี้</p>
                                 <p id="statTodayBorrows" class="text-xl font-bold text-gray-900 dark:text-white">-</p>
                             </div>
                         </div>
@@ -762,7 +763,7 @@
                                 </svg>
                             </div>
                             <div>
-                                <p class="text-gray-500 dark:text-gray-400 text-xs">This Week</p>
+                                <p class="text-gray-500 dark:text-gray-400 text-xs" data-i18n="thisWeek">สัปดาห์นี้</p>
                                 <p id="statWeekBorrows" class="text-xl font-bold text-gray-900 dark:text-white">-</p>
                             </div>
                         </div>
@@ -779,7 +780,8 @@
                                 </svg>
                             </div>
                             <div>
-                                <p class="text-gray-500 dark:text-gray-400 text-xs">On-Time Rate</p>
+                                <p class="text-gray-500 dark:text-gray-400 text-xs" data-i18n="onTimeRate">อัตราตรงเวลา
+                                </p>
                                 <p id="statOnTimeRate" class="text-xl font-bold text-gray-900 dark:text-white">-</p>
                             </div>
                         </div>
@@ -797,7 +799,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                             </svg>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Weekly Borrowings</h3>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white" data-i18n="weeklyBorrowings">
+                                การยืมรายสัปดาห์</h3>
                         </div>
                         <div class="h-64">
                             <canvas id="weeklyChart"></canvas>
@@ -811,7 +814,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                             </svg>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Top Equipment</h3>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white" data-i18n="topEquipment">
+                                อุปกรณ์ยอดนิยม</h3>
                         </div>
                         <div class="h-64">
                             <canvas id="topEquipmentChart"></canvas>
@@ -827,10 +831,11 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Top Borrowers</h3>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white" data-i18n="topBorrowers">
+                            ผู้ยืมมากที่สุด</h3>
                     </div>
                     <div id="topBorrowersList" class="space-y-3">
-                        <p class="text-gray-400 text-center py-4">Loading...</p>
+                        <p class="text-gray-400 text-center py-4" data-i18n="loading">กำลังโหลด...</p>
                     </div>
                 </div>
             </div>

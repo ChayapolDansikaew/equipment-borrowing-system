@@ -653,7 +653,8 @@ window.renderTopBorrowersList = function (data) {
     if (!container) return;
 
     if (!data || data.length === 0) {
-        container.innerHTML = '<p class="text-gray-400 text-center py-4">No borrowing data</p>';
+        const t = window.translations[window.currentLang];
+        container.innerHTML = `<p class="text-gray-400 text-center py-4">${t.noBorrowingData}</p>`;
         return;
     }
 
@@ -666,6 +667,8 @@ window.renderTopBorrowersList = function (data) {
         'bg-gray-200 text-gray-600'   // 5th
     ];
 
+    const t = window.translations[window.currentLang];
+
     container.innerHTML = data.map((item, index) => {
         const percentage = Math.round((item.count / maxCount) * 100);
         const badgeColor = badgeColors[index] || 'bg-gray-200 text-gray-600';
@@ -676,7 +679,7 @@ window.renderTopBorrowersList = function (data) {
                 <div class="flex-1">
                     <div class="flex justify-between items-center mb-1">
                         <span class="font-medium text-gray-900 dark:text-white">${item.name}</span>
-                        <span class="text-sm text-gray-500 dark:text-gray-400">${item.count} times</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400">${item.count} ${t.times}</span>
                     </div>
                     <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                         <div class="h-full bg-gradient-to-r from-brand-pink to-brand-magenta rounded-full transition-all duration-300" style="width: ${percentage}%"></div>

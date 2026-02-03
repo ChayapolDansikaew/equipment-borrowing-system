@@ -68,7 +68,16 @@ window.translations = {
         allCategories: 'ทั้งหมด',
         noActiveTransactions: 'ไม่มีรายการคืน',
         active: 'กำลังยืม',
-        refresh: 'รีเฟรช'
+        refresh: 'รีเฟรช',
+        today: 'วันนี้',
+        thisWeek: 'สัปดาห์นี้',
+        onTimeRate: 'อัตราตรงเวลา',
+        weeklyBorrowings: 'การยืมรายสัปดาห์',
+        topEquipment: 'อุปกรณ์ยอดนิยม',
+        topBorrowers: 'ผู้ยืมมากที่สุด',
+        loading: 'กำลังโหลด...',
+        noBorrowingData: 'ไม่มีข้อมูลการยืม',
+        times: 'ครั้ง'
     },
     en: {
         overview: 'Overview',
@@ -114,7 +123,16 @@ window.translations = {
         allCategories: 'All',
         noActiveTransactions: 'No active transactions',
         active: 'Active',
-        refresh: 'Refresh'
+        refresh: 'Refresh',
+        today: 'Today',
+        thisWeek: 'This Week',
+        onTimeRate: 'On-Time Rate',
+        weeklyBorrowings: 'Weekly Borrowings',
+        topEquipment: 'Top Equipment',
+        topBorrowers: 'Top Borrowers',
+        loading: 'Loading...',
+        noBorrowingData: 'No borrowing data',
+        times: 'times'
     }
 };
 
