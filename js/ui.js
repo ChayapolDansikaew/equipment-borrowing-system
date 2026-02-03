@@ -211,7 +211,7 @@ window.renderMyBorrowings = function (transactions) {
                 <div class="flex gap-4">
                     <div class="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                         <img src="${tr.equipments?.image_url || ''}" alt="${tr.equipments?.name || 'Equipment'}" 
-                            class="w-full h-full object-cover">
+                            loading="lazy" class="w-full h-full object-cover">
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-xs font-bold text-brand-pink uppercase mb-1">${tr.equipments?.type || ''}</p>
