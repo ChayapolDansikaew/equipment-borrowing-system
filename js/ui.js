@@ -346,6 +346,10 @@ window.toggleLanguage = function () {
     document.getElementById('langDisplay').textContent = window.currentLang.toUpperCase();
     window.updateTranslations();
     window.renderEquipments();
+    // Re-render return table if visible
+    if (!document.getElementById('returnSection').classList.contains('hidden')) {
+        window.fetchReturnData();
+    }
     if (!document.getElementById('overviewSection').classList.contains('hidden')) {
         window.fetchOverviewData();
     }
