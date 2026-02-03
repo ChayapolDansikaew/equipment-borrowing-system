@@ -197,6 +197,15 @@ window.confirmBorrow = async function () {
         return;
     }
 
+    // Check if user is banned
+    const banStatus = await window.checkCanBorrow?.(name);
+    if (banStatus && !banStatus.canBorrow) {
+        const banDate = banStatus.banUntil ? new Date(banStatus.banUntil).toLocaleDateString('th-TH') : 'ไม่มีกำหนด';
+        window.showToast(`คุณถูกระงับการยืมจนถึง ${banDate}`, 'error');
+        window.closeModal('borrowModal');
+        return;
+    }
+
     // Get selected dates
     const startVal = document.getElementById('startDate').value;
     const endVal = document.getElementById('endDate').value;
@@ -524,5 +533,212 @@ window.syncUserToDatabase = async function (userData) {
     } catch (err) {
         console.error('syncUserToDatabase exception:', err);
         return null;
+    }
+};
+
+// --- Penalty System ---
+
+// Strike calculation based on penalty type
+window.calculateStrikes = function (penaltyType, daysLate = 0) {
+    switch (penaltyType) {
+        case 'late_return':
+            if (daysLate <= 3) return { strikes: 1, severity: 'low' };
+            if (daysLate <= 7) return { strikes: 2, severity: 'medium' };
+            return { strikes: 3, severity: 'high' };
+        case 'minor_damage':
+            return { strikes: 1, severity: 'low' };
+        case 'major_damage':
+            return { strikes: 2, severity: 'medium' };
+        case 'severe_damage':
+            return { strikes: 3, severity: 'high' };
+        case 'lost':
+            return { strikes: 3, severity: 'critical' };
+        default:
+            return { strikes: 1, severity: 'low' };
+    }
+};
+
+// Ban duration based on total strikes
+window.calculateBanDuration = function (totalStrikes) {
+    if (totalStrikes >= 6) return { days: null, permanent: true };  // ถาวร
+    if (totalStrikes >= 4) return { days: 60, permanent: false };
+    if (totalStrikes >= 3) return { days: 30, permanent: false };
+    return { days: 0, permanent: false };
+};
+
+// Add a penalty record
+window.addPenalty = async function (penaltyData) {
+    if (!window.supabaseClient) return { success: false, error: 'No database connection' };
+
+    try {
+        const { strikes, severity } = window.calculateStrikes(penaltyData.penaltyType, penaltyData.daysLate || 0);
+
+        // Insert penalty record
+        const { data: penalty, error: insertError } = await window.supabaseClient
+            .from('penalties')
+            .insert([{
+                user_id: penaltyData.userId,
+                transaction_id: penaltyData.transactionId || null,
+                equipment_id: penaltyData.equipmentId || null,
+                penalty_type: penaltyData.penaltyType,
+                severity: severity,
+                days_late: penaltyData.daysLate || 0,
+                description: penaltyData.description || '',
+                strikes_given: strikes,
+                compensation_amount: penaltyData.compensationAmount || 0,
+                compensation_status: penaltyData.compensationAmount > 0 ? 'pending' : 'none',
+                created_by: window.currentUser?.username || 'system',
+                notes: penaltyData.notes || ''
+            }])
+            .select()
+            .single();
+
+        if (insertError) {
+            console.error('Error inserting penalty:', insertError);
+            return { success: false, error: insertError.message };
+        }
+
+        // Update user's total strikes
+        await window.updateUserStrikes(penaltyData.userId, strikes);
+
+        return { success: true, penalty, strikesGiven: strikes };
+    } catch (err) {
+        console.error('addPenalty exception:', err);
+        return { success: false, error: err.message };
+    }
+};
+
+// Update user's total strikes and check if should be banned
+window.updateUserStrikes = async function (userId, strikesToAdd) {
+    try {
+        // Get current user data
+        const { data: user, error: fetchError } = await window.supabaseClient
+            .from('users')
+            .select('total_strikes, is_banned')
+            .eq('username', userId)
+            .single();
+
+        if (fetchError) {
+            console.error('Error fetching user:', fetchError);
+            return false;
+        }
+
+        const newTotalStrikes = (user?.total_strikes || 0) + strikesToAdd;
+        const banInfo = window.calculateBanDuration(newTotalStrikes);
+
+        let updateData = { total_strikes: newTotalStrikes };
+
+        // Apply ban if threshold reached
+        if (banInfo.days > 0 || banInfo.permanent) {
+            const banUntil = banInfo.permanent
+                ? new Date('2099-12-31')
+                : new Date(Date.now() + banInfo.days * 24 * 60 * 60 * 1000);
+
+            updateData.is_banned = true;
+            updateData.ban_until = banUntil.toISOString();
+            updateData.ban_reason = banInfo.permanent
+                ? 'สะสม Strike มากกว่า 6 ครั้ง - ระงับการยืมถาวร'
+                : `สะสม Strike ${newTotalStrikes} ครั้ง - ระงับการยืม ${banInfo.days} วัน`;
+        }
+
+        // Update user
+        const { error: updateError } = await window.supabaseClient
+            .from('users')
+            .update(updateData)
+            .eq('username', userId);
+
+        if (updateError) {
+            console.error('Error updating user strikes:', updateError);
+            return false;
+        }
+
+        return true;
+    } catch (err) {
+        console.error('updateUserStrikes exception:', err);
+        return false;
+    }
+};
+
+// Get user's penalty history
+window.getUserPenalties = async function (userId) {
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('penalties')
+            .select('*, equipments(name)')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching penalties:', error);
+            return [];
+        }
+
+        return data || [];
+    } catch (err) {
+        console.error('getUserPenalties exception:', err);
+        return [];
+    }
+};
+
+// Check if user can borrow (not banned)
+window.checkCanBorrow = async function (userId) {
+    try {
+        const { data: user, error } = await window.supabaseClient
+            .from('users')
+            .select('is_banned, ban_until, ban_reason, total_strikes')
+            .eq('username', userId)
+            .single();
+
+        if (error) {
+            console.error('Error checking ban status:', error);
+            return { canBorrow: true }; // Allow if error
+        }
+
+        if (!user) return { canBorrow: true };
+
+        // Check if ban has expired
+        if (user.is_banned && user.ban_until) {
+            const banUntil = new Date(user.ban_until);
+            if (banUntil < new Date()) {
+                // Ban expired - unban user
+                await window.supabaseClient
+                    .from('users')
+                    .update({ is_banned: false, ban_until: null, ban_reason: null })
+                    .eq('username', userId);
+                return { canBorrow: true, totalStrikes: user.total_strikes };
+            }
+        }
+
+        return {
+            canBorrow: !user.is_banned,
+            isBanned: user.is_banned,
+            banUntil: user.ban_until,
+            banReason: user.ban_reason,
+            totalStrikes: user.total_strikes
+        };
+    } catch (err) {
+        console.error('checkCanBorrow exception:', err);
+        return { canBorrow: true }; // Allow if error
+    }
+};
+
+// Get all penalties (for admin)
+window.fetchAllPenalties = async function () {
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('penalties')
+            .select('*, equipments(name)')
+            .order('created_at', { ascending: false })
+            .limit(100);
+
+        if (error) {
+            console.error('Error fetching all penalties:', error);
+            return [];
+        }
+
+        return data || [];
+    } catch (err) {
+        console.error('fetchAllPenalties exception:', err);
+        return [];
     }
 };

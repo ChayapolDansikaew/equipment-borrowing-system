@@ -143,9 +143,14 @@ window.renderReturnTable = function (transactions) {
                 <td class="px-6 py-4 text-gray-500 dark:text-gray-400">${date}</td>
                 <td class="px-6 py-4">${statusBadge}</td>
                 <td class="px-6 py-4">
-                    <button onclick="openReturnModal(${tr.equipment_id}, '${tr.equipments?.name || 'Unknown'}')" class="text-brand-pink hover:text-white hover:bg-brand-pink border border-brand-pink px-4 py-1.5 rounded-lg transition-all text-xs font-bold uppercase">
-                        ${t.returnNotify}
-                    </button>
+                    <div class="flex gap-2">
+                        <button onclick="openReturnModal(${tr.equipment_id}, '${tr.equipments?.name || 'Unknown'}')" class="text-brand-pink hover:text-white hover:bg-brand-pink border border-brand-pink px-3 py-1.5 rounded-lg transition-all text-xs font-bold">
+                            ${t.returnNotify}
+                        </button>
+                        <button onclick="window.openPenaltyModal('${tr.borrower_name}', '${tr.borrower_name}', ${tr.equipment_id}, '${tr.equipments?.name || 'Unknown'}', ${tr.id})" class="text-red-500 hover:text-white hover:bg-red-500 border border-red-500 px-3 py-1.5 rounded-lg transition-all text-xs font-bold" title="รายงานปัญหา">
+                            ⚠️
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
@@ -778,3 +783,188 @@ window.toggleUserRole = async function (userId, currentRole) {
         window.renderUsersList(window.allUsers);
     }
 };
+
+// --- Penalty System Functions ---
+
+// Open penalty modal
+window.openPenaltyModal = function (userId, userName, equipmentId, equipmentName, transactionId) {
+    document.getElementById('penaltyUserId').value = userId;
+    document.getElementById('penaltyTransactionId').value = transactionId || '';
+    document.getElementById('penaltyEquipmentId').value = equipmentId || '';
+    document.getElementById('penaltyUserName').textContent = userName || userId;
+    document.getElementById('penaltyEquipmentName').textContent = equipmentName || '-';
+
+    // Reset form
+    document.getElementById('penaltyType').value = '';
+    document.getElementById('penaltyDaysLate').value = '1';
+    document.getElementById('penaltyCompensation').value = '';
+    document.getElementById('penaltyDescription').value = '';
+    document.getElementById('daysLateContainer').classList.add('hidden');
+    document.getElementById('compensationContainer').classList.add('hidden');
+    document.getElementById('strikePreview').classList.add('hidden');
+
+    document.getElementById('penaltyModal').classList.remove('hidden');
+};
+
+// Close penalty modal
+window.closePenaltyModal = function () {
+    document.getElementById('penaltyModal').classList.add('hidden');
+};
+
+// Submit penalty
+window.submitPenalty = async function () {
+    const userId = document.getElementById('penaltyUserId').value;
+    const penaltyType = document.getElementById('penaltyType').value;
+
+    if (!userId || !penaltyType) {
+        window.showToast?.('กรุณาเลือกประเภทความผิด', 'error');
+        return;
+    }
+
+    const daysLate = parseInt(document.getElementById('penaltyDaysLate').value) || 0;
+    const compensationAmount = parseFloat(document.getElementById('penaltyCompensation').value) || 0;
+    const description = document.getElementById('penaltyDescription').value.trim();
+
+    const penaltyData = {
+        userId: userId,
+        transactionId: document.getElementById('penaltyTransactionId').value || null,
+        equipmentId: document.getElementById('penaltyEquipmentId').value || null,
+        penaltyType: penaltyType,
+        daysLate: penaltyType === 'late_return' ? daysLate : 0,
+        compensationAmount: compensationAmount,
+        description: description
+    };
+
+    window.showToast?.('กำลังบันทึก...', 'info');
+
+    const result = await window.addPenalty(penaltyData);
+
+    if (result.success) {
+        const strikes = result.strikesGiven;
+        window.showToast?.(`บันทึกบทลงโทษสำเร็จ (+${strikes} Strike)`, 'success');
+        window.closePenaltyModal();
+
+        // Refresh data if needed
+        window.fetchReturnData?.();
+    } else {
+        window.showToast?.('เกิดข้อผิดพลาด: ' + result.error, 'error');
+    }
+};
+
+// Penalty type change handler - show/hide relevant fields
+window.onPenaltyTypeChange = function () {
+    const penaltyType = document.getElementById('penaltyType').value;
+    const daysLateContainer = document.getElementById('daysLateContainer');
+    const compensationContainer = document.getElementById('compensationContainer');
+    const strikePreview = document.getElementById('strikePreview');
+    const strikeCount = document.getElementById('strikeCount');
+
+    // Show days late input only for late_return
+    if (penaltyType === 'late_return') {
+        daysLateContainer.classList.remove('hidden');
+    } else {
+        daysLateContainer.classList.add('hidden');
+    }
+
+    // Show compensation for damage/lost
+    if (['major_damage', 'severe_damage', 'lost'].includes(penaltyType)) {
+        compensationContainer.classList.remove('hidden');
+    } else {
+        compensationContainer.classList.add('hidden');
+    }
+
+    // Show strike preview
+    if (penaltyType) {
+        const daysLate = parseInt(document.getElementById('penaltyDaysLate').value) || 1;
+        const { strikes } = window.calculateStrikes?.(penaltyType, daysLate) || { strikes: 0 };
+        strikeCount.textContent = strikes;
+        strikePreview.classList.remove('hidden');
+    } else {
+        strikePreview.classList.add('hidden');
+    }
+};
+
+// Days late change handler - update strike preview
+window.onDaysLateChange = function () {
+    const penaltyType = document.getElementById('penaltyType').value;
+    if (penaltyType === 'late_return') {
+        window.onPenaltyTypeChange();
+    }
+};
+
+// Open penalty history modal
+window.openPenaltyHistoryModal = async function (userId = null) {
+    document.getElementById('penaltyHistoryModal').classList.remove('hidden');
+    document.getElementById('penaltyHistoryList').innerHTML = '<div class="text-center py-8 text-gray-400">กำลังโหลด...</div>';
+
+    let penalties;
+    if (userId) {
+        penalties = await window.getUserPenalties(userId);
+    } else {
+        penalties = await window.fetchAllPenalties();
+    }
+
+    if (!penalties || penalties.length === 0) {
+        document.getElementById('penaltyHistoryList').innerHTML = `
+            <div class="text-center py-8 text-gray-400">
+                <p class="text-4xl mb-2">✓</p>
+                <p>ไม่มีประวัติบทลงโทษ</p>
+            </div>
+        `;
+        return;
+    }
+
+    const penaltyTypeLabels = {
+        'late_return': 'คืนล่าช้า',
+        'minor_damage': 'เสียหายเล็กน้อย',
+        'major_damage': 'เสียหายปานกลาง',
+        'severe_damage': 'เสียหายรุนแรง',
+        'lost': 'สูญหาย'
+    };
+
+    const severityColors = {
+        'low': 'bg-yellow-100 text-yellow-700',
+        'medium': 'bg-orange-100 text-orange-700',
+        'high': 'bg-red-100 text-red-700',
+        'critical': 'bg-red-600 text-white'
+    };
+
+    document.getElementById('penaltyHistoryList').innerHTML = penalties.map(penalty => `
+        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-3 border-l-4 ${penalty.severity === 'critical' ? 'border-red-600' : penalty.severity === 'high' ? 'border-red-500' : penalty.severity === 'medium' ? 'border-orange-500' : 'border-yellow-500'}">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-gray-900 dark:text-white">${penalty.user_id}</span>
+                    <span class="px-2 py-0.5 text-xs rounded-full ${severityColors[penalty.severity] || 'bg-gray-100 text-gray-700'}">
+                        ${penaltyTypeLabels[penalty.penalty_type] || penalty.penalty_type}
+                    </span>
+                </div>
+                <span class="text-xs text-gray-500">${new Date(penalty.created_at).toLocaleDateString('th-TH')}</span>
+            </div>
+            <div class="text-sm text-gray-600 dark:text-gray-300">
+                <p>อุปกรณ์: ${penalty.equipments?.name || '-'}</p>
+                ${penalty.days_late > 0 ? `<p>ล่าช้า: ${penalty.days_late} วัน</p>` : ''}
+                ${penalty.description ? `<p>หมายเหตุ: ${penalty.description}</p>` : ''}
+                <p class="text-red-500 font-bold mt-1">+${penalty.strikes_given} Strike</p>
+                ${penalty.compensation_amount > 0 ? `<p class="text-orange-500">ค่าชดใช้: ${penalty.compensation_amount.toLocaleString()} บาท (${penalty.compensation_status === 'paid' ? '✓ ชำระแล้ว' : '⏳ รอชำระ'})</p>` : ''}
+            </div>
+        </div>
+    `).join('');
+};
+
+// Close penalty history modal
+window.closePenaltyHistoryModal = function () {
+    document.getElementById('penaltyHistoryModal').classList.add('hidden');
+};
+
+// Add event listeners when DOM ready
+document.addEventListener('DOMContentLoaded', function () {
+    const penaltyTypeSelect = document.getElementById('penaltyType');
+    if (penaltyTypeSelect) {
+        penaltyTypeSelect.addEventListener('change', window.onPenaltyTypeChange);
+    }
+
+    const daysLateInput = document.getElementById('penaltyDaysLate');
+    if (daysLateInput) {
+        daysLateInput.addEventListener('change', window.onDaysLateChange);
+    }
+});
