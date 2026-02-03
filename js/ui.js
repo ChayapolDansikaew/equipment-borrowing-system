@@ -114,7 +114,7 @@ window.renderReturnTable = function (transactions) {
     const t = window.translations[window.currentLang];
 
     if (transactions.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-gray-400">No active transactions</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-gray-400">${t.noActiveTransactions}</td></tr>`;
         return;
     }
 
@@ -134,7 +134,7 @@ window.renderReturnTable = function (transactions) {
 
         const statusBadge = isOverdue
             ? `<span class="px-2 py-1 rounded-full text-xs font-bold bg-brand-pink text-white">${t.overdue}</span>`
-            : `<span class="px-2 py-1 rounded-full text-xs font-bold bg-brand-yellow text-black">Active</span>`;
+            : `<span class="px-2 py-1 rounded-full text-xs font-bold bg-brand-yellow text-black">${t.active}</span>`;
 
         return `
             <tr class="border-b border-gray-100 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 transition-colors">

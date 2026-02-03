@@ -65,7 +65,10 @@ window.translations = {
         borrowedOn: 'ยืมเมื่อ',
         alreadyBooked: 'อุปกรณ์ถูกจองแล้ว',
         category: 'ประเภท',
-        allCategories: 'ทั้งหมด'
+        allCategories: 'ทั้งหมด',
+        noActiveTransactions: 'ไม่มีรายการคืน',
+        active: 'กำลังยืม',
+        refresh: 'รีเฟรช'
     },
     en: {
         overview: 'Overview',
@@ -108,7 +111,10 @@ window.translations = {
         borrowedOn: 'Borrowed on',
         alreadyBooked: 'Equipment already booked',
         category: 'Category',
-        allCategories: 'All'
+        allCategories: 'All',
+        noActiveTransactions: 'No active transactions',
+        active: 'Active',
+        refresh: 'Refresh'
     }
 };
 
