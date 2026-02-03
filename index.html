@@ -13,6 +13,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- EmailJS -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         window.onerror = function (message, source, lineno, colno, error) {
             alert('Critical Error: ' + message + '\nLine: ' + lineno);
@@ -664,19 +666,93 @@
             </div>
             <!-- Overview Section (Hidden by default) -->
             <div id="overviewSection" class="hidden">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-brand-black">
-                        <p class="text-gray-500 text-sm font-bold uppercase" data-i18n="totalEquipments">Total
-                            Equipments</p>
-                        <p id="statTotal" class="text-4xl font-bold text-brand-black mt-2">-</p>
+                <!-- Stats Cards Row 1 -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div
+                        class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border-l-4 border-brand-black dark:border-brand-yellow">
+                        <p class="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase"
+                            data-i18n="totalEquipments">Total</p>
+                        <p id="statTotal" class="text-3xl font-bold text-brand-black dark:text-white mt-1">-</p>
                     </div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
-                        <p class="text-gray-500 text-sm font-bold uppercase" data-i18n="available">Available</p>
-                        <p id="statAvailable" class="text-4xl font-bold text-brand-black mt-2">-</p>
+                    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border-l-4 border-green-500">
+                        <p class="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase" data-i18n="available">
+                            Available</p>
+                        <p id="statAvailable" class="text-3xl font-bold text-green-600 dark:text-green-400 mt-1">-</p>
                     </div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-brand-yellow">
-                        <p class="text-gray-500 text-sm font-bold uppercase" data-i18n="borrowed">Borrowed</p>
-                        <p id="statBorrowed" class="text-4xl font-bold text-brand-black mt-2">-</p>
+                    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border-l-4 border-brand-yellow">
+                        <p class="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase" data-i18n="borrowed">
+                            Borrowed</p>
+                        <p id="statBorrowed" class="text-3xl font-bold text-brand-yellow mt-1">-</p>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border-l-4 border-red-500">
+                        <p class="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase">เกินกำหนด</p>
+                        <p id="statOverdue" class="text-3xl font-bold text-red-500 mt-1">-</p>
+                    </div>
+                </div>
+
+                <!-- Stats Cards Row 2 -->
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+                    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                <span class="text-blue-600 text-lg">📅</span>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 dark:text-gray-400 text-xs">ยืมวันนี้</p>
+                                <p id="statTodayBorrows" class="text-xl font-bold text-gray-900 dark:text-white">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                                <span class="text-purple-600 text-lg">📊</span>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 dark:text-gray-400 text-xs">ยืมสัปดาห์นี้</p>
+                                <p id="statWeekBorrows" class="text-xl font-bold text-gray-900 dark:text-white">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                                <span class="text-green-600 text-lg">✅</span>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 dark:text-gray-400 text-xs">คืนตรงเวลา</p>
+                                <p id="statOnTimeRate" class="text-xl font-bold text-gray-900 dark:text-white">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <!-- Weekly Chart -->
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">📈 ยืมรายสัปดาห์</h3>
+                        <div class="h-64">
+                            <canvas id="weeklyChart"></canvas>
+                        </div>
+                    </div>
+                    <!-- Top Equipment Chart -->
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">🏆 อุปกรณ์ยอดนิยม</h3>
+                        <div class="h-64">
+                            <canvas id="topEquipmentChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Borrowers -->
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">👥 ผู้ยืมบ่อยที่สุด</h3>
+                    <div id="topBorrowersList" class="space-y-3">
+                        <p class="text-gray-400 text-center py-4">กำลังโหลด...</p>
                     </div>
                 </div>
             </div>
@@ -1054,7 +1130,8 @@
     </div>
 
     <!-- Penalty Modal (Admin) -->
-    <div id="penaltyModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div id="penaltyModal"
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in">
             <!-- Header -->
             <div class="bg-gradient-to-r from-red-500 to-orange-500 p-4 text-white">
@@ -1064,7 +1141,8 @@
                     </h3>
                     <button onclick="window.closePenaltyModal()" class="p-1 hover:bg-white/20 rounded-lg transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
                 </div>
@@ -1090,8 +1168,10 @@
 
                 <!-- Penalty Type -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ประเภทความผิด *</label>
-                    <select id="penaltyType" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ประเภทความผิด
+                        *</label>
+                    <select id="penaltyType" required
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500">
                         <option value="">-- เลือกประเภท --</option>
                         <option value="late_return">คืนล่าช้า</option>
                         <option value="minor_damage">เสียหายเล็กน้อย (รอยขีดข่วน)</option>
@@ -1103,24 +1183,30 @@
 
                 <!-- Days Late (show only for late_return) -->
                 <div id="daysLateContainer" class="hidden">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">จำนวนวันที่ล่าช้า</label>
-                    <input type="number" id="penaltyDaysLate" min="1" value="1" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500">
+                    <label
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">จำนวนวันที่ล่าช้า</label>
+                    <input type="number" id="penaltyDaysLate" min="1" value="1"
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500">
                 </div>
 
                 <!-- Compensation (show for damage/lost) -->
                 <div id="compensationContainer" class="hidden">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ค่าชดใช้ (บาท)</label>
-                    <input type="number" id="penaltyCompensation" min="0" step="0.01" placeholder="0" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ค่าชดใช้
+                        (บาท)</label>
+                    <input type="number" id="penaltyCompensation" min="0" step="0.01" placeholder="0"
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500">
                 </div>
 
                 <!-- Description -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">รายละเอียด</label>
-                    <textarea id="penaltyDescription" rows="2" placeholder="อธิบายเพิ่มเติม..." class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 resize-none"></textarea>
+                    <textarea id="penaltyDescription" rows="2" placeholder="อธิบายเพิ่มเติม..."
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 resize-none"></textarea>
                 </div>
 
                 <!-- Strike Preview -->
-                <div id="strikePreview" class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3 hidden">
+                <div id="strikePreview"
+                    class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3 hidden">
                     <p class="text-sm text-red-600 dark:text-red-400">
                         ⚠️ ผู้ใช้จะได้รับ <span id="strikeCount" class="font-bold">0</span> Strike
                     </p>
@@ -1129,10 +1215,12 @@
 
             <!-- Actions -->
             <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex gap-3">
-                <button onclick="window.closePenaltyModal()" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition font-medium">
+                <button onclick="window.closePenaltyModal()"
+                    class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition font-medium">
                     ยกเลิก
                 </button>
-                <button onclick="window.submitPenalty()" class="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-medium">
+                <button onclick="window.submitPenalty()"
+                    class="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-medium">
                     บันทึกบทลงโทษ
                 </button>
             </div>
@@ -1140,15 +1228,18 @@
     </div>
 
     <!-- Penalty History Modal -->
-    <div id="penaltyHistoryModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div id="penaltyHistoryModal"
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-fade-in">
             <!-- Header -->
             <div class="bg-gradient-to-r from-red-500 to-orange-500 p-4 text-white">
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg font-bold">📋 ประวัติบทลงโทษ</h3>
-                    <button onclick="window.closePenaltyHistoryModal()" class="p-1 hover:bg-white/20 rounded-lg transition">
+                    <button onclick="window.closePenaltyHistoryModal()"
+                        class="p-1 hover:bg-white/20 rounded-lg transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
                 </div>

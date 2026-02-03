@@ -134,6 +134,138 @@ window.fetchOverviewData = async function () {
     document.getElementById('statTotal').textContent = total;
     document.getElementById('statAvailable').textContent = available;
     document.getElementById('statBorrowed').textContent = borrowed;
+
+    // Fetch additional analytics
+    await window.fetchAnalyticsData();
+};
+
+// Fetch comprehensive analytics data
+window.fetchAnalyticsData = async function () {
+    if (!window.supabaseClient) return;
+
+    try {
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+
+        // Get start of week (Monday)
+        const dayOfWeek = today.getDay();
+        const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - mondayOffset);
+        const weekStartStr = weekStart.toISOString().split('T')[0];
+
+        // Fetch all transactions for analytics
+        const { data: allTransactions, error } = await window.supabaseClient
+            .from('transactions')
+            .select('*, equipments(name)')
+            .order('borrow_date', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching analytics:', error);
+            return;
+        }
+
+        const transactions = allTransactions || [];
+
+        // 1. Overdue count
+        const overdueCount = transactions.filter(t => {
+            if (t.status !== 'active' || !t.end_date) return false;
+            const endDate = new Date(t.end_date);
+            return endDate < today;
+        }).length;
+        document.getElementById('statOverdue').textContent = overdueCount;
+
+        // 2. Today's borrows
+        const todayBorrows = transactions.filter(t => {
+            const borrowDate = t.borrow_date?.split('T')[0];
+            return borrowDate === todayStr;
+        }).length;
+        document.getElementById('statTodayBorrows').textContent = todayBorrows;
+
+        // 3. Week's borrows
+        const weekBorrows = transactions.filter(t => {
+            const borrowDate = new Date(t.borrow_date);
+            return borrowDate >= weekStart;
+        }).length;
+        document.getElementById('statWeekBorrows').textContent = weekBorrows;
+
+        // 4. On-time return rate
+        const returned = transactions.filter(t => t.status === 'returned');
+        const onTimeReturns = returned.filter(t => {
+            if (!t.end_date || !t.return_date) return true;
+            const endDate = new Date(t.end_date);
+            const returnDate = new Date(t.return_date);
+            return returnDate <= endDate;
+        }).length;
+        const onTimeRate = returned.length > 0
+            ? Math.round((onTimeReturns / returned.length) * 100)
+            : 100;
+        document.getElementById('statOnTimeRate').textContent = onTimeRate + '%';
+
+        // 5. Weekly chart data (last 7 days)
+        const weeklyData = window.getWeeklyBorrowings(transactions);
+        window.renderWeeklyChart(weeklyData);
+
+        // 6. Top equipment
+        const topEquipment = window.getTopEquipments(transactions);
+        window.renderTopEquipmentChart(topEquipment);
+
+        // 7. Top borrowers
+        const topBorrowers = window.getTopBorrowers(transactions);
+        window.renderTopBorrowersList(topBorrowers);
+
+    } catch (err) {
+        console.error('fetchAnalyticsData error:', err);
+    }
+};
+
+// Get daily borrowing counts for last 7 days
+window.getWeeklyBorrowings = function (transactions) {
+    const result = [];
+    const today = new Date();
+
+    for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+
+        const count = transactions.filter(t => {
+            const borrowDate = t.borrow_date?.split('T')[0];
+            return borrowDate === dateStr;
+        }).length;
+
+        const dayName = date.toLocaleDateString('th-TH', { weekday: 'short' });
+        result.push({ day: dayName, count });
+    }
+    return result;
+};
+
+// Get top 5 most borrowed equipment
+window.getTopEquipments = function (transactions) {
+    const counts = {};
+    transactions.forEach(t => {
+        const name = t.equipments?.name || 'Unknown';
+        counts[name] = (counts[name] || 0) + 1;
+    });
+
+    return Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([name, count]) => ({ name, count }));
+};
+
+// Get top 5 borrowers
+window.getTopBorrowers = function (transactions) {
+    const counts = {};
+    transactions.forEach(t => {
+        const name = t.borrower_name || 'Unknown';
+        counts[name] = (counts[name] || 0) + 1;
+    });
+
+    return Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([name, count]) => ({ name, count }));
 };
 
 // Fetch user's borrowed items

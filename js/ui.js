@@ -510,6 +510,172 @@ window.toggleOverview = function () {
     }
 };
 
+// --- Analytics Charts ---
+
+// Store chart instances for cleanup
+window.chartInstances = {};
+
+// Render weekly borrowings line chart
+window.renderWeeklyChart = function (data) {
+    const canvas = document.getElementById('weeklyChart');
+    if (!canvas) return;
+
+    // Destroy existing chart
+    if (window.chartInstances.weekly) {
+        window.chartInstances.weekly.destroy();
+    }
+
+    const ctx = canvas.getContext('2d');
+    const isDark = document.documentElement.classList.contains('dark');
+
+    window.chartInstances.weekly = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(d => d.day),
+            datasets: [{
+                label: 'จำนวนยืม',
+                data: data.map(d => d.count),
+                borderColor: '#FFD100',
+                backgroundColor: 'rgba(255, 209, 0, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#FFD100',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        color: isDark ? '#9CA3AF' : '#6B7280'
+                    },
+                    grid: {
+                        color: isDark ? '#374151' : '#E5E7EB'
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: isDark ? '#9CA3AF' : '#6B7280'
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+};
+
+// Render top equipment bar chart
+window.renderTopEquipmentChart = function (data) {
+    const canvas = document.getElementById('topEquipmentChart');
+    if (!canvas) return;
+
+    // Destroy existing chart
+    if (window.chartInstances.topEquipment) {
+        window.chartInstances.topEquipment.destroy();
+    }
+
+    const ctx = canvas.getContext('2d');
+    const isDark = document.documentElement.classList.contains('dark');
+
+    // Truncate long names
+    const labels = data.map(d => d.name.length > 15 ? d.name.substring(0, 15) + '...' : d.name);
+
+    window.chartInstances.topEquipment = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'จำนวนครั้ง',
+                data: data.map(d => d.count),
+                backgroundColor: [
+                    '#FF4191',
+                    '#FFD100',
+                    '#E90074',
+                    '#58595B',
+                    '#9CA3AF'
+                ],
+                borderRadius: 6
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        color: isDark ? '#9CA3AF' : '#6B7280'
+                    },
+                    grid: {
+                        color: isDark ? '#374151' : '#E5E7EB'
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: isDark ? '#9CA3AF' : '#6B7280'
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+};
+
+// Render top borrowers list
+window.renderTopBorrowersList = function (data) {
+    const container = document.getElementById('topBorrowersList');
+    if (!container) return;
+
+    if (!data || data.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 text-center py-4">ยังไม่มีข้อมูลการยืม</p>';
+        return;
+    }
+
+    const maxCount = data[0]?.count || 1;
+
+    container.innerHTML = data.map((item, index) => {
+        const percentage = Math.round((item.count / maxCount) * 100);
+        const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+
+        return `
+            <div class="flex items-center gap-3">
+                <span class="text-xl">${medals[index] || ''}</span>
+                <div class="flex-1">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-medium text-gray-900 dark:text-white">${item.name}</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400">${item.count} ครั้ง</span>
+                    </div>
+                    <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-brand-pink to-brand-magenta rounded-full" style="width: ${percentage}%"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+};
+
 // Utils & Modals
 
 // Generate skeleton cards HTML
