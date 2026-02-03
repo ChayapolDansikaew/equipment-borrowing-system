@@ -649,26 +649,33 @@ window.renderTopBorrowersList = function (data) {
     if (!container) return;
 
     if (!data || data.length === 0) {
-        container.innerHTML = '<p class="text-gray-400 text-center py-4">ยังไม่มีข้อมูลการยืม</p>';
+        container.innerHTML = '<p class="text-gray-400 text-center py-4">No borrowing data</p>';
         return;
     }
 
     const maxCount = data[0]?.count || 1;
+    const badgeColors = [
+        'bg-yellow-500 text-white',  // 1st - gold
+        'bg-gray-400 text-white',     // 2nd - silver
+        'bg-amber-600 text-white',    // 3rd - bronze
+        'bg-gray-300 text-gray-700',  // 4th
+        'bg-gray-200 text-gray-600'   // 5th
+    ];
 
     container.innerHTML = data.map((item, index) => {
         const percentage = Math.round((item.count / maxCount) * 100);
-        const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+        const badgeColor = badgeColors[index] || 'bg-gray-200 text-gray-600';
 
         return `
-            <div class="flex items-center gap-3">
-                <span class="text-xl">${medals[index] || ''}</span>
+            <div class="flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 p-2 rounded-lg transition-colors duration-150 cursor-pointer">
+                <span class="w-6 h-6 rounded-full ${badgeColor} flex items-center justify-center text-xs font-bold">${index + 1}</span>
                 <div class="flex-1">
                     <div class="flex justify-between items-center mb-1">
                         <span class="font-medium text-gray-900 dark:text-white">${item.name}</span>
-                        <span class="text-sm text-gray-500 dark:text-gray-400">${item.count} ครั้ง</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400">${item.count} times</span>
                     </div>
                     <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div class="h-full bg-gradient-to-r from-brand-pink to-brand-magenta rounded-full" style="width: ${percentage}%"></div>
+                        <div class="h-full bg-gradient-to-r from-brand-pink to-brand-magenta rounded-full transition-all duration-300" style="width: ${percentage}%"></div>
                     </div>
                 </div>
             </div>
