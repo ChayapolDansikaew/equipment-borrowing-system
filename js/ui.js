@@ -794,16 +794,16 @@ window.openEquipmentDetail = async function (equipmentId) {
 
     if (filterStartDate) {
         const startD = new Date(filterStartDate);
-        document.getElementById('detailStartDate').value = startD.toLocaleDateString(lang, options);
+        document.getElementById('detailStartDate').textContent = startD.toLocaleDateString(lang, options);
     } else {
-        document.getElementById('detailStartDate').value = '';
+        document.getElementById('detailStartDate').textContent = '-';
     }
 
     if (filterEndDate) {
         const endD = new Date(filterEndDate);
-        document.getElementById('detailEndDate').value = endD.toLocaleDateString(lang, options);
+        document.getElementById('detailEndDate').textContent = endD.toLocaleDateString(lang, options);
     } else {
-        document.getElementById('detailEndDate').value = '';
+        document.getElementById('detailEndDate').textContent = '-';
     }
 
     // Show modal first
@@ -856,8 +856,8 @@ window.initDetailCalendar = function (bookedDates = [], filterStartDate = null, 
                 const options = { day: 'numeric', month: 'short', year: 'numeric' };
                 const lang = window.currentLang === 'th' ? 'th-TH' : 'en-US';
 
-                document.getElementById('detailStartDate').value = startDate.toLocaleDateString(lang, options);
-                document.getElementById('detailEndDate').value = endDate.toLocaleDateString(lang, options);
+                document.getElementById('detailStartDate').textContent = startDate.toLocaleDateString(lang, options);
+                document.getElementById('detailEndDate').textContent = endDate.toLocaleDateString(lang, options);
 
                 // Also update main date inputs for confirmBorrow
                 const startInput = document.getElementById('startDate');
@@ -869,8 +869,8 @@ window.initDetailCalendar = function (bookedDates = [], filterStartDate = null, 
             } else if (selectedDates.length === 1) {
                 const options = { day: 'numeric', month: 'short', year: 'numeric' };
                 const lang = window.currentLang === 'th' ? 'th-TH' : 'en-US';
-                document.getElementById('detailStartDate').value = selectedDates[0].toLocaleDateString(lang, options);
-                document.getElementById('detailEndDate').value = '';
+                document.getElementById('detailStartDate').textContent = selectedDates[0].toLocaleDateString(lang, options);
+                document.getElementById('detailEndDate').textContent = '-';
             }
         },
         onDayCreate: function (dObj, dStr, fp, dayElem) {

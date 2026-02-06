@@ -895,100 +895,71 @@
                 </button>
             </div>
 
-            <!-- Main Content: 2 Columns -->
-            <div class="grid md:grid-cols-2 gap-6 p-6">
-                <!-- Left Column: Image + Info -->
-                <div>
-                    <!-- Equipment Image -->
-                    <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 mb-4">
-                        <img id="detailEquipmentImage" src="" alt="Equipment"
-                            class="w-full h-64 object-contain rounded-lg">
-                    </div>
-
-                    <!-- Equipment Info (No Description) -->
+            <!-- Main Content: Single Centered Column -->
+            <div class="p-6 max-w-lg mx-auto">
+                <!-- Equipment Info Header -->
+                <div class="flex items-center gap-4 mb-6">
+                    <img id="detailEquipmentImage" src="" alt="Equipment"
+                        class="w-20 h-20 object-contain rounded-xl bg-gray-50 dark:bg-gray-700 p-2">
                     <div>
-                        <h3 id="detailEquipmentName" class="text-2xl font-bold text-brand-black dark:text-white mb-2">
-                        </h3>
-                        <p class="text-gray-500 dark:text-gray-400">
+                        <h3 id="detailEquipmentName" class="text-xl font-bold text-brand-black dark:text-white"></h3>
+                        <p class="text-gray-500 dark:text-gray-400 text-sm">
                             <span data-i18n="category">Category</span>:
                             <span id="detailEquipmentType" class="text-brand-pink font-medium"></span>
                         </p>
                     </div>
                 </div>
 
-                <!-- Right Column: Calendar + Booking -->
-                <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-5">
-                    <!-- Calendar -->
-                    <div class="mb-4">
-                        <div id="detailCalendar" class="flatpickr-calendar-container"></div>
-                    </div>
-
-                    <!-- Legend -->
-                    <div
-                        class="flex items-center justify-center gap-6 text-sm text-gray-600 dark:text-gray-400 mb-4 pb-4 border-b border-gray-200 dark:border-gray-600">
-                        <span class="flex items-center gap-2">
-                            <span class="w-6 h-6 rounded-full bg-yellow-400 flex items-center justify-center">
-                                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd"
-                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                            </span>
-                            <span data-i18n="booked">Booked</span>
-                        </span>
-                        <span class="flex items-center gap-2">
-                            <span class="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
-                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
-                                        d="M5 13l4 4L19 7" />
-                                </svg>
-                            </span>
-                            <span data-i18n="available">Available</span>
-                        </span>
-                    </div>
-
-                    <!-- Date Inputs -->
-                    <div class="grid grid-cols-2 gap-4 mb-5">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
-                                data-i18n="startDate">Start Date</label>
-                            <div class="relative">
-                                <input type="text" id="detailStartDate" readonly
-                                    class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg text-brand-black dark:text-white font-medium cursor-pointer pl-10"
-                                    placeholder="DD/MM/YYYY">
-                                <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
-                                data-i18n="endDate">End Date</label>
-                            <div class="relative">
-                                <input type="text" id="detailEndDate" readonly
-                                    class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg text-brand-black dark:text-white font-medium cursor-pointer pl-10"
-                                    placeholder="DD/MM/YYYY">
-                                <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Borrow Button -->
-                    <button id="detailBorrowBtn" onclick="submitBookingFromDetail()"
-                        class="w-full py-4 rounded-xl bg-brand-yellow text-brand-black font-bold text-lg hover:bg-yellow-400 shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <span data-i18n="requestToBorrow">Request to Borrow</span>
-                    </button>
+                <!-- Calendar Section (Centered) -->
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 mb-4">
+                    <div id="detailCalendar" class="flatpickr-calendar-container flex justify-center"></div>
                 </div>
-            </div>
 
-            <input type="hidden" id="detailEquipmentId">
+                <!-- Legend -->
+                <div class="flex items-center justify-center gap-6 text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    <span class="flex items-center gap-2">
+                        <span class="w-5 h-5 rounded bg-amber-500 flex items-center justify-center">
+                            <span class="text-white text-xs">⊘</span>
+                        </span>
+                        <span data-i18n="booked">Booked</span>
+                    </span>
+                    <span class="flex items-center gap-2">
+                        <span class="w-5 h-5 rounded bg-green-500 flex items-center justify-center">
+                            <span class="text-white text-xs">✓</span>
+                        </span>
+                        <span data-i18n="available">Available</span>
+                    </span>
+                </div>
+
+                <!-- Selected Date Display -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 mb-4 border border-gray-200 dark:border-gray-600">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1" data-i18n="startDate">Start Date
+                            </p>
+                            <p id="detailStartDate" class="font-semibold text-brand-black dark:text-white">-</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1" data-i18n="endDate">End Date</p>
+                            <p id="detailEndDate" class="font-semibold text-brand-black dark:text-white">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Borrow Button -->
+                <button id="detailBorrowBtn" onclick="submitBookingFromDetail()"
+                    class="w-full py-4 rounded-xl bg-brand-yellow text-brand-black font-bold text-lg hover:bg-yellow-400 shadow-lg transition-all flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <span data-i18n="requestToBorrow">Request to Borrow</span>
+                </button>
+            </div>
         </div>
+
+        <input type="hidden" id="detailEquipmentId">
+    </div>
     </div>
 
     <!-- Return Modal (Admin only) -->
