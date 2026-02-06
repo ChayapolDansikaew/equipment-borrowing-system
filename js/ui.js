@@ -784,31 +784,38 @@ window.openEquipmentDetail = async function (equipmentId) {
     document.getElementById('detailEquipmentType').textContent = equipment.type;
     document.getElementById('detailEquipmentId').value = equipmentId;
 
-    // Status badge
-    const statusBadge = document.getElementById('detailStatusBadge');
-    const t = window.translations[window.currentLang];
-    if (equipment.status === 'borrowed') {
-        statusBadge.textContent = t.borrowed || 'ถูกยืม';
-        statusBadge.className = 'absolute bottom-3 left-3 px-3 py-1 rounded-full text-xs font-bold bg-brand-yellow text-brand-black';
+    // Get dates from top filter
+    const filterStartDate = document.getElementById('startDate')?.value;
+    const filterEndDate = document.getElementById('endDate')?.value;
+
+    // Set dates from filter to detail inputs
+    const options = { day: 'numeric', month: 'short', year: 'numeric' };
+    const lang = window.currentLang === 'th' ? 'th-TH' : 'en-US';
+
+    if (filterStartDate) {
+        const startD = new Date(filterStartDate);
+        document.getElementById('detailStartDate').value = startD.toLocaleDateString(lang, options);
     } else {
-        statusBadge.textContent = t.available || 'ว่าง';
-        statusBadge.className = 'absolute bottom-3 left-3 px-3 py-1 rounded-full text-xs font-bold bg-green-500 text-white';
+        document.getElementById('detailStartDate').value = '';
     }
 
-    // Clear previous dates
-    document.getElementById('detailStartDate').value = '';
-    document.getElementById('detailEndDate').value = '';
+    if (filterEndDate) {
+        const endD = new Date(filterEndDate);
+        document.getElementById('detailEndDate').value = endD.toLocaleDateString(lang, options);
+    } else {
+        document.getElementById('detailEndDate').value = '';
+    }
 
     // Show modal first
     window.openModal('equipmentDetailModal');
 
-    // Then init calendar with booked dates
+    // Then init calendar with booked dates and pre-selected dates from filter
     const bookedDates = await window.getBookedDatesForEquipment(equipmentId);
-    window.initDetailCalendar(bookedDates);
+    window.initDetailCalendar(bookedDates, filterStartDate, filterEndDate);
 };
 
 // Initialize flatpickr calendar for Equipment Detail
-window.initDetailCalendar = function (bookedDates = []) {
+window.initDetailCalendar = function (bookedDates = [], filterStartDate = null, filterEndDate = null) {
     // Destroy existing instance
     if (window.detailCalendarInstance) {
         window.detailCalendarInstance.destroy();
@@ -824,6 +831,14 @@ window.initDetailCalendar = function (bookedDates = []) {
     const isDark = document.documentElement.classList.contains('dark');
     const locale = window.currentLang === 'th' ? 'th' : 'default';
 
+    // Build default dates array from filter
+    let defaultDates = [];
+    if (filterStartDate && filterEndDate) {
+        defaultDates = [filterStartDate, filterEndDate];
+    } else if (filterStartDate) {
+        defaultDates = [filterStartDate];
+    }
+
     window.detailCalendarInstance = flatpickr(input, {
         mode: 'range',
         inline: true,
@@ -832,6 +847,7 @@ window.initDetailCalendar = function (bookedDates = []) {
         locale: locale,
         disable: bookedDates.map(d => d),
         disableMobile: true,
+        defaultDate: defaultDates.length > 0 ? defaultDates : null,
         onChange: function (selectedDates, dateStr) {
             if (selectedDates.length === 2) {
                 const startDate = selectedDates[0];
@@ -858,11 +874,25 @@ window.initDetailCalendar = function (bookedDates = []) {
             }
         },
         onDayCreate: function (dObj, dStr, fp, dayElem) {
-            // Style disabled dates (booked)
+            const dateStr = dayElem.dateObj ? dayElem.dateObj.toISOString().split('T')[0] : null;
+
+            // Style disabled dates (booked) - Yellow/Orange
             if (dayElem.classList.contains('flatpickr-disabled')) {
-                dayElem.style.backgroundColor = '#f87171';
+                dayElem.style.backgroundColor = '#fbbf24'; // yellow-400
                 dayElem.style.color = 'white';
+                dayElem.style.borderRadius = '50%';
                 dayElem.title = window.translations[window.currentLang].booked || 'ถูกจองแล้ว';
+            }
+            // Style available dates - Green
+            else if (!dayElem.classList.contains('flatpickr-disabled') &&
+                !dayElem.classList.contains('prevMonthDay') &&
+                !dayElem.classList.contains('nextMonthDay')) {
+                // Only style future/today dates
+                if (dayElem.dateObj && dayElem.dateObj >= new Date().setHours(0, 0, 0, 0)) {
+                    dayElem.style.backgroundColor = '#22c55e'; // green-500
+                    dayElem.style.color = 'white';
+                    dayElem.style.borderRadius = '50%';
+                }
             }
         }
     });
