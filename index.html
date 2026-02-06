@@ -881,29 +881,29 @@
     <div id="equipmentDetailModal"
         class="hidden fixed inset-0 z-50 flex items-center justify-center bg-brand-black/80 backdrop-blur-sm p-4 overflow-y-auto">
         <div
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden dark:bg-gray-800 border border-gray-200 my-8">
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden dark:bg-gray-800 border border-gray-200">
             <!-- Header with Close Button -->
-            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-                <h2 class="text-xl font-bold text-brand-black dark:text-white" data-i18n="equipmentDetails">Equipment
+            <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100 dark:border-gray-700">
+                <h2 class="text-lg font-bold text-brand-black dark:text-white" data-i18n="equipmentDetails">Equipment
                     Details</h2>
                 <button onclick="closeModal('equipmentDetailModal')"
                     class="w-8 h-8 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-full flex items-center justify-center text-gray-500 dark:text-gray-400 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
 
-            <!-- Main Content: Single Centered Column -->
-            <div class="p-6 max-w-lg mx-auto">
+            <!-- Main Content -->
+            <div class="p-5">
                 <!-- Equipment Info Header -->
-                <div class="flex items-center gap-4 mb-6">
+                <div class="flex items-center gap-3 mb-4">
                     <img id="detailEquipmentImage" src="" alt="Equipment"
-                        class="w-20 h-20 object-contain rounded-xl bg-gray-50 dark:bg-gray-700 p-2">
+                        class="w-14 h-14 object-contain rounded-lg bg-gray-50 dark:bg-gray-700 p-1">
                     <div>
-                        <h3 id="detailEquipmentName" class="text-xl font-bold text-brand-black dark:text-white"></h3>
-                        <p class="text-gray-500 dark:text-gray-400 text-sm">
+                        <h3 id="detailEquipmentName" class="text-lg font-bold text-brand-black dark:text-white"></h3>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs">
                             <span data-i18n="category">Category</span>:
                             <span id="detailEquipmentType" class="text-brand-pink font-medium"></span>
                         </p>
@@ -911,45 +911,46 @@
                 </div>
 
                 <!-- Calendar Section (Centered) -->
-                <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 mb-4">
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 mb-3">
                     <div id="detailCalendar" class="flatpickr-calendar-container flex justify-center"></div>
                 </div>
 
                 <!-- Legend -->
-                <div class="flex items-center justify-center gap-6 text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    <span class="flex items-center gap-2">
-                        <span class="w-5 h-5 rounded bg-amber-500 flex items-center justify-center">
-                            <span class="text-white text-xs">⊘</span>
+                <div class="flex items-center justify-center gap-4 text-xs text-gray-600 dark:text-gray-400 mb-3">
+                    <span class="flex items-center gap-1">
+                        <span class="w-4 h-4 rounded bg-amber-500 flex items-center justify-center">
+                            <span class="text-white text-[8px]">⊘</span>
                         </span>
                         <span data-i18n="booked">Booked</span>
                     </span>
-                    <span class="flex items-center gap-2">
-                        <span class="w-5 h-5 rounded bg-green-500 flex items-center justify-center">
-                            <span class="text-white text-xs">✓</span>
+                    <span class="flex items-center gap-1">
+                        <span class="w-4 h-4 rounded bg-green-500 flex items-center justify-center">
+                            <span class="text-white text-[8px]">✓</span>
                         </span>
                         <span data-i18n="available">Available</span>
                     </span>
                 </div>
 
                 <!-- Selected Date Display -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 mb-4 border border-gray-200 dark:border-gray-600">
-                    <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-3 mb-4 border border-gray-200 dark:border-gray-600">
+                    <div class="grid grid-cols-2 gap-3">
                         <div class="text-center">
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1" data-i18n="startDate">Start Date
-                            </p>
-                            <p id="detailStartDate" class="font-semibold text-brand-black dark:text-white">-</p>
+                            <p class="text-[10px] text-gray-500 dark:text-gray-400 mb-0.5" data-i18n="startDate">Start
+                                Date</p>
+                            <p id="detailStartDate" class="font-semibold text-sm text-brand-black dark:text-white">-</p>
                         </div>
                         <div class="text-center">
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1" data-i18n="endDate">End Date</p>
-                            <p id="detailEndDate" class="font-semibold text-brand-black dark:text-white">-</p>
+                            <p class="text-[10px] text-gray-500 dark:text-gray-400 mb-0.5" data-i18n="endDate">End Date
+                            </p>
+                            <p id="detailEndDate" class="font-semibold text-sm text-brand-black dark:text-white">-</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Borrow Button -->
                 <button id="detailBorrowBtn" onclick="submitBookingFromDetail()"
-                    class="w-full py-4 rounded-xl bg-brand-yellow text-brand-black font-bold text-lg hover:bg-yellow-400 shadow-lg transition-all flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="w-full py-3 rounded-xl bg-brand-yellow text-brand-black font-bold hover:bg-yellow-400 shadow-lg transition-all flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
