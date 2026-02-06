@@ -874,25 +874,43 @@ window.initDetailCalendar = function (bookedDates = [], filterStartDate = null, 
             }
         },
         onDayCreate: function (dObj, dStr, fp, dayElem) {
-            const dateStr = dayElem.dateObj ? dayElem.dateObj.toISOString().split('T')[0] : null;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const dayDate = dayElem.dateObj;
+            const isDisabled = dayElem.classList.contains('flatpickr-disabled');
+            const isPrevMonth = dayElem.classList.contains('prevMonthDay');
+            const isNextMonth = dayElem.classList.contains('nextMonthDay');
+            const isPast = dayDate && dayDate < today;
 
-            // Style disabled dates (booked) - Yellow/Orange
-            if (dayElem.classList.contains('flatpickr-disabled')) {
-                dayElem.style.backgroundColor = '#fbbf24'; // yellow-400
+            // Reset default styles
+            dayElem.style.borderRadius = '8px';
+            dayElem.style.margin = '2px';
+            dayElem.style.position = 'relative';
+
+            // Style: Booked dates (disabled) - Yellow with X icon
+            if (isDisabled && !isPrevMonth && !isNextMonth) {
+                dayElem.style.backgroundColor = '#f59e0b'; // amber-500
                 dayElem.style.color = 'white';
-                dayElem.style.borderRadius = '50%';
+                dayElem.innerHTML = `<span class="day-content">${dayElem.textContent}</span>
+                    <span class="day-icon" style="position:absolute;top:2px;right:2px;font-size:8px;">⊘</span>`;
                 dayElem.title = window.translations[window.currentLang].booked || 'ถูกจองแล้ว';
             }
-            // Style available dates - Green
-            else if (!dayElem.classList.contains('flatpickr-disabled') &&
-                !dayElem.classList.contains('prevMonthDay') &&
-                !dayElem.classList.contains('nextMonthDay')) {
-                // Only style future/today dates
-                if (dayElem.dateObj && dayElem.dateObj >= new Date().setHours(0, 0, 0, 0)) {
-                    dayElem.style.backgroundColor = '#22c55e'; // green-500
-                    dayElem.style.color = 'white';
-                    dayElem.style.borderRadius = '50%';
-                }
+            // Style: Past dates - Gray
+            else if (isPast && !isPrevMonth && !isNextMonth) {
+                dayElem.style.backgroundColor = '#d1d5db'; // gray-300
+                dayElem.style.color = '#6b7280'; // gray-500
+            }
+            // Style: Available future dates - Green with checkmark
+            else if (!isDisabled && !isPrevMonth && !isNextMonth && dayDate && dayDate >= today) {
+                dayElem.style.backgroundColor = '#22c55e'; // green-500
+                dayElem.style.color = 'white';
+                dayElem.innerHTML = `<span class="day-content">${dayElem.textContent}</span>
+                    <span class="day-icon" style="position:absolute;top:2px;right:2px;font-size:8px;">✓</span>`;
+            }
+            // Style: Other month days - Light gray
+            else if (isPrevMonth || isNextMonth) {
+                dayElem.style.backgroundColor = 'transparent';
+                dayElem.style.color = '#9ca3af'; // gray-400
             }
         }
     });
