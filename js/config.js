@@ -83,7 +83,8 @@ window.translations = {
         dateRequired: 'กรุณาเลือกวันยืม-คืน',
         booked: 'ถูกจองแล้ว',
         selected: 'เลือกไว้',
-        requestToBorrow: 'ขอยืมอุปกรณ์'
+        requestToBorrow: 'ขอยืมอุปกรณ์',
+        useCartToBook: 'ใช้ปุ่มตะกร้าเพื่อยืม'
     },
     en: {
         overview: 'Overview',
@@ -144,7 +145,8 @@ window.translations = {
         dateRequired: 'Please select borrow dates',
         booked: 'Booked',
         selected: 'Selected',
-        requestToBorrow: 'Request to Borrow'
+        requestToBorrow: 'Request to Borrow',
+        useCartToBook: 'Use the cart button to borrow'
     }
 };
 
