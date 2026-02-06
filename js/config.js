@@ -84,7 +84,8 @@ window.translations = {
         booked: 'ถูกจองแล้ว',
         selected: 'เลือกไว้',
         requestToBorrow: 'ขอยืมอุปกรณ์',
-        useCartToBook: 'ใช้ปุ่มตะกร้าเพื่อยืม'
+        useCartToBook: 'ใช้ปุ่มตะกร้าเพื่อยืม',
+        equipmentDetails: 'รายละเอียดอุปกรณ์'
     },
     en: {
         overview: 'Overview',
@@ -146,7 +147,8 @@ window.translations = {
         booked: 'Booked',
         selected: 'Selected',
         requestToBorrow: 'Request to Borrow',
-        useCartToBook: 'Use the cart button to borrow'
+        useCartToBook: 'Use the cart button to borrow',
+        equipmentDetails: 'Equipment Details'
     }
 };
 
