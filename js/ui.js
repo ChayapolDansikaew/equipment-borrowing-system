@@ -87,7 +87,7 @@ window.renderEquipments = function () {
 
         return `
         <div class="bg-white rounded-xl overflow-hidden group border border-gray-100 hover:shadow-xl transition-all duration-300 dark:bg-gray-800 dark:border-gray-700 cursor-pointer">
-            <div class="relative h-48 overflow-hidden bg-gray-50">
+            <div class="relative h-48 overflow-hidden bg-gray-50" onclick="openEquipmentDetail(${group.items[0].id})">
                 ${editBtn}
                 ${userBadge}
                 <img src="${group.image_url}" alt="${group.name} - ${group.type}" loading="lazy" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500">
@@ -763,6 +763,132 @@ window.openBorrowModal = function (id, name) {
     document.getElementById('borrowItemName').textContent = name;
     document.getElementById('borrowerDisplay').textContent = window.currentUser ? window.currentUser.username : 'Guest';
     window.openModal('borrowModal');
+};
+
+// --- Booking Calendar Functions ---
+
+// Store flatpickr instance for cleanup
+window.detailCalendarInstance = null;
+
+// Open Equipment Detail Modal with Calendar
+window.openEquipmentDetail = async function (equipmentId) {
+    const equipment = window.equipments.find(e => e.id == equipmentId);
+    if (!equipment) {
+        window.showToast('ไม่พบข้อมูลอุปกรณ์', 'error');
+        return;
+    }
+
+    // Populate modal
+    document.getElementById('detailEquipmentImage').src = equipment.image_url;
+    document.getElementById('detailEquipmentName').textContent = equipment.name;
+    document.getElementById('detailEquipmentType').textContent = equipment.type;
+    document.getElementById('detailEquipmentId').value = equipmentId;
+
+    // Status badge
+    const statusBadge = document.getElementById('detailStatusBadge');
+    const t = window.translations[window.currentLang];
+    if (equipment.status === 'borrowed') {
+        statusBadge.textContent = t.borrowed || 'ถูกยืม';
+        statusBadge.className = 'absolute bottom-3 left-3 px-3 py-1 rounded-full text-xs font-bold bg-brand-yellow text-brand-black';
+    } else {
+        statusBadge.textContent = t.available || 'ว่าง';
+        statusBadge.className = 'absolute bottom-3 left-3 px-3 py-1 rounded-full text-xs font-bold bg-green-500 text-white';
+    }
+
+    // Clear previous dates
+    document.getElementById('detailStartDate').value = '';
+    document.getElementById('detailEndDate').value = '';
+
+    // Show modal first
+    window.openModal('equipmentDetailModal');
+
+    // Then init calendar with booked dates
+    const bookedDates = await window.getBookedDatesForEquipment(equipmentId);
+    window.initDetailCalendar(bookedDates);
+};
+
+// Initialize flatpickr calendar for Equipment Detail
+window.initDetailCalendar = function (bookedDates = []) {
+    // Destroy existing instance
+    if (window.detailCalendarInstance) {
+        window.detailCalendarInstance.destroy();
+    }
+
+    const container = document.getElementById('detailCalendar');
+    if (!container) return;
+
+    // Create inline calendar input
+    container.innerHTML = '<input type="text" id="detailCalendarInput" class="hidden">';
+    const input = document.getElementById('detailCalendarInput');
+
+    const isDark = document.documentElement.classList.contains('dark');
+    const locale = window.currentLang === 'th' ? 'th' : 'default';
+
+    window.detailCalendarInstance = flatpickr(input, {
+        mode: 'range',
+        inline: true,
+        minDate: 'today',
+        dateFormat: 'Y-m-d',
+        locale: locale,
+        disable: bookedDates.map(d => d),
+        disableMobile: true,
+        onChange: function (selectedDates, dateStr) {
+            if (selectedDates.length === 2) {
+                const startDate = selectedDates[0];
+                const endDate = selectedDates[1];
+
+                const options = { day: 'numeric', month: 'short', year: 'numeric' };
+                const lang = window.currentLang === 'th' ? 'th-TH' : 'en-US';
+
+                document.getElementById('detailStartDate').value = startDate.toLocaleDateString(lang, options);
+                document.getElementById('detailEndDate').value = endDate.toLocaleDateString(lang, options);
+
+                // Also update main date inputs for confirmBorrow
+                const startInput = document.getElementById('startDate');
+                const endInput = document.getElementById('endDate');
+                if (startInput && endInput) {
+                    startInput.value = startDate.toISOString().split('T')[0];
+                    endInput.value = endDate.toISOString().split('T')[0];
+                }
+            } else if (selectedDates.length === 1) {
+                const options = { day: 'numeric', month: 'short', year: 'numeric' };
+                const lang = window.currentLang === 'th' ? 'th-TH' : 'en-US';
+                document.getElementById('detailStartDate').value = selectedDates[0].toLocaleDateString(lang, options);
+                document.getElementById('detailEndDate').value = '';
+            }
+        },
+        onDayCreate: function (dObj, dStr, fp, dayElem) {
+            // Style disabled dates (booked)
+            if (dayElem.classList.contains('flatpickr-disabled')) {
+                dayElem.style.backgroundColor = '#f87171';
+                dayElem.style.color = 'white';
+                dayElem.title = window.translations[window.currentLang].booked || 'ถูกจองแล้ว';
+            }
+        }
+    });
+};
+
+// Submit booking from Equipment Detail Modal
+window.submitBookingFromDetail = async function () {
+    const equipmentId = document.getElementById('detailEquipmentId').value;
+    const startDateEl = document.getElementById('detailStartDate');
+    const endDateEl = document.getElementById('detailEndDate');
+    const t = window.translations[window.currentLang];
+
+    // Validate dates selected
+    if (!startDateEl.value || !endDateEl.value) {
+        window.showToast(t.dateRequired || 'กรุณาเลือกวันยืม-คืน', 'error');
+        return;
+    }
+
+    // Set the borrowItemId for confirmBorrow
+    document.getElementById('borrowItemId').value = equipmentId;
+
+    // Close detail modal
+    window.closeModal('equipmentDetailModal');
+
+    // Call existing confirmBorrow which handles validation & insertion
+    await window.confirmBorrow();
 };
 
 window.openReturnModal = function (id, name) {

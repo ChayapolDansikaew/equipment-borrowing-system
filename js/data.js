@@ -317,6 +317,47 @@ window.fetchMyBorrowings = async function () {
     window.renderMyBorrowings(data);
 };
 
+// --- Booking Calendar Functions ---
+
+// Get all booked date ranges for a specific equipment
+window.getBookedDatesForEquipment = async function (equipmentId) {
+    if (!window.supabaseClient) return [];
+
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('transactions')
+            .select('start_date, end_date, borrower_name')
+            .eq('equipment_id', equipmentId)
+            .eq('status', 'active');
+
+        if (error) {
+            console.error('Error fetching booked dates:', error);
+            return [];
+        }
+
+        if (!data || data.length === 0) return [];
+
+        // Convert to array of disabled dates for flatpickr
+        const disabledDates = [];
+        data.forEach(booking => {
+            const start = new Date(booking.start_date);
+            const end = booking.end_date ? new Date(booking.end_date) : new Date(start.getTime() + 86400000);
+            
+            // Add each day in the range
+            let current = new Date(start);
+            while (current <= end) {
+                disabledDates.push(new Date(current).toISOString().split('T')[0]);
+                current.setDate(current.getDate() + 1);
+            }
+        });
+
+        return [...new Set(disabledDates)]; // Remove duplicates
+    } catch (err) {
+        console.error('getBookedDatesForEquipment error:', err);
+        return [];
+    }
+};
+
 // --- Actions ---
 
 window.confirmBorrow = async function () {

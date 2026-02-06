@@ -77,7 +77,13 @@ window.translations = {
         topBorrowers: 'ผู้ยืมมากที่สุด',
         loading: 'กำลังโหลด...',
         noBorrowingData: 'ไม่มีข้อมูลการยืม',
-        times: 'ครั้ง'
+        times: 'ครั้ง',
+        // Booking Calendar
+        selectDates: 'เลือกวันยืม-คืน',
+        dateRequired: 'กรุณาเลือกวันยืม-คืน',
+        booked: 'ถูกจองแล้ว',
+        selected: 'เลือกไว้',
+        requestToBorrow: 'ขอยืมอุปกรณ์'
     },
     en: {
         overview: 'Overview',
@@ -132,7 +138,13 @@ window.translations = {
         topBorrowers: 'Top Borrowers',
         loading: 'Loading...',
         noBorrowingData: 'No borrowing data',
-        times: 'times'
+        times: 'times',
+        // Booking Calendar
+        selectDates: 'Select Dates',
+        dateRequired: 'Please select borrow dates',
+        booked: 'Booked',
+        selected: 'Selected',
+        requestToBorrow: 'Request to Borrow'
     }
 };
 
