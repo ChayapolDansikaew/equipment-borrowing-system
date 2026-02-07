@@ -2,15 +2,15 @@
 
 console.log('Config loaded');
 
-// --- CONSTANTS ---
-const SUPABASE_URL = 'https://gzfzpkllhkuefmsktgor.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6Znpwa2xsaGt1ZWZtc2t0Z29yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxODA1OTUsImV4cCI6MjA3OTc1NjU5NX0.5gEU1AGANpYId9I8IXI90iSxYALXc0_oCGo9-wPjtq8';
+// --- CONSTANTS (from env.js) ---
+const SUPABASE_URL = window.ENV?.SUPABASE_URL || 'YOUR_SUPABASE_URL';
+const SUPABASE_KEY = window.ENV?.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
 
-// --- EmailJS Config ---
-const EMAILJS_PUBLIC_KEY = 'qtaXmNDcVNTOs8-RE';
-const EMAILJS_SERVICE_ID = 'service_bnaqk1g';
-const EMAILJS_APPROVAL_TEMPLATE = 'template_n5p48z8';
-const EMAILJS_REMINDER_TEMPLATE = 'template_u6643nq';
+// --- EmailJS Config (from env.js) ---
+const EMAILJS_PUBLIC_KEY = window.ENV?.EMAILJS_PUBLIC_KEY || 'YOUR_EMAILJS_PUBLIC_KEY';
+const EMAILJS_SERVICE_ID = window.ENV?.EMAILJS_SERVICE_ID || 'YOUR_EMAILJS_SERVICE_ID';
+const EMAILJS_APPROVAL_TEMPLATE = window.ENV?.EMAILJS_APPROVAL_TEMPLATE || 'YOUR_TEMPLATE_ID';
+const EMAILJS_REMINDER_TEMPLATE = window.ENV?.EMAILJS_REMINDER_TEMPLATE || 'YOUR_TEMPLATE_ID';
 
 // --- GLOBAL STATE ---
 // We attach these to window so they are accessible by other scripts and HTML attributes
