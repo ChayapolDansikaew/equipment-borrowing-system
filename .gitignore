@@ -5,7 +5,6 @@ node_modules/
 .env
 .env.local
 .env.*.local
-js/env.js
 
 # IDE
 .vscode/
