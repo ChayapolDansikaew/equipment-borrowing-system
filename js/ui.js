@@ -806,6 +806,18 @@ window.openEquipmentDetail = async function (equipmentId) {
         document.getElementById('detailEndDate').textContent = '-';
     }
 
+    // Calculate and display duration
+    if (filterStartDate && filterEndDate) {
+        const start = new Date(filterStartDate);
+        const end = new Date(filterEndDate);
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both days
+        const dayText = window.translations[window.currentLang]?.days || 'days';
+        document.getElementById('detailDuration').textContent = `${diffDays} ${dayText}`;
+    } else {
+        document.getElementById('detailDuration').textContent = '-';
+    }
+
     // Show modal first
     window.openModal('equipmentDetailModal');
 
@@ -859,6 +871,12 @@ window.initDetailCalendar = function (bookedDates = [], filterStartDate = null, 
                 document.getElementById('detailStartDate').textContent = startDate.toLocaleDateString(lang, options);
                 document.getElementById('detailEndDate').textContent = endDate.toLocaleDateString(lang, options);
 
+                // Calculate and display duration
+                const diffTime = Math.abs(endDate - startDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                const dayText = window.translations[window.currentLang]?.days || 'days';
+                document.getElementById('detailDuration').textContent = `${diffDays} ${dayText}`;
+
                 // Also update main date inputs for confirmBorrow
                 const startInput = document.getElementById('startDate');
                 const endInput = document.getElementById('endDate');
@@ -871,6 +889,7 @@ window.initDetailCalendar = function (bookedDates = [], filterStartDate = null, 
                 const lang = window.currentLang === 'th' ? 'th-TH' : 'en-US';
                 document.getElementById('detailStartDate').textContent = selectedDates[0].toLocaleDateString(lang, options);
                 document.getElementById('detailEndDate').textContent = '-';
+                document.getElementById('detailDuration').textContent = '-';
             }
         },
         onDayCreate: function (dObj, dStr, fp, dayElem) {
