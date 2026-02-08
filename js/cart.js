@@ -149,57 +149,315 @@ function renderCartItems() {
     `).join('');
 }
 
-// ============== QUANTITY MODAL ==============
+// ============== UNIFIED EQUIPMENT MODAL ==============
 
-let currentQuantityData = {};
+let unifiedModalData = {
+    name: '',
+    image: '',
+    category: '',
+    maxQty: 0,
+    equipmentId: null,
+    startDate: null,
+    endDate: null,
+    bookedDates: []
+};
 
-// เปิด Quantity Modal
-window.openQuantityModal = function (name, image, category, maxQty) {
-    const modal = document.getElementById('quantityModal');
+// เปิด Unified Modal (เรียกจากกดรูปหรือกดปุ่ม)
+window.openUnifiedModal = function (name, image, category, maxQty, equipmentId = null) {
+    const modal = document.getElementById('unifiedEquipmentModal');
     if (!modal) return;
 
-    // Store data for confirm
-    currentQuantityData = { name, image, category, maxQty };
-
-    // Get current quantity in cart (if any)
-    const existingItem = window.cart.getByName(name);
-    const currentQty = existingItem ? existingItem.quantity : 1;
+    // Store data
+    unifiedModalData = {
+        name, image, category, maxQty,
+        equipmentId,
+        startDate: null,
+        endDate: null,
+        bookedDates: []
+    };
 
     // Update modal content
-    document.getElementById('qtyModalName').textContent = name;
-    document.getElementById('qtyModalImage').src = image;
-    document.getElementById('qtyModalMax').textContent = maxQty;
-    document.getElementById('qtyInput').value = currentQty;
-    document.getElementById('qtyInput').max = maxQty;
+    document.getElementById('unifiedModalName').textContent = name;
+    document.getElementById('unifiedModalImage').src = image;
+    document.getElementById('unifiedModalCategory').textContent = category;
+    document.getElementById('unifiedModalAvailable').textContent = maxQty;
+    document.getElementById('unifiedQtyInput').value = 1;
+    document.getElementById('unifiedQtyInput').max = maxQty;
+
+    // Reset date display
+    document.getElementById('unifiedStartDate').textContent = '-';
+    document.getElementById('unifiedEndDate').textContent = '-';
+    document.getElementById('unifiedDuration').textContent = '-';
+
+    // Load booked dates and render calendar
+    loadBookedDatesAndRenderCalendar(name);
 
     modal.classList.remove('hidden');
     modal.classList.add('flex');
 };
 
-// ปิด Quantity Modal
-window.closeQuantityModal = function () {
-    const modal = document.getElementById('quantityModal');
+// ปิด Unified Modal
+window.closeUnifiedModal = function () {
+    const modal = document.getElementById('unifiedEquipmentModal');
     if (modal) {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
     }
+    // Reset dates
+    unifiedModalData.startDate = null;
+    unifiedModalData.endDate = null;
 };
 
 // เพิ่ม/ลดจำนวน
-window.adjustQuantity = function (delta) {
-    const input = document.getElementById('qtyInput');
-    const newVal = Math.max(0, Math.min(currentQuantityData.maxQty, parseInt(input.value) + delta));
+window.adjustUnifiedQuantity = function (delta) {
+    const input = document.getElementById('unifiedQtyInput');
+    const newVal = Math.max(1, Math.min(unifiedModalData.maxQty, parseInt(input.value) + delta));
     input.value = newVal;
 };
 
-// ยืนยันจำนวน
-window.confirmQuantity = function () {
-    const quantity = parseInt(document.getElementById('qtyInput').value);
-    const { name, image, category } = currentQuantityData;
+// โหลดวันที่ถูกจองและ render calendar
+async function loadBookedDatesAndRenderCalendar(equipmentName) {
+    try {
+        // Get all equipment IDs with this name
+        const equipmentIds = window.equipments
+            .filter(e => e.name === equipmentName)
+            .map(e => e.id);
 
-    window.cart.addOrUpdate(name, image, category, quantity);
-    closeQuantityModal();
+        if (equipmentIds.length === 0) {
+            renderUnifiedCalendar([]);
+            return;
+        }
+
+        // Fetch booked dates from transactions
+        const { data: transactions, error } = await supabaseClient
+            .from('transactions')
+            .select('borrow_date, return_date')
+            .in('equipment_id', equipmentIds)
+            .in('status', ['approved', 'borrowed']);
+
+        if (error) {
+            console.error('Error fetching booked dates:', error);
+            renderUnifiedCalendar([]);
+            return;
+        }
+
+        // Process booked dates
+        const bookedDates = [];
+        transactions.forEach(t => {
+            const start = new Date(t.borrow_date);
+            const end = new Date(t.return_date);
+            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                bookedDates.push(d.toISOString().split('T')[0]);
+            }
+        });
+
+        unifiedModalData.bookedDates = [...new Set(bookedDates)];
+        renderUnifiedCalendar(unifiedModalData.bookedDates);
+
+    } catch (err) {
+        console.error('Error loading booked dates:', err);
+        renderUnifiedCalendar([]);
+    }
+}
+
+// Render Calendar
+function renderUnifiedCalendar(bookedDates) {
+    const container = document.getElementById('unifiedCalendarContainer');
+    if (!container) return;
+
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+
+    // Get Thai month name
+    const thaiMonths = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+        'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+    const thaiYear = currentYear + 543;
+
+    // First day of month and days in month
+    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+    // Build calendar HTML
+    let html = `
+        <div class="flex items-center justify-between mb-3">
+            <button onclick="changeUnifiedMonth(-1)" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+            <span class="font-bold text-gray-900 dark:text-white">${thaiMonths[currentMonth]} ${thaiYear}</span>
+            <button onclick="changeUnifiedMonth(1)" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+        </div>
+        <div class="grid grid-cols-7 gap-1 text-center text-xs">
+            <div class="text-gray-500 font-medium py-1">อา</div>
+            <div class="text-gray-500 font-medium py-1">จ</div>
+            <div class="text-gray-500 font-medium py-1">อ</div>
+            <div class="text-gray-500 font-medium py-1">พ</div>
+            <div class="text-gray-500 font-medium py-1">พฤ</div>
+            <div class="text-gray-500 font-medium py-1">ศ</div>
+            <div class="text-gray-500 font-medium py-1">ส</div>
+    `;
+
+    // Empty cells before first day
+    for (let i = 0; i < firstDay; i++) {
+        html += `<div></div>`;
+    }
+
+    // Days
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isBooked = bookedDates.includes(dateStr);
+        const isPast = new Date(dateStr) < new Date(today.toDateString());
+        const isSelected = isDateInRange(dateStr);
+        const isStart = unifiedModalData.startDate === dateStr;
+        const isEnd = unifiedModalData.endDate === dateStr;
+
+        let dayClass = 'w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all text-sm ';
+        let indicator = '';
+
+        if (isPast) {
+            dayClass += 'text-gray-300 cursor-not-allowed';
+        } else if (isBooked) {
+            dayClass += 'text-gray-400 cursor-not-allowed';
+            indicator = '<span class="absolute top-0 right-0 w-2 h-2 bg-orange-400 rounded-full"></span>';
+        } else if (isStart || isEnd) {
+            dayClass += 'bg-gradient-to-r from-brand-yellow to-brand-pink text-black font-bold';
+        } else if (isSelected) {
+            dayClass += 'bg-yellow-200 text-black';
+        } else {
+            dayClass += 'hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white';
+            indicator = '<svg class="absolute bottom-0 right-0 w-2 h-2 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>';
+        }
+
+        const clickHandler = (!isPast && !isBooked) ? `onclick="selectUnifiedDate('${dateStr}')"` : '';
+
+        html += `
+            <div class="relative flex items-center justify-center">
+                <div ${clickHandler} class="${dayClass}">${day}</div>
+                ${indicator}
+            </div>
+        `;
+    }
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// Check if date is in selected range
+function isDateInRange(dateStr) {
+    if (!unifiedModalData.startDate || !unifiedModalData.endDate) return false;
+    return dateStr >= unifiedModalData.startDate && dateStr <= unifiedModalData.endDate;
+}
+
+// Select date
+window.selectUnifiedDate = function (dateStr) {
+    if (!unifiedModalData.startDate || (unifiedModalData.startDate && unifiedModalData.endDate)) {
+        // First click or reset: set start date
+        unifiedModalData.startDate = dateStr;
+        unifiedModalData.endDate = null;
+    } else {
+        // Second click: set end date
+        if (dateStr < unifiedModalData.startDate) {
+            unifiedModalData.endDate = unifiedModalData.startDate;
+            unifiedModalData.startDate = dateStr;
+        } else {
+            unifiedModalData.endDate = dateStr;
+        }
+    }
+
+    updateDateDisplay();
+    renderUnifiedCalendar(unifiedModalData.bookedDates);
 };
+
+// Update date summary display
+function updateDateDisplay() {
+    const formatThaiDate = (dateStr) => {
+        if (!dateStr) return '-';
+        const d = new Date(dateStr);
+        const day = d.getDate();
+        const month = d.getMonth() + 1;
+        const year = (d.getFullYear() + 543) % 100;
+        return `${day} ${['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'][month]} ${year}`;
+    };
+
+    document.getElementById('unifiedStartDate').textContent = formatThaiDate(unifiedModalData.startDate);
+    document.getElementById('unifiedEndDate').textContent = formatThaiDate(unifiedModalData.endDate);
+
+    if (unifiedModalData.startDate && unifiedModalData.endDate) {
+        const start = new Date(unifiedModalData.startDate);
+        const end = new Date(unifiedModalData.endDate);
+        const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        document.getElementById('unifiedDuration').textContent = `${days} วัน`;
+    } else if (unifiedModalData.startDate) {
+        document.getElementById('unifiedDuration').textContent = '1 วัน';
+        document.getElementById('unifiedEndDate').textContent = formatThaiDate(unifiedModalData.startDate);
+    } else {
+        document.getElementById('unifiedDuration').textContent = '-';
+    }
+}
+
+// Submit borrow request
+window.submitUnifiedBorrow = async function () {
+    const quantity = parseInt(document.getElementById('unifiedQtyInput').value);
+    const { name, image, category, startDate, endDate } = unifiedModalData;
+
+    // Validation
+    if (!startDate) {
+        window.showToast?.('กรุณาเลือกวันที่ต้องการยืม', 'error');
+        return;
+    }
+
+    if (quantity < 1) {
+        window.showToast?.('กรุณาเลือกจำนวนอย่างน้อย 1 ชิ้น', 'error');
+        return;
+    }
+
+    // Find available equipment IDs with this name
+    const availableEquipment = window.equipments.filter(e =>
+        e.name === name && e.status === 'available'
+    ).slice(0, quantity);
+
+    if (availableEquipment.length < quantity) {
+        window.showToast?.(`มีอุปกรณ์ว่างเพียง ${availableEquipment.length} ชิ้น`, 'error');
+        return;
+    }
+
+    const borrowDate = startDate;
+    const returnDate = endDate || startDate;
+
+    try {
+        // Create transaction for each equipment
+        for (const equip of availableEquipment) {
+            const { error } = await supabaseClient.from('transactions').insert({
+                equipment_id: equip.id,
+                borrower_name: window.currentUser?.username || 'Unknown',
+                borrow_date: borrowDate,
+                return_date: returnDate,
+                status: 'pending'
+            });
+
+            if (error) throw error;
+        }
+
+        window.showToast?.(`ส่งคำขอยืม ${name} (${quantity} ชิ้น) สำเร็จ!`, 'success');
+        closeUnifiedModal();
+
+        // Refresh data
+        if (typeof window.loadEquipments === 'function') {
+            await window.loadEquipments();
+        }
+
+    } catch (err) {
+        console.error('Borrow error:', err);
+        window.showToast?.('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
+    }
+};
+
+// Alias for backward compatibility (for existing buttons)
+window.openQuantityModal = window.openUnifiedModal;
+window.closeQuantityModal = window.closeUnifiedModal;
+window.adjustQuantity = window.adjustUnifiedQuantity;
 
 // โหลด cart เมื่อ DOM พร้อม
 document.addEventListener('DOMContentLoaded', () => {
