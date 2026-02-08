@@ -86,11 +86,11 @@ window.renderEquipments = function () {
         }
 
         return `
-        <div class="bg-white rounded-xl overflow-hidden group border border-gray-100 hover:shadow-xl transition-all duration-300 dark:bg-gray-800 dark:border-gray-700 cursor-pointer">
+        <div class="bg-white rounded-xl overflow-hidden group border border-gray-100 card-premium dark:bg-gray-800 dark:border-gray-700 cursor-pointer opacity-0 fade-in-up" style="animation-delay: ${Math.random() * 0.2}s">
             <div class="relative h-48 overflow-hidden bg-gray-50" onclick="openEquipmentDetail(${group.items[0].id})">
                 ${editBtn}
                 ${userBadge}
-                <img src="${group.image_url}" alt="${group.name} - ${group.type}" loading="lazy" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500">
+                <img src="${group.image_url}" alt="${group.name} - ${group.type}" loading="lazy" class="w-full h-full object-cover img-zoom">
                 <div class="absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md ${statusColor}" style="${group.borrowedByUser > 0 ? 'top: 2.5rem;' : ''}">
                     ${statusText}
                 </div>
@@ -100,7 +100,7 @@ window.renderEquipments = function () {
                 <h3 class="font-bold text-lg mb-4 text-brand-black dark:text-white">${group.name}</h3>
                 
                 <button ${btnAction}
-                    class="w-full py-2.5 rounded-lg font-bold uppercase text-sm tracking-wider transition-all transform active:scale-95 ${btnClass}"
+                    class="w-full py-2.5 rounded-lg font-bold uppercase text-sm tracking-wider transition-all transform active:scale-95 btn-ripple ${btnClass}"
                     ${isOutOfStock ? 'disabled' : ''}>
                     ${btnText}
                 </button>

@@ -168,6 +168,270 @@
         .skip-link:focus {
             top: 0;
         }
+
+        /* ========================================
+           PREMIUM ANIMATIONS & MICRO-INTERACTIONS
+           ======================================== */
+
+        /* Fade In Up Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.5s ease-out forwards;
+        }
+
+        /* Staggered Animation Classes */
+        .stagger-1 {
+            animation-delay: 0.05s;
+        }
+
+        .stagger-2 {
+            animation-delay: 0.1s;
+        }
+
+        .stagger-3 {
+            animation-delay: 0.15s;
+        }
+
+        .stagger-4 {
+            animation-delay: 0.2s;
+        }
+
+        .stagger-5 {
+            animation-delay: 0.25s;
+        }
+
+        .stagger-6 {
+            animation-delay: 0.3s;
+        }
+
+        .stagger-7 {
+            animation-delay: 0.35s;
+        }
+
+        .stagger-8 {
+            animation-delay: 0.4s;
+        }
+
+        /* Scale In Animation */
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .scale-in {
+            animation: scaleIn 0.3s ease-out forwards;
+        }
+
+        /* Slide Up Animation for Modals */
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .slide-up {
+            animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Ripple Effect for Buttons */
+        .btn-ripple {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-ripple::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.4s ease-out, height 0.4s ease-out, opacity 0.4s ease-out;
+            opacity: 0;
+        }
+
+        .btn-ripple:active::after {
+            width: 300px;
+            height: 300px;
+            opacity: 0;
+        }
+
+        /* Enhanced Card Hover - Premium Style */
+        .card-premium {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-premium:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .dark .card-premium:hover {
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Button Glow Effect */
+        .btn-glow {
+            transition: all 0.3s ease;
+        }
+
+        .btn-glow:hover {
+            box-shadow: 0 0 20px rgba(255, 209, 0, 0.5);
+            transform: translateY(-2px);
+        }
+
+        /* Smooth Image Zoom on Hover */
+        .img-zoom {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .img-zoom:hover {
+            transform: scale(1.05);
+        }
+
+        /* Bounce Animation for Success States */
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            70% {
+                transform: scale(0.9);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .bounce-in {
+            animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        /* Toast Notification Slide In */
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .slide-in-right {
+            animation: slideInRight 0.4s ease-out forwards;
+        }
+
+        /* Pulse Animation for Badges */
+        @keyframes pulseBadge {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .pulse-badge {
+            animation: pulseBadge 2s ease-in-out infinite;
+        }
+
+        /* Gradient Shift Animation */
+        @keyframes gradientShift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .gradient-animate {
+            background-size: 200% 200%;
+            animation: gradientShift 3s ease infinite;
+        }
+
+        /* Smooth Focus Animation */
+        .focus-animate:focus {
+            transition: all 0.2s ease;
+            transform: scale(1.02);
+        }
+
+        /* Loading Dots Animation */
+        @keyframes loadingDots {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0);
+                opacity: 0.5;
+            }
+
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .loading-dot {
+            animation: loadingDots 1.4s ease-in-out infinite both;
+        }
+
+        .loading-dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .loading-dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        .loading-dot:nth-child(3) {
+            animation-delay: 0s;
+        }
     </style>
 </head>
 
@@ -881,7 +1145,7 @@
     <div id="equipmentDetailModal"
         class="hidden fixed inset-0 z-50 flex items-center justify-center bg-brand-black/80 backdrop-blur-sm p-4 overflow-y-auto">
         <div
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden dark:bg-gray-800 border border-gray-200">
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden dark:bg-gray-800 border border-gray-200 slide-up">
             <!-- Header with Close Button -->
             <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100 dark:border-gray-700">
                 <h2 class="text-lg font-bold text-brand-black dark:text-white" data-i18n="equipmentDetails">Equipment
@@ -1052,7 +1316,8 @@
 
     <!-- Cart Modal -->
     <div id="cartModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[80vh] overflow-hidden">
+        <div
+            class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[80vh] overflow-hidden slide-up">
             <!-- Header -->
             <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -1090,7 +1355,7 @@
     <!-- Quantity Selection Modal -->
     <div id="quantityModal"
         class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden slide-up">
             <!-- Header -->
             <div
                 class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-brand-yellow to-brand-pink">
