@@ -58,19 +58,142 @@
             font-family: 'Kanit', sans-serif;
         }
 
+        /* ========================================
+           GLASSMORPHISM & PREMIUM STYLES
+           ======================================== */
+
         .glass-effect {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
+        .dark .glass-effect {
+            background: rgba(31, 41, 55, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        }
+
+        .dark .glass-card {
+            background: rgba(31, 41, 55, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .glass-modal {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow:
+                0 25px 50px -12px rgba(0, 0, 0, 0.25),
+                0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+        }
+
+        .dark .glass-modal {
+            background: rgba(31, 41, 55, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow:
+                0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+        }
+
+        /* Enhanced Card Shadows */
         .card-shadow {
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s ease-in-out;
+            box-shadow:
+                0 4px 6px -1px rgba(0, 0, 0, 0.07),
+                0 2px 4px -1px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .card-shadow:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(-6px);
+            box-shadow:
+                0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Gradient Buttons */
+        .btn-gradient-primary {
+            background: linear-gradient(135deg, #FFD100 0%, #FFA500 100%);
+            color: #000;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-gradient-primary:hover {
+            background: linear-gradient(135deg, #FFE44D 0%, #FFB833 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 209, 0, 0.4);
+        }
+
+        .btn-gradient-pink {
+            background: linear-gradient(135deg, #FF4191 0%, #E90074 100%);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient-pink:hover {
+            background: linear-gradient(135deg, #FF69A7 0%, #FF1493 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 65, 145, 0.4);
+        }
+
+        /* Subtle Background Gradient */
+        .bg-gradient-subtle {
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+
+        .dark .bg-gradient-subtle {
+            background: linear-gradient(180deg, #111827 0%, #1f2937 100%);
+        }
+
+        /* Floating Shadow Effect */
+        .shadow-float {
+            box-shadow:
+                0 10px 15px -3px rgba(0, 0, 0, 0.08),
+                0 4px 6px -2px rgba(0, 0, 0, 0.04),
+                0 0 0 1px rgba(0, 0, 0, 0.02);
+        }
+
+        .shadow-float-lg {
+            box-shadow:
+                0 25px 50px -12px rgba(0, 0, 0, 0.15),
+                0 12px 24px -8px rgba(0, 0, 0, 0.08),
+                0 0 0 1px rgba(0, 0, 0, 0.02);
+        }
+
+        /* Glow Effects */
+        .glow-yellow {
+            box-shadow: 0 0 20px rgba(255, 209, 0, 0.3);
+        }
+
+        .glow-pink {
+            box-shadow: 0 0 20px rgba(255, 65, 145, 0.3);
+        }
+
+        /* Gradient Text */
+        .text-gradient {
+            background: linear-gradient(135deg, #FFD100 0%, #FF4191 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Inner Glow for Inputs */
+        .input-glow:focus {
+            box-shadow:
+                0 0 0 3px rgba(255, 209, 0, 0.2),
+                0 0 20px rgba(255, 209, 0, 0.1);
         }
 
         /* Skeleton Loading Animation */
@@ -1144,8 +1267,7 @@
     <!-- Equipment Detail Modal with Calendar -->
     <div id="equipmentDetailModal"
         class="hidden fixed inset-0 z-50 flex items-center justify-center bg-brand-black/80 backdrop-blur-sm p-4 overflow-y-auto">
-        <div
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden dark:bg-gray-800 border border-gray-200 slide-up">
+        <div class="glass-modal rounded-2xl w-full max-w-md overflow-hidden dark:bg-gray-800/95 slide-up">
             <!-- Header with Close Button -->
             <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100 dark:border-gray-700">
                 <h2 class="text-lg font-bold text-brand-black dark:text-white" data-i18n="equipmentDetails">Equipment
@@ -1316,8 +1438,7 @@
 
     <!-- Cart Modal -->
     <div id="cartModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center p-4">
-        <div
-            class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[80vh] overflow-hidden slide-up">
+        <div class="glass-modal dark:bg-gray-800/95 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden slide-up">
             <!-- Header -->
             <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -1355,7 +1476,7 @@
     <!-- Quantity Selection Modal -->
     <div id="quantityModal"
         class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden slide-up">
+        <div class="glass-modal dark:bg-gray-800/95 rounded-2xl max-w-sm w-full overflow-hidden slide-up">
             <!-- Header -->
             <div
                 class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-brand-yellow to-brand-pink">
