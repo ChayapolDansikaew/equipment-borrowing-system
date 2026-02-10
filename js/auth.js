@@ -109,7 +109,7 @@ window.handleLogout = function () {
     document.getElementById('loginError').classList.add('hidden');
 };
 
-window.checkSession = function () {
+window.checkSession = async function () {
     // Check for saved session in localStorage
     const savedUser = localStorage.getItem('currentUser');
 
@@ -133,8 +133,30 @@ window.checkSession = function () {
                 return;
             }
 
+            // Re-fetch role from database to sync with any admin changes
+            if (window.supabaseClient && userData.id) {
+                try {
+                    const { data: freshUser, error } = await window.supabaseClient
+                        .from('users')
+                        .select('role')
+                        .eq('id', userData.id)
+                        .single();
+
+                    if (!error && freshUser) {
+                        if (userData.role !== freshUser.role) {
+                            console.log(`Role updated: ${userData.role} → ${freshUser.role}`);
+                        }
+                        userData.role = freshUser.role;
+                    }
+                } catch (syncErr) {
+                    console.warn('Could not sync role from DB:', syncErr);
+                    // Continue with cached role if DB is unreachable
+                }
+            }
+
             window.currentUser = userData;
-            console.log('Session restored for user:', window.currentUser.username);
+            localStorage.setItem('currentUser', JSON.stringify(window.currentUser));
+            console.log('Session restored for user:', window.currentUser.username, 'role:', window.currentUser.role);
             window.showMainApp();
         } catch (e) {
             console.error('Failed to parse saved session:', e);
