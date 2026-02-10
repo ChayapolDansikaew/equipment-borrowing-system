@@ -322,6 +322,9 @@ window.showMainApp = function () {
         // Hide pending requests button for regular users
         const pendingBtn = document.getElementById('pendingRequestsBtn');
         if (pendingBtn) pendingBtn.classList.add('hidden');
+        // Hide user management button for regular users
+        const userMgmtBtn = document.getElementById('userManagementBtn');
+        if (userMgmtBtn) userMgmtBtn.classList.add('hidden');
     }
 
     // Show cart button for all logged in users
