@@ -77,11 +77,11 @@ window.renderEquipments = function () {
             btnAction = '';
         } else if (isInCart) {
             btnClass = 'bg-green-500 text-white cursor-pointer hover:bg-green-600';
-            btnText = `<svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> ในตะกร้า (${cartItem.quantity})`;
+            btnText = `<svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> ${t.inCart} (${cartItem.quantity})`;
             btnAction = `onclick="openEquipmentDetail(${group.items[0].id})"`;
         } else {
             btnClass = 'bg-brand-yellow text-black hover:bg-yellow-400 shadow-md cursor-pointer';
-            btnText = '<svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg> ใส่ตะกร้า';
+            btnText = `<svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg> ${t.addToCart}`;
             btnAction = `onclick="openEquipmentDetail(${group.items[0].id})"`;
         }
 
@@ -369,6 +369,14 @@ window.updateTranslations = function () {
         if (t[key]) el.textContent = t[key];
     });
     document.getElementById('searchInput').placeholder = t.searchPlaceholder;
+
+    // Update textarea placeholder
+    const noteArea = document.getElementById('requestNote');
+    if (noteArea) noteArea.placeholder = t.notePlaceholder;
+
+    // Update tooltip for myRequestsBtn
+    const myReqBtn = document.getElementById('myRequestsBtn');
+    if (myReqBtn) myReqBtn.title = t.myRequests;
 
     const overviewBtn = document.getElementById('overviewBtn');
     if (document.getElementById('overviewSection').classList.contains('hidden')) {

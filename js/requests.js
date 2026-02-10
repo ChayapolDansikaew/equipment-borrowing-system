@@ -81,7 +81,8 @@ window.requests = {
 // เปิด Request Form Modal
 window.openRequestForm = function () {
     if (window.cart.items.length === 0) {
-        window.showToast?.('กรุณาเลือกอุปกรณ์ก่อน', 'warning');
+        const t = window.translations[window.currentLang];
+        window.showToast?.(t.selectEquipmentFirst, 'warning');
         return;
     }
 
@@ -139,13 +140,15 @@ window.submitBorrowRequest = function () {
     const endDate = document.getElementById('requestEndDate').value;
     const note = document.getElementById('requestNote').value;
 
+    const t = window.translations[window.currentLang];
+
     if (!startDate || !endDate) {
-        window.showToast?.('กรุณาเลือกวันยืม-คืน', 'warning');
+        window.showToast?.(t.selectBorrowDates, 'warning');
         return;
     }
 
     if (new Date(startDate) > new Date(endDate)) {
-        window.showToast?.('วันสิ้นสุดต้องหลังวันเริ่มต้น', 'warning');
+        window.showToast?.(t.endDateAfterStart, 'warning');
         return;
     }
 
@@ -154,7 +157,7 @@ window.submitBorrowRequest = function () {
 
     if (request) {
         closeRequestForm();
-        window.showToast?.('ส่งคำขอยืมสำเร็จ! รอการอนุมัติ', 'success');
+        window.showToast?.(t.requestSentSuccess, 'success');
 
         // Refresh equipment list
         if (typeof window.renderEquipments === 'function') {
@@ -192,12 +195,13 @@ function renderPendingRequests() {
     const pendingRequests = window.requests.getPendingRequests();
 
     if (pendingRequests.length === 0) {
+        const t = window.translations[window.currentLang];
         container.innerHTML = `
             <div class="text-center py-8 text-gray-500">
                 <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
-                <p class="text-lg font-medium">ไม่มีคำขอที่รออนุมัติ</p>
+                <p class="text-lg font-medium">${t.noPendingRequests}</p>
             </div>
         `;
         updatePendingBadge(0);
@@ -205,6 +209,7 @@ function renderPendingRequests() {
     }
 
     let totalPending = 0;
+    const t = window.translations[window.currentLang];
     container.innerHTML = pendingRequests.map(request => {
         const pendingItems = request.items.filter(item => item.status === 'pending');
         totalPending += pendingItems.length;
@@ -224,10 +229,10 @@ function renderPendingRequests() {
                         ${pendingItems.length > 1 ? `
                             <button onclick="approveAllItems('${request.id}')" 
                                 class="px-3 py-1.5 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 transition-colors cursor-pointer">
-                                ✓ อนุมัติทั้งหมด
+                                ${t.approveAll}
                             </button>
                         ` : ''}
-                        <span class="px-2 py-1 bg-orange-100 text-orange-600 text-xs font-bold rounded-full">${pendingItems.length} รอดำเนินการ</span>
+                        <span class="px-2 py-1 bg-orange-100 text-orange-600 text-xs font-bold rounded-full">${pendingItems.length} ${t.pendingCount}</span>
                     </div>
                 </div>
                 
@@ -236,8 +241,8 @@ function renderPendingRequests() {
                     ${request.items.map(item => {
             if (item.status !== 'pending') {
                 const statusBadge = item.status === 'approved'
-                    ? '<span class="px-2 py-0.5 bg-green-100 text-green-600 text-xs rounded-full">อนุมัติแล้ว</span>'
-                    : '<span class="px-2 py-0.5 bg-red-100 text-red-600 text-xs rounded-full">ปฏิเสธแล้ว</span>';
+                    ? `<span class="px-2 py-0.5 bg-green-100 text-green-600 text-xs rounded-full">${t.approved}</span>`
+                    : `<span class="px-2 py-0.5 bg-red-100 text-red-600 text-xs rounded-full">${t.rejected}</span>`;
                 return `
                                 <div class="flex items-center gap-3 p-2 bg-white dark:bg-gray-800 rounded-lg opacity-60">
                                     <img src="${item.image}" alt="${item.name}" class="w-10 h-10 object-cover rounded">
@@ -253,11 +258,11 @@ function renderPendingRequests() {
                                 <div class="flex gap-1">
                                     <button onclick="approveItem('${request.id}', '${item.name}')" 
                                         class="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 transition-colors cursor-pointer">
-                                        อนุมัติ
+                                        ${t.approve}
                                     </button>
                                     <button onclick="rejectItem('${request.id}', '${item.name}')" 
                                         class="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-lg hover:bg-red-600 transition-colors cursor-pointer">
-                                        ปฏิเสธ
+                                        ${t.reject}
                                     </button>
                                 </div>
                             </div>
@@ -274,7 +279,8 @@ function renderPendingRequests() {
 // Format date helper
 function formatDate(dateStr) {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+    const locale = window.currentLang === 'th' ? 'th-TH' : 'en-US';
+    return date.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 }
 
 // Update pending badge
@@ -291,14 +297,15 @@ window.approveItem = async function (requestId, itemName) {
     // Get the request to find details
     const requests = window.requests.getAll();
     const request = requests.find(r => r.id === requestId);
+    const t = window.translations[window.currentLang];
     if (!request) {
-        window.showToast?.('ไม่พบคำขอ', 'error');
+        window.showToast?.(t.requestNotFound, 'error');
         return;
     }
 
     const item = request.items.find(i => i.name === itemName);
     if (!item) {
-        window.showToast?.('ไม่พบอุปกรณ์', 'error');
+        window.showToast?.(t.equipmentNotFound, 'error');
         return;
     }
 
@@ -351,7 +358,7 @@ window.approveItem = async function (requestId, itemName) {
         const success = window.requests.updateItemStatus(requestId, itemName, 'approved');
 
         if (success) {
-            window.showToast?.(`อนุมัติ ${itemName} (${quantity} ชิ้น) สำเร็จ`, 'success');
+            window.showToast?.(`${t.approve} ${itemName} (${quantity} ${t.pieces}) ✓`, 'success');
             renderPendingRequests();
             // Refresh equipment list
             window.fetchEquipments?.();
@@ -362,17 +369,18 @@ window.approveItem = async function (requestId, itemName) {
         }
     } catch (err) {
         console.error('Approve error:', err);
-        window.showToast?.('เกิดข้อผิดพลาดในการอนุมัติ', 'error');
+        window.showToast?.(t.approveError, 'error');
     }
 };
 
 // Reject an item
 window.rejectItem = function (requestId, itemName) {
-    const reason = prompt('เหตุผลที่ปฏิเสธ (ไม่บังคับ):');
+    const t = window.translations[window.currentLang];
+    const reason = prompt(t.rejectionReasonPrompt);
     if (reason === null) return; // User cancelled
     const success = window.requests.updateItemStatus(requestId, itemName, 'rejected', reason || '');
     if (success) {
-        window.showToast?.('ปฏิเสธคำขอแล้ว', 'info');
+        window.showToast?.(t.rejectedSuccess, 'info');
         renderPendingRequests();
     }
 };
@@ -381,19 +389,20 @@ window.rejectItem = function (requestId, itemName) {
 window.approveAllItems = async function (requestId) {
     const requests = window.requests.getAll();
     const request = requests.find(r => r.id === requestId);
+    const t = window.translations[window.currentLang];
     if (!request) {
-        window.showToast?.('ไม่พบคำขอ', 'error');
+        window.showToast?.(t.requestNotFound, 'error');
         return;
     }
 
     const pendingItems = request.items.filter(i => i.status === 'pending');
     if (pendingItems.length === 0) {
-        window.showToast?.('ไม่มีรายการรออนุมัติ', 'info');
+        window.showToast?.(t.noPendingItems, 'info');
         return;
     }
 
     // Confirm action
-    if (!confirm(`ต้องการอนุมัติทั้งหมด ${pendingItems.length} รายการ?`)) {
+    if (!confirm(`${t.approveAll} ${pendingItems.length}?`)) {
         return;
     }
 
@@ -444,7 +453,7 @@ window.approveAllItems = async function (requestId) {
         }
 
         if (successCount > 0) {
-            window.showToast?.(`อนุมัติ ${successCount} รายการสำเร็จ`, 'success');
+            window.showToast?.(`${t.approve} ${successCount} ✓`, 'success');
             renderPendingRequests();
             window.fetchEquipments?.();
 
@@ -455,7 +464,7 @@ window.approveAllItems = async function (requestId) {
         }
     } catch (err) {
         console.error('Approve all error:', err);
-        window.showToast?.('เกิดข้อผิดพลาด', 'error');
+        window.showToast?.(t.approveError, 'error');
     }
 };
 
@@ -499,21 +508,24 @@ function renderMyRequests() {
     const myRequests = window.requests.getMyRequests();
 
     if (myRequests.length === 0) {
+        const t = window.translations[window.currentLang];
         container.innerHTML = `
             <div class="text-center py-8 text-gray-500">
                 <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
-                <p class="text-lg font-medium">ยังไม่มีคำขอยืม</p>
-                <p class="text-sm">เลือกอุปกรณ์และส่งคำขอเพื่อเริ่มต้น</p>
+                <p class="text-lg font-medium">${t.noRequests}</p>
+                <p class="text-sm">${t.noRequestsDesc}</p>
             </div>
         `;
         return;
     }
 
+    const t = window.translations[window.currentLang];
     container.innerHTML = myRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map(request => {
         const dateRange = `${formatDate(request.startDate)} - ${formatDate(request.endDate)}`;
-        const createdDate = new Date(request.createdAt).toLocaleDateString('th-TH', {
+        const locale = window.currentLang === 'th' ? 'th-TH' : 'en-US';
+        const createdDate = new Date(request.createdAt).toLocaleDateString(locale, {
             day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
         });
 
@@ -523,12 +535,12 @@ function renderMyRequests() {
                 <div class="flex items-center justify-between mb-3 pb-3 border-b border-gray-200 dark:border-gray-600">
                     <div>
                         <p class="text-sm font-semibold text-gray-900 dark:text-white">📅 ${dateRange}</p>
-                        <p class="text-xs text-gray-400">ส่งเมื่อ: ${createdDate}</p>
+                        <p class="text-xs text-gray-400">${t.sentOn}: ${createdDate}</p>
                         ${request.note ? `<p class="text-xs text-gray-500 mt-1">📝 ${request.note}</p>` : ''}
                     </div>
                     <button onclick="deleteMyRequest('${request.id}')" 
                         class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                        title="ลบคำขอนี้">
+                        title="${t.deleteRequest}">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                         </svg>
@@ -540,13 +552,13 @@ function renderMyRequests() {
                     ${request.items.map(item => {
             let statusBadge, statusBg;
             if (item.status === 'approved') {
-                statusBadge = '<span class="px-2 py-0.5 bg-green-100 text-green-600 text-xs font-bold rounded-full">อนุมัติแล้ว</span>';
+                statusBadge = `<span class="px-2 py-0.5 bg-green-100 text-green-600 text-xs font-bold rounded-full">${t.approved}</span>`;
                 statusBg = '';
             } else if (item.status === 'rejected') {
-                statusBadge = '<span class="px-2 py-0.5 bg-red-100 text-red-600 text-xs font-bold rounded-full">ถูกปฏิเสธ</span>';
+                statusBadge = `<span class="px-2 py-0.5 bg-red-100 text-red-600 text-xs font-bold rounded-full">${t.rejected}</span>`;
                 statusBg = 'opacity-60';
             } else {
-                statusBadge = '<span class="px-2 py-0.5 bg-orange-100 text-orange-600 text-xs font-bold rounded-full animate-pulse">รออนุมัติ</span>';
+                statusBadge = `<span class="px-2 py-0.5 bg-orange-100 text-orange-600 text-xs font-bold rounded-full animate-pulse">${t.pendingApproval}</span>`;
                 statusBg = '';
             }
             return `
@@ -555,7 +567,7 @@ function renderMyRequests() {
                                 <span class="flex-1 text-sm font-medium">${item.name}</span>
                                 ${statusBadge}
                             </div>
-                            ${item.status === 'rejected' && item.rejectionReason ? `<p class="text-xs text-red-400 ml-13 pl-12">เหตุผล: ${item.rejectionReason}</p>` : ''}
+                            ${item.status === 'rejected' && item.rejectionReason ? `<p class="text-xs text-red-400 ml-13 pl-12">${t.reason}: ${item.rejectionReason}</p>` : ''}
                         `;
         }).join('')}
                 </div>
@@ -566,10 +578,11 @@ function renderMyRequests() {
 
 // ลบคำขอของ user
 window.deleteMyRequest = function (requestId) {
-    if (!confirm('ต้องการลบคำขอนี้หรือไม่?')) return;
+    const t = window.translations[window.currentLang];
+    if (!confirm(t.confirmDeleteRequest)) return;
 
     window.requests.delete(requestId);
-    window.showToast?.('ลบคำขอแล้ว', 'info');
+    window.showToast?.(t.rejectedSuccess, 'info');
     renderMyRequests();
 };
 

@@ -94,7 +94,50 @@ window.translations = {
         myBorrowingsDesc: 'รายการอุปกรณ์ที่คุณกำลังยืมอยู่',
         noItemsDesc: 'คุณยังไม่ได้ยืมอุปกรณ์ใดๆ ในขณะนี้',
         browseEquipments: 'เลือกยืมอุปกรณ์',
-        daysRemaining: 'วัน'
+        daysRemaining: 'วัน',
+        // Cart
+        addToCart: 'ใส่ตะกร้า',
+        inCart: 'ในตะกร้า',
+        cartTitle: 'ตะกร้าอุปกรณ์',
+        cartEmpty: 'ตะกร้าว่างเปล่า',
+        cartEmptyDesc: 'เลือกอุปกรณ์ที่ต้องการยืม',
+        pieces: 'ชิ้น',
+        submitRequest: 'ส่งคำขอยืม',
+        // Request Form
+        selectedEquipments: 'อุปกรณ์ที่เลือก',
+        borrowStartDate: 'วันเริ่มยืม',
+        returnDate: 'วันคืน',
+        noteOptional: 'หมายเหตุ (ไม่บังคับ)',
+        notePlaceholder: 'ระบุเหตุผลหรือรายละเอียดเพิ่มเติม...',
+        confirmSubmit: 'ยืนยันส่งคำขอ',
+        // My Requests
+        myRequests: 'คำขอของฉัน',
+        noRequests: 'ยังไม่มีคำขอยืม',
+        noRequestsDesc: 'เลือกอุปกรณ์และส่งคำขอเพื่อเริ่มต้น',
+        sentOn: 'ส่งเมื่อ',
+        deleteRequest: 'ลบคำขอนี้',
+        approved: 'อนุมัติแล้ว',
+        rejected: 'ถูกปฏิเสธ',
+        pendingApproval: 'รออนุมัติ',
+        reason: 'เหตุผล',
+        // Pending Requests (Admin)
+        noPendingRequests: 'ไม่มีคำขอที่รออนุมัติ',
+        approveAll: '✓ อนุมัติทั้งหมด',
+        pendingCount: 'รอดำเนินการ',
+        approve: 'อนุมัติ',
+        reject: 'ปฏิเสธ',
+        // Toast Messages
+        selectEquipmentFirst: 'กรุณาเลือกอุปกรณ์ก่อน',
+        selectBorrowDates: 'กรุณาเลือกวันยืม-คืน',
+        endDateAfterStart: 'วันสิ้นสุดต้องหลังวันเริ่มต้น',
+        requestSentSuccess: 'ส่งคำขอยืมสำเร็จ! รอการอนุมัติ',
+        requestNotFound: 'ไม่พบคำขอ',
+        equipmentNotFound: 'ไม่พบอุปกรณ์',
+        confirmDeleteRequest: 'ต้องการลบคำขอนี้หรือไม่?',
+        rejectionReasonPrompt: 'เหตุผลที่ปฏิเสธ (ไม่บังคับ):',
+        rejectedSuccess: 'ปฏิเสธคำขอแล้ว',
+        approveError: 'เกิดข้อผิดพลาดในการอนุมัติ',
+        noPendingItems: 'ไม่มีรายการรออนุมัติ'
     },
     en: {
         overview: 'Overview',
@@ -166,7 +209,50 @@ window.translations = {
         myBorrowingsDesc: 'Equipment you are currently borrowing',
         noItemsDesc: 'You have not borrowed any equipment yet',
         browseEquipments: 'Browse Equipment',
-        daysRemaining: 'days'
+        daysRemaining: 'days',
+        // Cart
+        addToCart: 'Add to Cart',
+        inCart: 'In Cart',
+        cartTitle: 'Equipment Cart',
+        cartEmpty: 'Cart is empty',
+        cartEmptyDesc: 'Select equipment to borrow',
+        pieces: 'pcs',
+        submitRequest: 'Submit Request',
+        // Request Form
+        selectedEquipments: 'Selected Equipment',
+        borrowStartDate: 'Start Date',
+        returnDate: 'Return Date',
+        noteOptional: 'Note (Optional)',
+        notePlaceholder: 'Specify reason or additional details...',
+        confirmSubmit: 'Confirm & Submit',
+        // My Requests
+        myRequests: 'My Requests',
+        noRequests: 'No requests yet',
+        noRequestsDesc: 'Select equipment and submit a request to get started',
+        sentOn: 'Sent on',
+        deleteRequest: 'Delete this request',
+        approved: 'Approved',
+        rejected: 'Rejected',
+        pendingApproval: 'Pending',
+        reason: 'Reason',
+        // Pending Requests (Admin)
+        noPendingRequests: 'No pending requests',
+        approveAll: '✓ Approve All',
+        pendingCount: 'pending',
+        approve: 'Approve',
+        reject: 'Reject',
+        // Toast Messages
+        selectEquipmentFirst: 'Please select equipment first',
+        selectBorrowDates: 'Please select borrow dates',
+        endDateAfterStart: 'End date must be after start date',
+        requestSentSuccess: 'Request sent successfully! Awaiting approval',
+        requestNotFound: 'Request not found',
+        equipmentNotFound: 'Equipment not found',
+        confirmDeleteRequest: 'Delete this request?',
+        rejectionReasonPrompt: 'Reason for rejection (optional):',
+        rejectedSuccess: 'Request rejected',
+        approveError: 'Error approving request',
+        noPendingItems: 'No items pending approval'
     }
 };
 
