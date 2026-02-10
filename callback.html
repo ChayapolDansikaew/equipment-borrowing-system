@@ -148,15 +148,24 @@
 
                 // Sync user to database and get actual role
                 try {
-                    const response = await fetch('/js/config.js');
-                    const configText = await response.text();
-                    const urlMatch = configText.match(/SUPABASE_URL\s*=\s*['"]([^'"]+)['"]/);
-                    const keyMatch = configText.match(/SUPABASE_KEY\s*=\s*['"]([^'"]+)['"]/);
+                    // Load env.js to get Supabase credentials
+                    await new Promise((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = '/js/env.js';
+                        script.onload = resolve;
+                        script.onerror = () => {
+                            console.warn('env.js not found, trying config.js fallback');
+                            resolve(); // Continue anyway
+                        };
+                        document.head.appendChild(script);
+                    });
 
-                    console.log('Config loaded, URL found:', !!urlMatch, 'Key found:', !!keyMatch);
-                    if (urlMatch && keyMatch) {
-                        const supabaseUrl = urlMatch[1];
-                        const supabaseKey = keyMatch[1];
+                    const supabaseUrl = window.ENV?.SUPABASE_URL;
+                    const supabaseKey = window.ENV?.SUPABASE_ANON_KEY;
+
+                    console.log('Supabase URL found:', !!supabaseUrl, 'Key found:', !!supabaseKey);
+
+                    if (supabaseUrl && supabaseKey && !supabaseUrl.startsWith('YOUR_')) {
 
                         // Check if user exists in database
                         const checkResponse = await fetch(
@@ -200,6 +209,8 @@
                                 userData.dbId = newUser[0].id;
                             }
                         }
+                    } else {
+                        console.warn('Supabase credentials not available — using SSO role');
                     }
                 } catch (syncError) {
                     console.warn('Could not sync user to database:', syncError);

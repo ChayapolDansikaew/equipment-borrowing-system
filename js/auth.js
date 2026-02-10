@@ -134,19 +134,29 @@ window.checkSession = async function () {
             }
 
             // Re-fetch role from database to sync with any admin changes
-            if (window.supabaseClient && userData.id) {
+            if (window.supabaseClient && (userData.dbId || userData.id || userData.username)) {
                 try {
-                    const { data: freshUser, error } = await window.supabaseClient
+                    // Use dbId (DB primary key) if available, otherwise query by username
+                    let query = window.supabaseClient
                         .from('users')
-                        .select('role')
-                        .eq('id', userData.id)
-                        .single();
+                        .select('id, role');
+
+                    if (userData.dbId) {
+                        query = query.eq('id', userData.dbId);
+                    } else if (userData.username) {
+                        query = query.eq('username', userData.username);
+                    } else {
+                        query = query.eq('id', userData.id);
+                    }
+
+                    const { data: freshUser, error } = await query.single();
 
                     if (!error && freshUser) {
                         if (userData.role !== freshUser.role) {
                             console.log(`Role updated: ${userData.role} → ${freshUser.role}`);
                         }
                         userData.role = freshUser.role;
+                        userData.dbId = freshUser.id; // Cache dbId for future use
                     }
                 } catch (syncErr) {
                     console.warn('Could not sync role from DB:', syncErr);
