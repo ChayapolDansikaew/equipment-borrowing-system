@@ -1,4 +1,7 @@
 // js/auth.js
+// =====================================================
+// AUTHENTICATION MODULE — Login, Logout, Session, SSO
+// =====================================================
 
 console.log('Auth loaded');
 
@@ -15,6 +18,14 @@ window.handleLogin = async function () {
     // Hide previous errors
     errorMsg.classList.add('hidden');
 
+    // [FIX 3] Rate Limiting — ตรวจว่าถูกล็อคหรือไม่
+    if (window.isLoginLocked && window.isLoginLocked()) {
+        const remaining = Math.ceil((window.LOGIN_RATE_LIMIT?.lockedUntil - Date.now()) / 1000);
+        errorMsg.textContent = `ล็อคการเข้าสู่ระบบ กรุณารอ ${remaining} วินาที`;
+        errorMsg.classList.remove('hidden');
+        return;
+    }
+
     // Validation
     if (!usernameInput || !passwordInput) {
         errorMsg.textContent = 'กรุณากรอก username และ password';
@@ -22,20 +33,27 @@ window.handleLogin = async function () {
         return;
     }
 
+    // [FIX 5] Input Sanitization
+    const sanitizedUsername = window.sanitizeInput ? window.sanitizeInput(usernameInput) : usernameInput;
+
     // Show loading state
     loginBtn.disabled = true;
     loginBtnText.classList.add('hidden');
     loginSpinner.classList.remove('hidden');
 
     try {
-        // Query user from Supabase
-        // WARNING: In production, use Supabase Auth or hashed passwords.
-        // This is a simple demo bypass/query.
+        // [FIX 2] Hash password ด้วย SHA-256 ก่อน query
+        let passwordToCompare = passwordInput;
+        if (window.hashPassword) {
+            passwordToCompare = await window.hashPassword(passwordInput);
+        }
+
+        // Query user from Supabase with hashed password
         const { data, error } = await window.supabaseClient
             .from('users')
             .select('*')
-            .eq('username', usernameInput)
-            .eq('password', passwordInput)
+            .eq('username', sanitizedUsername)
+            .eq('password', passwordToCompare)
             .single();
 
         if (error) {
@@ -43,14 +61,27 @@ window.handleLogin = async function () {
             if (error.code === 'PGRST116') {
                 errorMsg.textContent = 'Username หรือ Password ไม่ถูกต้อง';
             } else {
-                errorMsg.textContent = 'เกิดข้อผิดพลาด: ' + error.message;
+                errorMsg.textContent = 'เกิดข้อผิดพลาด กรุณาลองใหม่';
             }
             errorMsg.classList.remove('hidden');
+
+            // [FIX 3] Record failed attempt
+            if (window.recordFailedLogin) {
+                window.recordFailedLogin();
+            }
             return;
         }
 
-        // Login Success
-        window.currentUser = data;
+        // [FIX 3] Reset attempts on success
+        if (window.resetLoginAttempts) {
+            window.resetLoginAttempts();
+        }
+
+        // [FIX 4] Login Success — เพิ่ม loginTime สำหรับ session expiry
+        window.currentUser = {
+            ...data,
+            loginTime: new Date().toISOString()
+        };
         localStorage.setItem('currentUser', JSON.stringify(window.currentUser));
         window.showMainApp();
 
@@ -84,13 +115,30 @@ window.checkSession = function () {
 
     if (savedUser) {
         try {
-            window.currentUser = JSON.parse(savedUser);
+            const userData = JSON.parse(savedUser);
+
+            // [FIX 4] Validate session integrity & expiry
+            if (window.validateSession && !window.validateSession(userData)) {
+                console.warn('Session invalid or expired, forcing logout');
+                localStorage.removeItem('currentUser');
+                document.getElementById('loginSection').classList.remove('hidden');
+                document.getElementById('mainApp').classList.add('hidden');
+
+                // แสดงข้อความ session หมดอายุ
+                const errorMsg = document.getElementById('loginError');
+                if (errorMsg) {
+                    errorMsg.textContent = 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่';
+                    errorMsg.classList.remove('hidden');
+                }
+                return;
+            }
+
+            window.currentUser = userData;
             console.log('Session restored for user:', window.currentUser.username);
             window.showMainApp();
         } catch (e) {
             console.error('Failed to parse saved session:', e);
             localStorage.removeItem('currentUser');
-            // Show login page
             document.getElementById('loginSection').classList.remove('hidden');
             document.getElementById('mainApp').classList.add('hidden');
         }
