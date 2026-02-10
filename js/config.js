@@ -87,7 +87,14 @@ window.translations = {
         useCartToBook: 'ใช้ปุ่มตะกร้าเพื่อยืม',
         equipmentDetails: 'รายละเอียดอุปกรณ์',
         totalDuration: 'ระยะเวลา',
-        days: 'วัน'
+        days: 'วัน',
+        // Labels
+        search: 'ค้นหา',
+        statusLabel: 'สถานะ',
+        myBorrowingsDesc: 'รายการอุปกรณ์ที่คุณกำลังยืมอยู่',
+        noItemsDesc: 'คุณยังไม่ได้ยืมอุปกรณ์ใดๆ ในขณะนี้',
+        browseEquipments: 'เลือกยืมอุปกรณ์',
+        daysRemaining: 'วัน'
     },
     en: {
         overview: 'Overview',
@@ -152,7 +159,14 @@ window.translations = {
         useCartToBook: 'Use the cart button to borrow',
         equipmentDetails: 'Equipment Details',
         totalDuration: 'Duration',
-        days: 'days'
+        days: 'days',
+        // Labels
+        search: 'Search',
+        statusLabel: 'Status',
+        myBorrowingsDesc: 'Equipment you are currently borrowing',
+        noItemsDesc: 'You have not borrowed any equipment yet',
+        browseEquipments: 'Browse Equipment',
+        daysRemaining: 'days'
     }
 };
 

@@ -199,9 +199,9 @@ window.renderMyBorrowings = function (transactions) {
                 // Calculate days remaining
                 const daysRemaining = Math.ceil((endDay - today) / (1000 * 60 * 60 * 24));
                 if (daysRemaining <= 2) {
-                    statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">${daysRemaining} วัน</span>`;
+                    statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">${daysRemaining} ${t.daysRemaining}</span>`;
                 } else {
-                    statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-600">${daysRemaining} วัน</span>`;
+                    statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-600">${daysRemaining} ${t.daysRemaining}</span>`;
                 }
             }
         }
@@ -355,6 +355,10 @@ window.toggleLanguage = function () {
     }
     if (!document.getElementById('overviewSection').classList.contains('hidden')) {
         window.fetchOverviewData();
+    }
+    // Re-render My Borrowings if visible
+    if (!document.getElementById('myBorrowingsSection').classList.contains('hidden')) {
+        window.fetchMyBorrowings();
     }
 };
 

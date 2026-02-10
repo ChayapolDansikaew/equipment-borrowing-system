@@ -883,7 +883,8 @@
                         <!-- Search Input -->
                         <div class="lg:col-span-1">
                             <label
-                                class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block">ค้นหา</label>
+                                class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block"
+                                data-i18n="search">ค้นหา</label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                     <svg class="h-5 w-5 text-brand-yellow" fill="none" viewBox="0 0 24 24"
@@ -926,7 +927,8 @@
                         <!-- Status Filter Buttons -->
                         <div class="flex-1">
                             <label
-                                class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block">สถานะ</label>
+                                class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block"
+                                data-i18n="statusLabel">สถานะ</label>
                             <div class="flex gap-2 flex-wrap">
                                 <button onclick="filterStatus('all')" id="btn-all"
                                     class="filter-btn px-4 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-brand-black to-gray-800 text-brand-yellow shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200 whitespace-nowrap"
@@ -1024,7 +1026,8 @@
                             <div>
                                 <h2 class="text-lg font-bold text-brand-black" data-i18n="myBorrowings">ของที่ฉันยืม
                                 </h2>
-                                <p class="text-xs text-gray-500">รายการอุปกรณ์ที่คุณกำลังยืมอยู่</p>
+                                <p class="text-xs text-gray-500" data-i18n="myBorrowingsDesc">
+                                    รายการอุปกรณ์ที่คุณกำลังยืมอยู่</p>
                             </div>
                         </div>
                         <button onclick="fetchMyBorrowings()"
@@ -1034,7 +1037,7 @@
                                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
                                 </path>
                             </svg>
-                            Refresh
+                            <span data-i18n="refresh">Refresh</span>
                         </button>
                     </div>
 
@@ -1057,10 +1060,11 @@
                             </div>
                             <h3 class="text-lg font-bold text-gray-400 mb-2" data-i18n="noActiveBorrowings">
                                 ไม่มีรายการยืม</h3>
-                            <p class="text-sm text-gray-400">คุณยังไม่ได้ยืมอุปกรณ์ใดๆ ในขณะนี้</p>
+                            <p class="text-sm text-gray-400" data-i18n="noItemsDesc">คุณยังไม่ได้ยืมอุปกรณ์ใดๆ ในขณะนี้
+                            </p>
                             <button onclick="filterStatus('all')"
                                 class="mt-6 px-6 py-2 bg-brand-yellow text-brand-black font-bold rounded-lg hover:bg-brand-pink hover:text-white transition-colors">
-                                เลือกยืมอุปกรณ์
+                                <span data-i18n="browseEquipments">เลือกยืมอุปกรณ์</span>
                             </button>
                         </div>
                     </div>
