@@ -691,56 +691,29 @@
         <!-- Navbar -->
         <header class="bg-[#16181d] sticky top-0 z-40 border-b border-white/[0.06]">
             <div class="container mx-auto px-4 md:px-6 h-14 flex justify-between items-center">
-                <!-- Left: Logo + Name -->
-                <div class="flex items-center gap-2.5">
-                    <img src="images/sciren-logo.png" alt="SciREN Logo" class="w-7 h-7 rounded-md object-cover">
-                    <h1 class="font-semibold text-[15px] tracking-tight text-white/90">Equipment Borrowing</h1>
+
+                <!-- Left: Logo + Nav Links -->
+                <div class="flex items-center gap-6">
+                    <!-- Logo -->
+                    <div class="flex items-center gap-2.5 shrink-0">
+                        <img src="images/sciren-logo.png" alt="SciREN Logo" class="w-7 h-7 rounded-md object-cover">
+                        <h1 class="font-semibold text-[15px] tracking-tight text-white/90 hidden sm:block">Equipment
+                            Borrowing</h1>
+                    </div>
+
+                    <!-- Desktop Text Nav Links (md+) -->
+                    <nav class="hidden md:flex items-center gap-1" id="desktopNav">
+                        <button onclick="toggleOverview()" id="overviewBtn"
+                            class="hidden nav-link px-3 py-1.5 rounded-md text-[13px] font-medium text-gray-400 hover:text-white hover:bg-white/[0.06] transition-all duration-150"
+                            data-i18n="overview">ภาพรวม</button>
+                        <button onclick="toggleHistoryPage()" id="historyBtn"
+                            class="hidden nav-link px-3 py-1.5 rounded-md text-[13px] font-medium text-gray-400 hover:text-white hover:bg-white/[0.06] transition-all duration-150"
+                            data-i18n="history">ประวัติ</button>
+                    </nav>
                 </div>
 
                 <!-- Right: Actions -->
-                <div class="flex items-center gap-0.5">
-
-                    <!-- === Global Nav Icons (Desktop md+) === -->
-
-                    <!-- Overview (admin) -->
-                    <button onclick="toggleOverview()" id="overviewBtn"
-                        class="hidden p-2 rounded-lg text-gray-400 hover:text-brand-yellow hover:bg-white/[0.06] transition-all duration-150"
-                        title="ภาพรวม" data-i18n-title="overview">
-                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            stroke-width="1.8">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                            </path>
-                        </svg>
-                    </button>
-
-                    <!-- Pending Requests (admin) -->
-                    <button onclick="openPendingRequestsModal()" id="pendingRequestsBtn"
-                        class="hidden relative p-2 rounded-lg text-gray-400 hover:text-brand-yellow hover:bg-white/[0.06] transition-all duration-150"
-                        title="รออนุมัติ">
-                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            stroke-width="1.8">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
-                            </path>
-                        </svg>
-                        <span id="pendingBadge"
-                            class="hidden absolute -top-0.5 -right-0.5 bg-rose-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center ring-2 ring-[#16181d]">0</span>
-                    </button>
-
-                    <!-- History (all users) -->
-                    <button onclick="toggleHistoryPage()" id="historyBtn"
-                        class="hidden p-2 rounded-lg text-gray-400 hover:text-brand-yellow hover:bg-white/[0.06] transition-all duration-150"
-                        title="ประวัติ" data-i18n-title="history">
-                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            stroke-width="1.8">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </button>
-
-                    <!-- Divider before user actions -->
-                    <div class="hidden md:block w-px h-4 bg-white/[0.08] mx-1.5"></div>
+                <div class="flex items-center gap-1">
 
                     <!-- Cart (all users) -->
                     <button onclick="openCartModal()" id="cartBtn"
@@ -756,32 +729,34 @@
                             class="hidden absolute -top-0.5 -right-0.5 bg-rose-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center ring-2 ring-[#16181d]">0</span>
                     </button>
 
-                    <!-- My Requests (all users) -->
-                    <button onclick="openMyRequestsModal()" id="myRequestsBtn"
+                    <!-- Notification/Pending Bell (admin, desktop md+) -->
+                    <button onclick="openPendingRequestsModal()" id="pendingRequestsBtn"
                         class="hidden relative p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/[0.06] transition-all duration-150"
-                        title="คำขอของฉัน" aria-label="My requests">
+                        title="คำขอรออนุมัติ" aria-label="Pending requests">
                         <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                             stroke-width="1.8">
                             <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
                             </path>
                         </svg>
+                        <span id="pendingBadge"
+                            class="hidden absolute -top-0.5 -right-0.5 bg-rose-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center ring-2 ring-[#16181d]">0</span>
                     </button>
 
                     <!-- Add Equipment CTA (admin, desktop md+) -->
                     <button onclick="openManageModal()" id="addBtn"
-                        class="hidden ml-1 px-3 py-1.5 text-xs font-semibold text-brand-yellow border border-brand-yellow/30 hover:bg-brand-yellow hover:text-brand-black rounded-lg transition-all duration-150"
+                        class="hidden ml-0.5 px-3 py-1.5 text-xs font-semibold text-brand-yellow border border-brand-yellow/30 hover:bg-brand-yellow hover:text-brand-black rounded-lg transition-all duration-150"
                         data-i18n="addEquipment">+ เพิ่ม</button>
 
                     <!-- Divider -->
                     <div class="hidden md:block w-px h-4 bg-white/[0.08] mx-1.5"></div>
 
-                    <!-- === Utilities === -->
+                    <!-- Utilities (desktop md+) -->
                     <button onclick="toggleLanguage()"
-                        class="p-2 rounded-lg hover:bg-white/[0.06] transition-all duration-150 text-gray-500 hover:text-gray-300 text-[11px] font-semibold tracking-wide w-8 text-center"
+                        class="hidden md:block p-2 rounded-lg hover:bg-white/[0.06] transition-all duration-150 text-gray-500 hover:text-gray-300 text-[11px] font-semibold tracking-wide w-8 text-center"
                         id="langDisplay">TH</button>
                     <button onclick="toggleTheme()"
-                        class="p-2 rounded-lg hover:bg-white/[0.06] transition-all duration-150 text-gray-400 hover:text-white"
+                        class="hidden md:block p-2 rounded-lg hover:bg-white/[0.06] transition-all duration-150 text-gray-400 hover:text-white"
                         aria-label="Toggle dark mode">
                         <svg id="themeIcon" class="w-[18px] h-[18px]" fill="none" stroke="currentColor"
                             viewBox="0 0 24 24" stroke-width="1.8">
@@ -793,7 +768,7 @@
                     <!-- Divider -->
                     <div class="hidden md:block w-px h-4 bg-white/[0.08] mx-1.5"></div>
 
-                    <!-- === User Avatar + Account Dropdown === -->
+                    <!-- User Avatar + Dropdown -->
                     <div class="relative">
                         <button onclick="toggleUserMenu()" id="userMenuBtn"
                             class="flex items-center gap-1.5 p-1 rounded-lg hover:bg-white/[0.06] transition-all duration-150"
@@ -808,9 +783,10 @@
                             </svg>
                         </button>
 
-                        <!-- Account Dropdown -->
+                        <!-- Dropdown -->
                         <div id="userMenuDropdown"
                             class="hidden absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#1e2028] rounded-xl shadow-2xl shadow-black/20 border border-gray-200/80 dark:border-white/[0.08] overflow-hidden z-50">
+
                             <!-- User Info -->
                             <div class="px-4 py-3 border-b border-gray-100 dark:border-white/[0.06]">
                                 <p id="menuUserDisplay" class="font-semibold text-gray-900 dark:text-white text-sm">
@@ -819,37 +795,10 @@
                                     class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-semibold tracking-wider bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-400 uppercase">admin</span>
                             </div>
 
-                            <!-- Mobile-only Nav Items (hidden on md+) -->
+                            <!-- Mobile Navigation (md:hidden) -->
                             <div class="md:hidden py-1.5 border-b border-gray-100 dark:border-white/[0.06]">
-                                <!-- Cart (mobile) -->
-                                <button id="mobileCartBtn" onclick="openCartModal(); closeUserMenu();"
-                                    class="hidden w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors">
-                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24" stroke-width="1.8">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
-                                        </path>
-                                    </svg>
-                                    <span data-i18n="cartTitle">ตะกร้าอุปกรณ์</span>
-                                    <span id="mobileCartBadge"
-                                        class="hidden ml-auto bg-rose-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">0</span>
-                                </button>
-
-                                <!-- My Requests (mobile) -->
-                                <button id="mobileMyRequestsBtn" onclick="openMyRequestsModal(); closeUserMenu();"
-                                    class="hidden w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors">
-                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24" stroke-width="1.8">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                                        </path>
-                                    </svg>
-                                    <span data-i18n="myRequests">คำขอของฉัน</span>
-                                </button>
-
-                                <!-- Overview (mobile, admin) -->
                                 <button id="mobileOverviewBtn" onclick="toggleOverview(); closeUserMenu();"
-                                    class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors">
+                                    class="hidden w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors">
                                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24" stroke-width="1.8">
                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -858,10 +807,8 @@
                                     </svg>
                                     <span data-i18n="overview">ภาพรวม</span>
                                 </button>
-
-                                <!-- History (mobile) -->
                                 <button id="mobileHistoryBtn" onclick="toggleHistoryPage(); closeUserMenu();"
-                                    class="hidden w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors">
+                                    class="hidden w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors">
                                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24" stroke-width="1.8">
                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -869,36 +816,20 @@
                                     </svg>
                                     <span data-i18n="history">ประวัติ</span>
                                 </button>
-
-                                <!-- Pending Requests (mobile, admin) -->
                                 <button id="mobilePendingBtn" onclick="openPendingRequestsModal(); closeUserMenu();"
-                                    class="hidden w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors">
+                                    class="hidden w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors">
                                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24" stroke-width="1.8">
                                         <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
                                         </path>
                                     </svg>
-                                    <span>รออนุมัติ</span>
+                                    <span>คำขอรออนุมัติ</span>
                                     <span id="mobilePendingBadge"
-                                        class="hidden ml-auto bg-rose-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">0</span>
+                                        class="hidden ml-auto bg-rose-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center">0</span>
                                 </button>
-
-                                <!-- User Management (mobile, admin) -->
-                                <button id="mobileUserMgmtBtn" onclick="openUserManagementModal(); closeUserMenu();"
-                                    class="hidden w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors">
-                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24" stroke-width="1.8">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z">
-                                        </path>
-                                    </svg>
-                                    <span>จัดการผู้ใช้</span>
-                                </button>
-
-                                <!-- Add Equipment (mobile, admin) -->
                                 <button id="mobileAddBtn" onclick="openManageModal(); closeUserMenu();"
-                                    class="hidden w-full flex items-center gap-3 px-4 py-2 text-sm text-brand-yellow dark:text-brand-yellow hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors font-medium">
+                                    class="hidden w-full flex items-center gap-3 px-4 py-2.5 text-sm text-brand-yellow dark:text-brand-yellow hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors font-medium">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                         stroke-width="1.8">
                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -908,10 +839,52 @@
                                 </button>
                             </div>
 
-                            <!-- Logout (always visible) -->
+                            <!-- Account Actions -->
+                            <div class="py-1.5 border-b border-gray-100 dark:border-white/[0.06]">
+                                <button id="menuMyRequestsBtn" onclick="openMyRequestsModal(); closeUserMenu();"
+                                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                        </path>
+                                    </svg>
+                                    <span data-i18n="myRequests">คำขอของฉัน</span>
+                                </button>
+                                <button id="mobileUserMgmtBtn" onclick="openUserManagementModal(); closeUserMenu();"
+                                    class="hidden w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z">
+                                        </path>
+                                    </svg>
+                                    <span>จัดการผู้ใช้</span>
+                                </button>
+                            </div>
+
+                            <!-- Settings (mobile only) -->
+                            <div class="md:hidden py-1.5 border-b border-gray-100 dark:border-white/[0.06]">
+                                <div class="flex items-center gap-2 px-4 py-2">
+                                    <button onclick="toggleLanguage()"
+                                        class="flex-1 py-1.5 rounded-md text-xs font-semibold text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors text-center"
+                                        id="mobileLangDisplay">TH / EN</button>
+                                    <button onclick="toggleTheme()"
+                                        class="flex-1 py-1.5 rounded-md text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors flex items-center justify-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                            stroke-width="1.8">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                                        </svg>
+                                        <span class="font-semibold">ธีม</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Logout -->
                             <div class="py-1.5">
                                 <button onclick="handleLogout()"
-                                    class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors">
+                                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                         stroke-width="1.8">
                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -928,519 +901,508 @@
         </header>
 
         <!-- Main Content -->
-        <main class="container mx-auto px-4 py-8">
 
-            <!-- Controls Section (Search & Filter) -->
-            <div id="controlsSection" class="container mx-auto px-4 md:px-6 pt-6 pb-4">
-                <!-- Main Controls Card -->
-                <div
-                    class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-xl shadow-gray-200/20 dark:shadow-black/20 p-4 md:p-6 mb-6">
+        <!-- Controls Section (Search & Filter) -->
+        <div id="controlsSection" class="container mx-auto px-4 md:px-6 pt-6 pb-4">
+            <!-- Main Controls Card -->
+            <div
+                class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-xl shadow-gray-200/20 dark:shadow-black/20 p-4 md:p-6 mb-6">
 
-                    <!-- Row 1: Search & Dates -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                        <!-- Search Input -->
-                        <div class="lg:col-span-1">
-                            <label
-                                class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block"
-                                data-i18n="search">ค้นหา</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <svg class="h-5 w-5 text-brand-yellow" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor" stroke-width="2.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                    </svg>
-                                </div>
-                                <input type="text" id="searchInput" placeholder="ค้นหาอุปกรณ์..."
-                                    class="w-full pl-12 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-brand-yellow focus:ring-4 focus:ring-brand-yellow/20 transition-all duration-200">
-                            </div>
-                        </div>
-
-                        <!-- Start Date -->
-                        <div>
-                            <label
-                                class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block"
-                                data-i18n="startDate">เริ่ม</label>
-                            <input type="date" id="startDate"
-                                class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-white focus:outline-none focus:border-brand-yellow focus:ring-4 focus:ring-brand-yellow/20 transition-all duration-200 cursor-pointer">
-                        </div>
-
-                        <!-- End Date -->
-                        <div>
-                            <label
-                                class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block"
-                                data-i18n="endDate">สิ้นสุด</label>
-                            <input type="date" id="endDate"
-                                class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-white focus:outline-none focus:border-brand-yellow focus:ring-4 focus:ring-brand-yellow/20 transition-all duration-200 cursor-pointer">
-                        </div>
-                    </div>
-
-                    <!-- Divider -->
-                    <div
-                        class="h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-600 to-transparent mb-4">
-                    </div>
-
-                    <!-- Row 2: Status & Category -->
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-                        <!-- Status Filter Buttons -->
-                        <div class="flex-1">
-                            <label
-                                class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block"
-                                data-i18n="statusLabel">สถานะ</label>
-                            <div class="flex gap-2 flex-wrap">
-                                <button onclick="filterStatus('all')" id="btn-all"
-                                    class="filter-btn px-4 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-brand-black to-gray-800 text-brand-yellow shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200 whitespace-nowrap"
-                                    data-i18n="all">ทั้งหมด</button>
-                                <button onclick="filterStatus('available')" id="btn-available"
-                                    class="filter-btn px-4 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/30 dark:hover:text-green-400 border border-gray-200 dark:border-gray-600 hover:border-green-300 transition-all duration-200 whitespace-nowrap"
-                                    data-i18n="available">ว่าง</button>
-                                <button onclick="filterStatus('borrowed')" id="btn-borrowed"
-                                    class="filter-btn px-4 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-900/30 dark:hover:text-orange-400 border border-gray-200 dark:border-gray-600 hover:border-orange-300 transition-all duration-200 whitespace-nowrap"
-                                    data-i18n="borrowed">ถูกยืม</button>
-                                <button onclick="filterStatus('my-items')" id="btn-my-items"
-                                    class="filter-btn px-4 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 border border-gray-200 dark:border-gray-600 hover:border-blue-300 transition-all duration-200 whitespace-nowrap"
-                                    data-i18n="myItems">ของฉัน</button>
-                            </div>
-                        </div>
-
-                        <!-- Category Filter -->
-                        <div class="w-full md:w-48">
-                            <label
-                                class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block"
-                                data-i18n="category">ประเภท</label>
-                            <select id="categoryFilter" onchange="filterByCategory(this.value)"
-                                class="w-full bg-gray-50 dark:bg-gray-700 text-sm font-bold text-gray-700 dark:text-white rounded-xl px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 focus:outline-none focus:border-brand-yellow focus:ring-4 focus:ring-brand-yellow/20 cursor-pointer transition-all duration-200">
-                                <option value="all" data-i18n="allCategories">ทั้งหมด</option>
-                                <option value="Camera">Camera</option>
-                                <option value="Lens">Lens</option>
-                                <option value="Audio">Audio</option>
-                                <option value="Lighting">Lighting</option>
-                                <option value="Accessory">Accessory</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Browse Section (Grid) -->
-            <div id="browseSection" class="container mx-auto px-6 pb-8">
-                <!-- Main Content anchor for skip link -->
-                <main id="mainContent" tabindex="-1">
-                    <!-- Equipment Grid -->
-                    <div id="equipmentGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        <!-- Cards will be injected here -->
-                        <div class="col-span-full text-center py-12 text-gray-400">
-                            Loading equipments...
-                        </div>
-                    </div>
-                </main>
-            </div>
-
-            <!-- Admin Return Section (Hidden by default) -->
-            <div id="returnSection" class="hidden container mx-auto px-6 pb-8">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                        <h2 class="text-lg font-bold text-brand-black" data-i18n="activeTransactions">Active
-                            Transactions
-                        </h2>
-                        <button onclick="fetchReturnData()"
-                            class="text-sm text-brand-pink hover:text-pink-700 font-bold uppercase transition-colors"
-                            data-i18n="refresh">รีเฟรช</button>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr
-                                    class="bg-white text-brand-grey text-xs uppercase tracking-wider border-b border-gray-100">
-                                    <th class="px-6 py-3 font-bold" data-i18n="equipment">Equipment</th>
-                                    <th class="px-6 py-3 font-bold" data-i18n="borrower">Borrower</th>
-                                    <th class="px-6 py-3 font-bold" data-i18n="date">Date</th>
-                                    <th class="px-6 py-3 font-bold" data-i18n="status">Status</th>
-                                    <th class="px-6 py-3 font-bold" data-i18n="action">ดำเนินการ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="returnTableBody" class="text-gray-700 text-sm">
-                                <!-- Rows -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- My Borrowings Section (For Users) -->
-            <div id="myBorrowingsSection" class="hidden container mx-auto px-6 pb-8">
-                <!-- Header -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div
-                        class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-brand-pink/10 to-white">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-brand-pink/20 flex items-center justify-center">
-                                <svg class="w-5 h-5 text-brand-pink" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                <!-- Row 1: Search & Dates -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                    <!-- Search Input -->
+                    <div class="lg:col-span-1">
+                        <label
+                            class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block"
+                            data-i18n="search">ค้นหา</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-brand-yellow" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </div>
-                            <div>
-                                <h2 class="text-lg font-bold text-brand-black" data-i18n="myBorrowings">ของที่ฉันยืม
-                                </h2>
-                                <p class="text-xs text-gray-500" data-i18n="myBorrowingsDesc">
-                                    รายการอุปกรณ์ที่คุณกำลังยืมอยู่</p>
-                            </div>
+                            <input type="text" id="searchInput" placeholder="ค้นหาอุปกรณ์..."
+                                class="w-full pl-12 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-brand-yellow focus:ring-4 focus:ring-brand-yellow/20 transition-all duration-200">
                         </div>
-                        <button onclick="fetchMyBorrowings()"
-                            class="flex items-center gap-2 text-sm text-brand-pink hover:text-pink-700 font-bold uppercase transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    </div>
+
+                    <!-- Start Date -->
+                    <div>
+                        <label
+                            class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block"
+                            data-i18n="startDate">เริ่ม</label>
+                        <input type="date" id="startDate"
+                            class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-white focus:outline-none focus:border-brand-yellow focus:ring-4 focus:ring-brand-yellow/20 transition-all duration-200 cursor-pointer">
+                    </div>
+
+                    <!-- End Date -->
+                    <div>
+                        <label
+                            class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block"
+                            data-i18n="endDate">สิ้นสุด</label>
+                        <input type="date" id="endDate"
+                            class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-white focus:outline-none focus:border-brand-yellow focus:ring-4 focus:ring-brand-yellow/20 transition-all duration-200 cursor-pointer">
+                    </div>
+                </div>
+
+                <!-- Divider -->
+                <div class="h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-600 to-transparent mb-4">
+                </div>
+
+                <!-- Row 2: Status & Category -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                    <!-- Status Filter Buttons -->
+                    <div class="flex-1">
+                        <label
+                            class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block"
+                            data-i18n="statusLabel">สถานะ</label>
+                        <div class="flex gap-2 flex-wrap">
+                            <button onclick="filterStatus('all')" id="btn-all"
+                                class="filter-btn px-4 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-brand-black to-gray-800 text-brand-yellow shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200 whitespace-nowrap"
+                                data-i18n="all">ทั้งหมด</button>
+                            <button onclick="filterStatus('available')" id="btn-available"
+                                class="filter-btn px-4 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/30 dark:hover:text-green-400 border border-gray-200 dark:border-gray-600 hover:border-green-300 transition-all duration-200 whitespace-nowrap"
+                                data-i18n="available">ว่าง</button>
+                            <button onclick="filterStatus('borrowed')" id="btn-borrowed"
+                                class="filter-btn px-4 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-900/30 dark:hover:text-orange-400 border border-gray-200 dark:border-gray-600 hover:border-orange-300 transition-all duration-200 whitespace-nowrap"
+                                data-i18n="borrowed">ถูกยืม</button>
+                            <button onclick="filterStatus('my-items')" id="btn-my-items"
+                                class="filter-btn px-4 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 border border-gray-200 dark:border-gray-600 hover:border-blue-300 transition-all duration-200 whitespace-nowrap"
+                                data-i18n="myItems">ของฉัน</button>
+                        </div>
+                    </div>
+
+                    <!-- Category Filter -->
+                    <div class="w-full md:w-48">
+                        <label
+                            class="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1.5 ml-1 uppercase tracking-wider block"
+                            data-i18n="category">ประเภท</label>
+                        <select id="categoryFilter" onchange="filterByCategory(this.value)"
+                            class="w-full bg-gray-50 dark:bg-gray-700 text-sm font-bold text-gray-700 dark:text-white rounded-xl px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 focus:outline-none focus:border-brand-yellow focus:ring-4 focus:ring-brand-yellow/20 cursor-pointer transition-all duration-200">
+                            <option value="all" data-i18n="allCategories">ทั้งหมด</option>
+                            <option value="Camera">Camera</option>
+                            <option value="Lens">Lens</option>
+                            <option value="Audio">Audio</option>
+                            <option value="Lighting">Lighting</option>
+                            <option value="Accessory">Accessory</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Browse Section (Grid) -->
+        <div id="browseSection" class="container mx-auto px-6 pb-8">
+            <!-- Main Content anchor for skip link -->
+            <main id="mainContent" tabindex="-1">
+                <!-- Equipment Grid -->
+                <div id="equipmentGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <!-- Cards will be injected here -->
+                    <div class="col-span-full text-center py-12 text-gray-400">
+                        Loading equipments...
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Admin Return Section (Hidden by default) -->
+        <div id="returnSection" class="hidden container mx-auto px-6 pb-8">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <h2 class="text-lg font-bold text-brand-black" data-i18n="activeTransactions">Active
+                        Transactions
+                    </h2>
+                    <button onclick="fetchReturnData()"
+                        class="text-sm text-brand-pink hover:text-pink-700 font-bold uppercase transition-colors"
+                        data-i18n="refresh">รีเฟรช</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr
+                                class="bg-white text-brand-grey text-xs uppercase tracking-wider border-b border-gray-100">
+                                <th class="px-6 py-3 font-bold" data-i18n="equipment">Equipment</th>
+                                <th class="px-6 py-3 font-bold" data-i18n="borrower">Borrower</th>
+                                <th class="px-6 py-3 font-bold" data-i18n="date">Date</th>
+                                <th class="px-6 py-3 font-bold" data-i18n="status">Status</th>
+                                <th class="px-6 py-3 font-bold" data-i18n="action">ดำเนินการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="returnTableBody" class="text-gray-700 text-sm">
+                            <!-- Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Borrowings Section (For Users) -->
+        <div id="myBorrowingsSection" class="hidden container mx-auto px-6 pb-8">
+            <!-- Header -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div
+                    class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-brand-pink/10 to-white">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-brand-pink/20 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-brand-pink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
-                                </path>
+                                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
                             </svg>
-                            <span data-i18n="refresh">Refresh</span>
-                        </button>
-                    </div>
-
-                    <!-- My Borrowings Cards Grid -->
-                    <div id="myBorrowingsContent" class="p-6">
-                        <div id="myBorrowingsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <!-- Cards will be injected here -->
                         </div>
-
-                        <!-- Empty State -->
-                        <div id="myBorrowingsEmpty" class="hidden text-center py-16">
-                            <div
-                                class="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
-                                <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
-                                    </path>
-                                </svg>
-                            </div>
-                            <h3 class="text-lg font-bold text-gray-400 mb-2" data-i18n="noActiveBorrowings">
-                                ไม่มีรายการยืม</h3>
-                            <p class="text-sm text-gray-400" data-i18n="noItemsDesc">คุณยังไม่ได้ยืมอุปกรณ์ใดๆ ในขณะนี้
-                            </p>
-                            <button onclick="filterStatus('all')"
-                                class="mt-6 px-6 py-2 bg-brand-yellow text-brand-black font-bold rounded-lg hover:bg-brand-pink hover:text-white transition-colors">
-                                <span data-i18n="browseEquipments">เลือกยืมอุปกรณ์</span>
-                            </button>
+                        <div>
+                            <h2 class="text-lg font-bold text-brand-black" data-i18n="myBorrowings">ของที่ฉันยืม
+                            </h2>
+                            <p class="text-xs text-gray-500" data-i18n="myBorrowingsDesc">
+                                รายการอุปกรณ์ที่คุณกำลังยืมอยู่</p>
                         </div>
                     </div>
+                    <button onclick="fetchMyBorrowings()"
+                        class="flex items-center gap-2 text-sm text-brand-pink hover:text-pink-700 font-bold uppercase transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                            </path>
+                        </svg>
+                        <span data-i18n="refresh">Refresh</span>
+                    </button>
                 </div>
-            </div>
-            <!-- Overview Section (Hidden by default) -->
 
-            <!-- Borrowing History Section (Hidden by default) -->
-            <div id="historySection" class="hidden container mx-auto px-4 md:px-6 pb-8">
-                <!-- Header -->
-                <div
-                    class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-xl shadow-gray-200/20 dark:shadow-black/20 overflow-hidden mb-6">
-                    <div
-                        class="px-4 md:px-6 py-4 border-b border-gray-200/50 dark:border-gray-700/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-gradient-to-r from-emerald-50 to-white dark:from-emerald-900/20 dark:to-gray-800">
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                                <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                            <div>
-                                <h2 class="text-lg font-bold text-brand-black dark:text-white"
-                                    data-i18n="borrowingHistory">ประวัติการยืม-คืน</h2>
-                                <p class="text-xs text-gray-500 dark:text-gray-400" data-i18n="borrowingHistoryDesc">
-                                    ประวัติการยืม-คืนอุปกรณ์ทั้งหมด</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <!-- Summary Stats Badges -->
-                            <span id="historyStatTotal"
-                                class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">0
-                                รายการ</span>
-                            <span id="historyStatReturned"
-                                class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">0
-                                คืนแล้ว</span>
-                            <span id="historyStatActive"
-                                class="px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400">0
-                                กำลังยืม</span>
-                        </div>
-                    </div>
-
-                    <!-- Filter Bar -->
-                    <div
-                        class="px-4 md:px-6 py-4 bg-gray-50/50 dark:bg-gray-900/30 border-b border-gray-200/50 dark:border-gray-700/50">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-                            <!-- Equipment Search -->
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                    </svg>
-                                </div>
-                                <input type="text" id="historySearchEquipment" placeholder="ค้นหาอุปกรณ์..."
-                                    oninput="applyHistoryFilters()"
-                                    class="w-full pl-9 pr-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition-all">
-                            </div>
-                            <!-- Borrower Search -->
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                </div>
-                                <input type="text" id="historySearchBorrower" placeholder="ค้นหาผู้ยืม..."
-                                    oninput="applyHistoryFilters()"
-                                    class="w-full pl-9 pr-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition-all">
-                            </div>
-                            <!-- Status Filter -->
-                            <select id="historyStatusFilter" onchange="applyHistoryFilters()"
-                                class="w-full bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-white rounded-lg px-3 py-2 border border-gray-200 dark:border-gray-600 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 cursor-pointer transition-all">
-                                <option value="all" data-i18n="allStatus">ทั้งหมด</option>
-                                <option value="active" data-i18n="activeStatus">กำลังยืม</option>
-                                <option value="returned" data-i18n="returnedStatus">คืนแล้ว</option>
-                                <option value="overdue" data-i18n="overdueStatus">เลยกำหนด</option>
-                            </select>
-                            <!-- Date From -->
-                            <input type="date" id="historyDateFrom" onchange="applyHistoryFilters()"
-                                class="w-full bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-white rounded-lg px-3 py-2 border border-gray-200 dark:border-gray-600 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 cursor-pointer transition-all">
-                            <!-- Date To -->
-                            <input type="date" id="historyDateTo" onchange="applyHistoryFilters()"
-                                class="w-full bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-white rounded-lg px-3 py-2 border border-gray-200 dark:border-gray-600 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 cursor-pointer transition-all">
-                        </div>
-                    </div>
-
-                    <!-- History Table -->
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr
-                                    class="bg-gray-50 dark:bg-gray-900/40 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider border-b border-gray-200/50 dark:border-gray-700/50">
-                                    <th class="px-4 md:px-6 py-3 font-bold" data-i18n="equipment">อุปกรณ์</th>
-                                    <th class="px-4 md:px-6 py-3 font-bold" data-i18n="borrower">ผู้ยืม</th>
-                                    <th class="px-4 md:px-6 py-3 font-bold" data-i18n="date">วันยืม</th>
-                                    <th class="px-4 md:px-6 py-3 font-bold" data-i18n="dueDate">กำหนดคืน</th>
-                                    <th class="px-4 md:px-6 py-3 font-bold" data-i18n="actualReturn">วันคืนจริง</th>
-                                    <th class="px-4 md:px-6 py-3 font-bold" data-i18n="status">สถานะ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="historyTableBody" class="text-gray-700 dark:text-gray-300 text-sm">
-                            </tbody>
-                        </table>
+                <!-- My Borrowings Cards Grid -->
+                <div id="myBorrowingsContent" class="p-6">
+                    <div id="myBorrowingsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Cards will be injected here -->
                     </div>
 
                     <!-- Empty State -->
-                    <div id="historyEmpty" class="hidden text-center py-16">
+                    <div id="myBorrowingsEmpty" class="hidden text-center py-16">
+                        <div class="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
+                                </path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-400 mb-2" data-i18n="noActiveBorrowings">
+                            ไม่มีรายการยืม</h3>
+                        <p class="text-sm text-gray-400" data-i18n="noItemsDesc">คุณยังไม่ได้ยืมอุปกรณ์ใดๆ ในขณะนี้
+                        </p>
+                        <button onclick="filterStatus('all')"
+                            class="mt-6 px-6 py-2 bg-brand-yellow text-brand-black font-bold rounded-lg hover:bg-brand-pink hover:text-white transition-colors">
+                            <span data-i18n="browseEquipments">เลือกยืมอุปกรณ์</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Overview Section (Hidden by default) -->
+
+        <!-- Borrowing History Section (Hidden by default) -->
+        <div id="historySection" class="hidden container mx-auto px-4 md:px-6 pb-8">
+            <!-- Header -->
+            <div
+                class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-xl shadow-gray-200/20 dark:shadow-black/20 overflow-hidden mb-6">
+                <div
+                    class="px-4 md:px-6 py-4 border-b border-gray-200/50 dark:border-gray-700/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-gradient-to-r from-emerald-50 to-white dark:from-emerald-900/20 dark:to-gray-800">
+                    <div class="flex items-center gap-3">
                         <div
-                            class="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-4">
-                            <svg class="w-10 h-10 text-gray-300 dark:text-gray-500" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
+                            class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                         </div>
-                        <h3 class="text-lg font-bold text-gray-400 mb-2" data-i18n="noHistoryRecords">
-                            ไม่พบประวัติการยืม-คืน</h3>
-                        <p class="text-sm text-gray-400" data-i18n="noHistoryDesc">ยังไม่มีรายการยืม-คืนในระบบ</p>
-                    </div>
-
-                    <!-- Pagination + Export -->
-                    <div id="historyPagination"
-                        class="hidden px-4 md:px-6 py-4 border-t border-gray-200/50 dark:border-gray-700/50 flex flex-col sm:flex-row justify-between items-center gap-3 bg-gray-50/30 dark:bg-gray-900/20">
-                        <div class="flex items-center gap-2">
-                            <span id="historyPageInfo"
-                                class="text-xs text-gray-500 dark:text-gray-400 font-medium"></span>
+                        <div>
+                            <h2 class="text-lg font-bold text-brand-black dark:text-white" data-i18n="borrowingHistory">
+                                ประวัติการยืม-คืน</h2>
+                            <p class="text-xs text-gray-500 dark:text-gray-400" data-i18n="borrowingHistoryDesc">
+                                ประวัติการยืม-คืนอุปกรณ์ทั้งหมด</p>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="exportHistoryCSV()"
-                                class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg transition-colors">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                                    </path>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <!-- Summary Stats Badges -->
+                        <span id="historyStatTotal"
+                            class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">0
+                            รายการ</span>
+                        <span id="historyStatReturned"
+                            class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">0
+                            คืนแล้ว</span>
+                        <span id="historyStatActive"
+                            class="px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400">0
+                            กำลังยืม</span>
+                    </div>
+                </div>
+
+                <!-- Filter Bar -->
+                <div
+                    class="px-4 md:px-6 py-4 bg-gray-50/50 dark:bg-gray-900/30 border-b border-gray-200/50 dark:border-gray-700/50">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                        <!-- Equipment Search -->
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
-                                <span data-i18n="exportCSV">CSV</span>
-                            </button>
-                            <button onclick="changeHistoryPage(-1)" id="historyPrevBtn"
-                                class="px-3 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-                                ← Prev
-                            </button>
-                            <button onclick="changeHistoryPage(1)" id="historyNextBtn"
-                                class="px-3 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-                                Next →
-                            </button>
+                            </div>
+                            <input type="text" id="historySearchEquipment" placeholder="ค้นหาอุปกรณ์..."
+                                oninput="applyHistoryFilters()"
+                                class="w-full pl-9 pr-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition-all">
+                        </div>
+                        <!-- Borrower Search -->
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                            </div>
+                            <input type="text" id="historySearchBorrower" placeholder="ค้นหาผู้ยืม..."
+                                oninput="applyHistoryFilters()"
+                                class="w-full pl-9 pr-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition-all">
+                        </div>
+                        <!-- Status Filter -->
+                        <select id="historyStatusFilter" onchange="applyHistoryFilters()"
+                            class="w-full bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-white rounded-lg px-3 py-2 border border-gray-200 dark:border-gray-600 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 cursor-pointer transition-all">
+                            <option value="all" data-i18n="allStatus">ทั้งหมด</option>
+                            <option value="active" data-i18n="activeStatus">กำลังยืม</option>
+                            <option value="returned" data-i18n="returnedStatus">คืนแล้ว</option>
+                            <option value="overdue" data-i18n="overdueStatus">เลยกำหนด</option>
+                        </select>
+                        <!-- Date From -->
+                        <input type="date" id="historyDateFrom" onchange="applyHistoryFilters()"
+                            class="w-full bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-white rounded-lg px-3 py-2 border border-gray-200 dark:border-gray-600 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 cursor-pointer transition-all">
+                        <!-- Date To -->
+                        <input type="date" id="historyDateTo" onchange="applyHistoryFilters()"
+                            class="w-full bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-white rounded-lg px-3 py-2 border border-gray-200 dark:border-gray-600 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 cursor-pointer transition-all">
+                    </div>
+                </div>
+
+                <!-- History Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr
+                                class="bg-gray-50 dark:bg-gray-900/40 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider border-b border-gray-200/50 dark:border-gray-700/50">
+                                <th class="px-4 md:px-6 py-3 font-bold" data-i18n="equipment">อุปกรณ์</th>
+                                <th class="px-4 md:px-6 py-3 font-bold" data-i18n="borrower">ผู้ยืม</th>
+                                <th class="px-4 md:px-6 py-3 font-bold" data-i18n="date">วันยืม</th>
+                                <th class="px-4 md:px-6 py-3 font-bold" data-i18n="dueDate">กำหนดคืน</th>
+                                <th class="px-4 md:px-6 py-3 font-bold" data-i18n="actualReturn">วันคืนจริง</th>
+                                <th class="px-4 md:px-6 py-3 font-bold" data-i18n="status">สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody" class="text-gray-700 dark:text-gray-300 text-sm">
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State -->
+                <div id="historyEmpty" class="hidden text-center py-16">
+                    <div
+                        class="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-10 h-10 text-gray-300 dark:text-gray-500" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-400 mb-2" data-i18n="noHistoryRecords">
+                        ไม่พบประวัติการยืม-คืน</h3>
+                    <p class="text-sm text-gray-400" data-i18n="noHistoryDesc">ยังไม่มีรายการยืม-คืนในระบบ</p>
+                </div>
+
+                <!-- Pagination + Export -->
+                <div id="historyPagination"
+                    class="hidden px-4 md:px-6 py-4 border-t border-gray-200/50 dark:border-gray-700/50 flex flex-col sm:flex-row justify-between items-center gap-3 bg-gray-50/30 dark:bg-gray-900/20">
+                    <div class="flex items-center gap-2">
+                        <span id="historyPageInfo" class="text-xs text-gray-500 dark:text-gray-400 font-medium"></span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="exportHistoryCSV()"
+                            class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                </path>
+                            </svg>
+                            <span data-i18n="exportCSV">CSV</span>
+                        </button>
+                        <button onclick="changeHistoryPage(-1)" id="historyPrevBtn"
+                            class="px-3 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                            ← Prev
+                        </button>
+                        <button onclick="changeHistoryPage(1)" id="historyNextBtn"
+                            class="px-3 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                            Next →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="overviewSection" class="hidden">
+            <!-- Stats Cards Row 1 -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div
+                    class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border-l-4 border-brand-black dark:border-brand-yellow hover:shadow-md transition-shadow duration-200 cursor-pointer">
+                    <div class="flex items-center gap-2 mb-1">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase"
+                            data-i18n="totalEquipments">Total</p>
+                    </div>
+                    <p id="statTotal" class="text-3xl font-bold text-brand-black dark:text-white">-</p>
+                </div>
+                <div
+                    class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border-l-4 border-green-500 hover:shadow-md transition-shadow duration-200 cursor-pointer">
+                    <div class="flex items-center gap-2 mb-1">
+                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase" data-i18n="available">
+                            Available</p>
+                    </div>
+                    <p id="statAvailable" class="text-3xl font-bold text-green-600 dark:text-green-400">-</p>
+                </div>
+                <div
+                    class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border-l-4 border-brand-yellow hover:shadow-md transition-shadow duration-200 cursor-pointer">
+                    <div class="flex items-center gap-2 mb-1">
+                        <svg class="w-5 h-5 text-brand-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase" data-i18n="borrowed">
+                            Borrowed</p>
+                    </div>
+                    <p id="statBorrowed" class="text-3xl font-bold text-brand-yellow">-</p>
+                </div>
+                <div
+                    class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border-l-4 border-red-500 hover:shadow-md transition-shadow duration-200 cursor-pointer">
+                    <div class="flex items-center gap-2 mb-1">
+                        <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase" data-i18n="overdue">
+                            คืนล่าช้า</p>
+                    </div>
+                    <p id="statOverdue" class="text-3xl font-bold text-red-500">-</p>
+                </div>
+            </div>
+
+            <!-- Stats Cards Row 2 -->
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+                <div
+                    class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-xs" data-i18n="today">วันนี้</p>
+                            <p id="statTodayBorrows" class="text-xl font-bold text-gray-900 dark:text-white">-</p>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-xs" data-i18n="thisWeek">สัปดาห์นี้</p>
+                            <p id="statWeekBorrows" class="text-xl font-bold text-gray-900 dark:text-white">-</p>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-xs" data-i18n="onTimeRate">อัตราตรงเวลา
+                            </p>
+                            <p id="statOnTimeRate" class="text-xl font-bold text-gray-900 dark:text-white">-</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div id="overviewSection" class="hidden">
-                <!-- Stats Cards Row 1 -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div
-                        class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border-l-4 border-brand-black dark:border-brand-yellow hover:shadow-md transition-shadow duration-200 cursor-pointer">
-                        <div class="flex items-center gap-2 mb-1">
-                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                            </svg>
-                            <p class="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase"
-                                data-i18n="totalEquipments">Total</p>
-                        </div>
-                        <p id="statTotal" class="text-3xl font-bold text-brand-black dark:text-white">-</p>
-                    </div>
-                    <div
-                        class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border-l-4 border-green-500 hover:shadow-md transition-shadow duration-200 cursor-pointer">
-                        <div class="flex items-center gap-2 mb-1">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <p class="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase"
-                                data-i18n="available">Available</p>
-                        </div>
-                        <p id="statAvailable" class="text-3xl font-bold text-green-600 dark:text-green-400">-</p>
-                    </div>
-                    <div
-                        class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border-l-4 border-brand-yellow hover:shadow-md transition-shadow duration-200 cursor-pointer">
-                        <div class="flex items-center gap-2 mb-1">
-                            <svg class="w-5 h-5 text-brand-yellow" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <p class="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase"
-                                data-i18n="borrowed">Borrowed</p>
-                        </div>
-                        <p id="statBorrowed" class="text-3xl font-bold text-brand-yellow">-</p>
-                    </div>
-                    <div
-                        class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border-l-4 border-red-500 hover:shadow-md transition-shadow duration-200 cursor-pointer">
-                        <div class="flex items-center gap-2 mb-1">
-                            <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                            <p class="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase" data-i18n="overdue">
-                                คืนล่าช้า</p>
-                        </div>
-                        <p id="statOverdue" class="text-3xl font-bold text-red-500">-</p>
-                    </div>
-                </div>
-
-                <!-- Stats Cards Row 2 -->
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-                    <div
-                        class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer">
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-gray-500 dark:text-gray-400 text-xs" data-i18n="today">วันนี้</p>
-                                <p id="statTodayBorrows" class="text-xl font-bold text-gray-900 dark:text-white">-</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div
-                        class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer">
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-gray-500 dark:text-gray-400 text-xs" data-i18n="thisWeek">สัปดาห์นี้</p>
-                                <p id="statWeekBorrows" class="text-xl font-bold text-gray-900 dark:text-white">-</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div
-                        class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer">
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-gray-500 dark:text-gray-400 text-xs" data-i18n="onTimeRate">อัตราตรงเวลา
-                                </p>
-                                <p id="statOnTimeRate" class="text-xl font-bold text-gray-900 dark:text-white">-</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Charts Row -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    <!-- Weekly Chart -->
-                    <div
-                        class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
-                        <div class="flex items-center gap-2 mb-4">
-                            <svg class="w-5 h-5 text-brand-yellow" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                            </svg>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white" data-i18n="weeklyBorrowings">
-                                การยืมรายสัปดาห์</h3>
-                        </div>
-                        <div class="h-64">
-                            <canvas id="weeklyChart"></canvas>
-                        </div>
-                    </div>
-                    <!-- Top Equipment Chart -->
-                    <div
-                        class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
-                        <div class="flex items-center gap-2 mb-4">
-                            <svg class="w-5 h-5 text-brand-pink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                            </svg>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white" data-i18n="topEquipment">
-                                อุปกรณ์ยอดนิยม</h3>
-                        </div>
-                        <div class="h-64">
-                            <canvas id="topEquipmentChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Top Borrowers -->
+            <!-- Charts Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Weekly Chart -->
                 <div
                     class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
                     <div class="flex items-center gap-2 mb-4">
-                        <svg class="w-5 h-5 text-brand-magenta" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-brand-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                         </svg>
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white" data-i18n="topBorrowers">
-                            ผู้ยืมมากที่สุด</h3>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white" data-i18n="weeklyBorrowings">
+                            การยืมรายสัปดาห์</h3>
                     </div>
-                    <div id="topBorrowersList" class="space-y-3">
-                        <p class="text-gray-400 text-center py-4" data-i18n="loading">กำลังโหลด...</p>
+                    <div class="h-64">
+                        <canvas id="weeklyChart"></canvas>
+                    </div>
+                </div>
+                <!-- Top Equipment Chart -->
+                <div
+                    class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <div class="flex items-center gap-2 mb-4">
+                        <svg class="w-5 h-5 text-brand-pink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                        </svg>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white" data-i18n="topEquipment">
+                            อุปกรณ์ยอดนิยม</h3>
+                    </div>
+                    <div class="h-64">
+                        <canvas id="topEquipmentChart"></canvas>
                     </div>
                 </div>
             </div>
 
-        </main>
+            <!-- Top Borrowers -->
+            <div
+                class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div class="flex items-center gap-2 mb-4">
+                    <svg class="w-5 h-5 text-brand-magenta" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white" data-i18n="topBorrowers">
+                        ผู้ยืมมากที่สุด</h3>
+                </div>
+                <div id="topBorrowersList" class="space-y-3">
+                    <p class="text-gray-400 text-center py-4" data-i18n="loading">กำลังโหลด...</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
     </div>
 
     <!-- Modals -->

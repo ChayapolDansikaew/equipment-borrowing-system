@@ -254,35 +254,34 @@ window.showMainApp = function () {
         menuRoleBadge.textContent = window.currentUser.role;
     }
 
-    // Dropdown menu items
+    // Dropdown menu items (mobile)
     const mobileAddBtn = document.getElementById('mobileAddBtn');
     const mobileOverviewBtn = document.getElementById('mobileOverviewBtn');
     const mobilePendingBtn = document.getElementById('mobilePendingBtn');
     const mobileUserMgmtBtn = document.getElementById('mobileUserMgmtBtn');
-    const mobileCartBtn = document.getElementById('mobileCartBtn');
-    const mobileMyRequestsBtn = document.getElementById('mobileMyRequestsBtn');
     const mobileHistoryBtn = document.getElementById('mobileHistoryBtn');
 
     if (window.currentUser.role === 'admin') {
-        // Show admin buttons in dropdown (mobile)
+        // Show admin items in dropdown (mobile)
         if (mobileAddBtn) mobileAddBtn.classList.remove('hidden');
         if (mobileOverviewBtn) mobileOverviewBtn.classList.remove('hidden');
         if (mobilePendingBtn) mobilePendingBtn.classList.remove('hidden');
         if (mobileUserMgmtBtn) mobileUserMgmtBtn.classList.remove('hidden');
 
-        // Show admin desktop icon buttons (md only)
+        // Show admin desktop text nav link (Overview)
         const overviewBtn = document.getElementById('overviewBtn');
         if (overviewBtn) {
             overviewBtn.classList.remove('hidden');
-            overviewBtn.classList.add('hidden', 'md:flex');
         }
+
+        // Show notification bell (desktop md+)
         const pendingBtn = document.getElementById('pendingRequestsBtn');
         if (pendingBtn) {
             pendingBtn.classList.remove('hidden');
             pendingBtn.classList.add('hidden', 'md:flex');
         }
 
-        // Show Add Equipment CTA (desktop md only)
+        // Show Add Equipment CTA (desktop md+)
         const addBtn = document.getElementById('addBtn');
         if (addBtn) {
             addBtn.classList.remove('hidden');
@@ -298,7 +297,7 @@ window.showMainApp = function () {
             myItemsBtn.id = 'btn-returns';
         }
     } else {
-        // NOT admin — hide all admin buttons
+        // NOT admin — hide all admin items
         if (mobileAddBtn) mobileAddBtn.classList.add('hidden');
         if (mobileOverviewBtn) mobileOverviewBtn.classList.add('hidden');
         if (mobilePendingBtn) mobilePendingBtn.classList.add('hidden');
@@ -307,15 +306,12 @@ window.showMainApp = function () {
         const overviewBtn = document.getElementById('overviewBtn');
         if (overviewBtn) {
             overviewBtn.classList.add('hidden');
-            overviewBtn.classList.remove('md:flex');
         }
         const pendingBtn = document.getElementById('pendingRequestsBtn');
         if (pendingBtn) {
             pendingBtn.classList.add('hidden');
             pendingBtn.classList.remove('md:flex');
         }
-
-        // Hide Add Equipment CTA
         const addBtn = document.getElementById('addBtn');
         if (addBtn) {
             addBtn.classList.add('hidden');
@@ -331,28 +327,17 @@ window.showMainApp = function () {
         }
     }
 
-    // Show cart button — desktop: md only, mobile: in dropdown
+    // Show cart button (visible on ALL screen sizes)
     const cartBtn = document.getElementById('cartBtn');
     if (cartBtn) {
         cartBtn.classList.remove('hidden');
-        cartBtn.classList.add('hidden', 'md:block');
         window.cart?.load();
     }
-    if (mobileCartBtn) mobileCartBtn.classList.remove('hidden');
 
-    // Show my requests button — desktop: md only, mobile: in dropdown
-    const myRequestsBtn = document.getElementById('myRequestsBtn');
-    if (myRequestsBtn) {
-        myRequestsBtn.classList.remove('hidden');
-        myRequestsBtn.classList.add('hidden', 'md:block');
-    }
-    if (mobileMyRequestsBtn) mobileMyRequestsBtn.classList.remove('hidden');
-
-    // Show history button — for all users, desktop: md only, mobile: in dropdown
+    // Show history text nav link (all users)
     const historyBtn = document.getElementById('historyBtn');
     if (historyBtn) {
         historyBtn.classList.remove('hidden');
-        historyBtn.classList.add('hidden', 'md:flex');
     }
     if (mobileHistoryBtn) mobileHistoryBtn.classList.remove('hidden');
 
