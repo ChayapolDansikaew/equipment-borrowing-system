@@ -264,7 +264,7 @@ window.showMainApp = function () {
     const mobileHistoryBtn = document.getElementById('mobileHistoryBtn');
 
     if (window.currentUser.role === 'admin') {
-        // Show admin buttons in dropdown
+        // Show admin buttons in dropdown (mobile)
         if (mobileAddBtn) mobileAddBtn.classList.remove('hidden');
         if (mobileOverviewBtn) mobileOverviewBtn.classList.remove('hidden');
         if (mobilePendingBtn) mobilePendingBtn.classList.remove('hidden');
@@ -280,6 +280,13 @@ window.showMainApp = function () {
         if (pendingBtn) {
             pendingBtn.classList.remove('hidden');
             pendingBtn.classList.add('hidden', 'md:flex');
+        }
+
+        // Show Add Equipment CTA (desktop md only)
+        const addBtn = document.getElementById('addBtn');
+        if (addBtn) {
+            addBtn.classList.remove('hidden');
+            addBtn.classList.add('hidden', 'md:block');
         }
 
         // Admin: rename "my items" to "returns"
@@ -306,6 +313,13 @@ window.showMainApp = function () {
         if (pendingBtn) {
             pendingBtn.classList.add('hidden');
             pendingBtn.classList.remove('md:flex');
+        }
+
+        // Hide Add Equipment CTA
+        const addBtn = document.getElementById('addBtn');
+        if (addBtn) {
+            addBtn.classList.add('hidden');
+            addBtn.classList.remove('md:block');
         }
 
         const returnsBtn = document.getElementById('btn-returns');
