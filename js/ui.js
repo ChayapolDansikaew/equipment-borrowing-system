@@ -239,65 +239,48 @@ window.showMainApp = function () {
     document.getElementById('loginSection').classList.add('hidden');
     document.getElementById('mainApp').classList.remove('hidden');
 
-    document.getElementById('userDisplay').textContent = window.currentUser.username;
+    // Update user avatar + dropdown info
+    const userAvatar = document.getElementById('userAvatar');
+    const menuUserDisplay = document.getElementById('menuUserDisplay');
+    const menuRoleBadge = document.getElementById('menuRoleBadge');
 
-    // Role Badge
-    const badge = document.getElementById('roleBadge');
-    badge.textContent = window.currentUser.role;
-    if (window.currentUser.role === 'admin') {
-        badge.className = "px-2 py-0.5 rounded-full text-xs font-bold bg-brand-black text-brand-yellow uppercase border border-brand-yellow";
-    } else {
-        badge.className = "px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-600 uppercase";
+    if (userAvatar) {
+        userAvatar.textContent = window.currentUser.username.charAt(0).toUpperCase();
+    }
+    if (menuUserDisplay) {
+        menuUserDisplay.textContent = window.currentUser.username;
+    }
+    if (menuRoleBadge) {
+        menuRoleBadge.textContent = window.currentUser.role;
     }
 
-    // Update Mobile Menu
-    const mobileUserDisplay = document.getElementById('mobileUserDisplay');
-    const mobileRoleBadge = document.getElementById('mobileRoleBadge');
-    const mobileUserAvatar = document.getElementById('mobileUserAvatar');
+    // Dropdown menu items
     const mobileAddBtn = document.getElementById('mobileAddBtn');
-
-    if (mobileUserDisplay) {
-        mobileUserDisplay.textContent = window.currentUser.username;
-    }
-    if (mobileRoleBadge) {
-        mobileRoleBadge.textContent = window.currentUser.role;
-        if (window.currentUser.role === 'admin') {
-            mobileRoleBadge.className = "inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-bold bg-brand-black text-brand-yellow uppercase";
-        } else {
-            mobileRoleBadge.className = "inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-bold bg-gray-200 text-gray-600 uppercase";
-        }
-    }
-    if (mobileUserAvatar) {
-        mobileUserAvatar.textContent = window.currentUser.username.charAt(0).toUpperCase();
-        if (window.currentUser.role === 'admin') {
-            mobileUserAvatar.className = "w-8 h-8 rounded-full bg-brand-yellow flex items-center justify-center text-brand-black font-bold text-sm";
-        } else {
-            mobileUserAvatar.className = "w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-white font-bold text-sm";
-        }
-    }
-
-    const addBtn = document.getElementById('addBtn');
     const mobileOverviewBtn = document.getElementById('mobileOverviewBtn');
     const mobilePendingBtn = document.getElementById('mobilePendingBtn');
     const mobileUserMgmtBtn = document.getElementById('mobileUserMgmtBtn');
     const mobileCartBtn = document.getElementById('mobileCartBtn');
     const mobileMyRequestsBtn = document.getElementById('mobileMyRequestsBtn');
+    const mobileHistoryBtn = document.getElementById('mobileHistoryBtn');
 
     if (window.currentUser.role === 'admin') {
-        // Desktop admin buttons — hidden on mobile, flex on md+
-        if (addBtn) {
-            addBtn.classList.remove('hidden');
-            addBtn.classList.add('hidden', 'md:block');
-        }
+        // Show admin buttons in dropdown
         if (mobileAddBtn) mobileAddBtn.classList.remove('hidden');
+        if (mobileOverviewBtn) mobileOverviewBtn.classList.remove('hidden');
+        if (mobilePendingBtn) mobilePendingBtn.classList.remove('hidden');
+        if (mobileUserMgmtBtn) mobileUserMgmtBtn.classList.remove('hidden');
 
-        // Overview button (desktop: md only)
+        // Show admin desktop icon buttons (md only)
         const overviewBtn = document.getElementById('overviewBtn');
         if (overviewBtn) {
             overviewBtn.classList.remove('hidden');
             overviewBtn.classList.add('hidden', 'md:flex');
         }
-        if (mobileOverviewBtn) mobileOverviewBtn.classList.remove('hidden');
+        const pendingBtn = document.getElementById('pendingRequestsBtn');
+        if (pendingBtn) {
+            pendingBtn.classList.remove('hidden');
+            pendingBtn.classList.add('hidden', 'md:flex');
+        }
 
         // Admin: rename "my items" to "returns"
         const myItemsBtn = document.getElementById('btn-my-items');
@@ -307,36 +290,23 @@ window.showMainApp = function () {
             myItemsBtn.textContent = window.translations[window.currentLang].returns;
             myItemsBtn.id = 'btn-returns';
         }
-
-        // Pending requests (desktop: md only)
-        const pendingBtn = document.getElementById('pendingRequestsBtn');
-        if (pendingBtn) {
-            pendingBtn.classList.remove('hidden');
-            pendingBtn.classList.add('hidden', 'md:flex');
-        }
-        if (mobilePendingBtn) mobilePendingBtn.classList.remove('hidden');
-
-        // User management (desktop: md only)
-        const userMgmtBtn = document.getElementById('userManagementBtn');
-        if (userMgmtBtn) {
-            userMgmtBtn.classList.remove('hidden');
-            userMgmtBtn.classList.add('hidden', 'md:flex');
-        }
-        if (mobileUserMgmtBtn) mobileUserMgmtBtn.classList.remove('hidden');
     } else {
         // NOT admin — hide all admin buttons
-        if (addBtn) {
-            addBtn.classList.add('hidden');
-            addBtn.classList.remove('md:block');
-        }
         if (mobileAddBtn) mobileAddBtn.classList.add('hidden');
+        if (mobileOverviewBtn) mobileOverviewBtn.classList.add('hidden');
+        if (mobilePendingBtn) mobilePendingBtn.classList.add('hidden');
+        if (mobileUserMgmtBtn) mobileUserMgmtBtn.classList.add('hidden');
 
         const overviewBtn = document.getElementById('overviewBtn');
         if (overviewBtn) {
             overviewBtn.classList.add('hidden');
             overviewBtn.classList.remove('md:flex');
         }
-        if (mobileOverviewBtn) mobileOverviewBtn.classList.add('hidden');
+        const pendingBtn = document.getElementById('pendingRequestsBtn');
+        if (pendingBtn) {
+            pendingBtn.classList.add('hidden');
+            pendingBtn.classList.remove('md:flex');
+        }
 
         const returnsBtn = document.getElementById('btn-returns');
         if (returnsBtn) {
@@ -345,20 +315,6 @@ window.showMainApp = function () {
             returnsBtn.textContent = window.translations[window.currentLang].myItems;
             returnsBtn.id = 'btn-my-items';
         }
-
-        const pendingBtn = document.getElementById('pendingRequestsBtn');
-        if (pendingBtn) {
-            pendingBtn.classList.add('hidden');
-            pendingBtn.classList.remove('md:flex');
-        }
-        if (mobilePendingBtn) mobilePendingBtn.classList.add('hidden');
-
-        const userMgmtBtn = document.getElementById('userManagementBtn');
-        if (userMgmtBtn) {
-            userMgmtBtn.classList.add('hidden');
-            userMgmtBtn.classList.remove('md:flex');
-        }
-        if (mobileUserMgmtBtn) mobileUserMgmtBtn.classList.add('hidden');
     }
 
     // Show cart button — desktop: md only, mobile: in dropdown
@@ -384,7 +340,6 @@ window.showMainApp = function () {
         historyBtn.classList.remove('hidden');
         historyBtn.classList.add('hidden', 'md:flex');
     }
-    const mobileHistoryBtn = document.getElementById('mobileHistoryBtn');
     if (mobileHistoryBtn) mobileHistoryBtn.classList.remove('hidden');
 
     // Initialize pending badge for admin
@@ -1272,40 +1227,40 @@ window.initDates = function () {
     }
 };
 
-// Mobile Menu Functions
-window.toggleMobileMenu = function () {
-    const dropdown = document.getElementById('mobileMenuDropdown');
-    const arrow = document.getElementById('mobileMenuArrow');
+// User Menu Functions (unified for desktop + mobile)
+window.toggleUserMenu = function () {
+    const dropdown = document.getElementById('userMenuDropdown');
+    const arrow = document.getElementById('userMenuArrow');
 
     if (dropdown.classList.contains('hidden')) {
         dropdown.classList.remove('hidden');
-        arrow.style.transform = 'rotate(180deg)';
+        if (arrow) arrow.style.transform = 'rotate(180deg)';
     } else {
         dropdown.classList.add('hidden');
-        arrow.style.transform = 'rotate(0deg)';
+        if (arrow) arrow.style.transform = 'rotate(0deg)';
     }
 };
 
-window.closeMobileMenu = function () {
-    const dropdown = document.getElementById('mobileMenuDropdown');
-    const arrow = document.getElementById('mobileMenuArrow');
+window.closeUserMenu = function () {
+    const dropdown = document.getElementById('userMenuDropdown');
+    const arrow = document.getElementById('userMenuArrow');
 
-    if (dropdown) {
-        dropdown.classList.add('hidden');
-    }
-    if (arrow) {
-        arrow.style.transform = 'rotate(0deg)';
-    }
+    if (dropdown) dropdown.classList.add('hidden');
+    if (arrow) arrow.style.transform = 'rotate(0deg)';
 };
 
-// Close mobile menu when clicking outside
+// Backward compatibility aliases
+window.toggleMobileMenu = window.toggleUserMenu;
+window.closeMobileMenu = window.closeUserMenu;
+
+// Close user menu when clicking outside
 document.addEventListener('click', function (e) {
-    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    const mobileMenuDropdown = document.getElementById('mobileMenuDropdown');
+    const userMenuBtn = document.getElementById('userMenuBtn');
+    const userMenuDropdown = document.getElementById('userMenuDropdown');
 
-    if (mobileMenuBtn && mobileMenuDropdown) {
-        if (!mobileMenuBtn.contains(e.target) && !mobileMenuDropdown.contains(e.target)) {
-            window.closeMobileMenu();
+    if (userMenuBtn && userMenuDropdown) {
+        if (!userMenuBtn.contains(e.target) && !userMenuDropdown.contains(e.target)) {
+            window.closeUserMenu();
         }
     }
 });
