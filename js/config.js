@@ -137,7 +137,28 @@ window.translations = {
         rejectionReasonPrompt: 'เหตุผลที่ปฏิเสธ (ไม่บังคับ):',
         rejectedSuccess: 'ปฏิเสธคำขอแล้ว',
         approveError: 'เกิดข้อผิดพลาดในการอนุมัติ',
-        noPendingItems: 'ไม่มีรายการรออนุมัติ'
+        noPendingItems: 'ไม่มีรายการรออนุมัติ',
+        // Borrowing History
+        history: 'ประวัติ',
+        borrowingHistory: 'ประวัติการยืม-คืน',
+        borrowingHistoryDesc: 'ประวัติการยืม-คืนอุปกรณ์ทั้งหมด',
+        allStatus: 'ทั้งหมด',
+        returnedStatus: 'คืนแล้ว',
+        overdueStatus: 'เลยกำหนด',
+        activeStatus: 'กำลังยืม',
+        actualReturn: 'วันคืนจริง',
+        noHistoryRecords: 'ไม่พบประวัติการยืม-คืน',
+        noHistoryDesc: 'ยังไม่มีรายการยืม-คืนในระบบ',
+        exportCSV: 'ดาวน์โหลด CSV',
+        page: 'หน้า',
+        of: 'จาก',
+        showing: 'แสดง',
+        records: 'รายการ',
+        searchEquipment: 'ค้นหาอุปกรณ์...',
+        searchBorrower: 'ค้นหาผู้ยืม...',
+        total: 'ทั้งหมด',
+        returned: 'คืนแล้ว',
+        filterBy: 'กรอง'
     },
     en: {
         overview: 'Overview',
@@ -252,7 +273,28 @@ window.translations = {
         rejectionReasonPrompt: 'Reason for rejection (optional):',
         rejectedSuccess: 'Request rejected',
         approveError: 'Error approving request',
-        noPendingItems: 'No items pending approval'
+        noPendingItems: 'No items pending approval',
+        // Borrowing History
+        history: 'History',
+        borrowingHistory: 'Borrowing History',
+        borrowingHistoryDesc: 'Complete equipment borrowing and return records',
+        allStatus: 'All',
+        returnedStatus: 'Returned',
+        overdueStatus: 'Overdue',
+        activeStatus: 'Active',
+        actualReturn: 'Returned On',
+        noHistoryRecords: 'No borrowing history found',
+        noHistoryDesc: 'No borrowing records in the system yet',
+        exportCSV: 'Download CSV',
+        page: 'Page',
+        of: 'of',
+        showing: 'Showing',
+        records: 'records',
+        searchEquipment: 'Search equipment...',
+        searchBorrower: 'Search borrower...',
+        total: 'Total',
+        returned: 'Returned',
+        filterBy: 'Filter'
     }
 };
 

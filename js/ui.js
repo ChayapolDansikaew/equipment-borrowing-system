@@ -378,6 +378,15 @@ window.showMainApp = function () {
     }
     if (mobileMyRequestsBtn) mobileMyRequestsBtn.classList.remove('hidden');
 
+    // Show history button — for all users, desktop: md only, mobile: in dropdown
+    const historyBtn = document.getElementById('historyBtn');
+    if (historyBtn) {
+        historyBtn.classList.remove('hidden');
+        historyBtn.classList.add('hidden', 'md:flex');
+    }
+    const mobileHistoryBtn = document.getElementById('mobileHistoryBtn');
+    if (mobileHistoryBtn) mobileHistoryBtn.classList.remove('hidden');
+
     // Initialize pending badge for admin
     window.initPendingBadge?.();
 
@@ -507,9 +516,15 @@ window.filterStatus = function (status) {
     const overview = document.getElementById('overviewSection');
     const controls = document.getElementById('controlsSection');
     const myBorrowingsSection = document.getElementById('myBorrowingsSection');
+    const historySection = document.getElementById('historySection');
 
     controls.classList.remove('hidden');
     overview.classList.add('hidden');
+    if (historySection) historySection.classList.add('hidden');
+
+    // Reset history button text
+    const historyBtn = document.getElementById('historyBtn');
+    if (historyBtn) historyBtn.textContent = window.translations[window.currentLang]?.history || 'History';
 
     if (status === 'returns') {
         browse.classList.add('hidden');
@@ -541,14 +556,20 @@ window.toggleOverview = function () {
     const controls = document.getElementById('controlsSection');
     const returnSection = document.getElementById('returnSection');
     const myBorrowingsSection = document.getElementById('myBorrowingsSection');
+    const historySection = document.getElementById('historySection');
     const btn = document.getElementById('overviewBtn');
     const t = window.translations[window.currentLang];
+
+    // Reset history button text
+    const historyBtn = document.getElementById('historyBtn');
+    if (historyBtn) historyBtn.textContent = t?.history || 'History';
 
     if (overview.classList.contains('hidden')) {
         browse.classList.add('hidden');
         controls.classList.add('hidden');
         returnSection.classList.add('hidden');
         myBorrowingsSection.classList.add('hidden');
+        if (historySection) historySection.classList.add('hidden');
         overview.classList.remove('hidden');
         btn.textContent = t.backToBrowse;
         window.fetchOverviewData();
@@ -567,6 +588,173 @@ window.toggleOverview = function () {
             window.fetchEquipments();
         }
     }
+};
+
+// --- Borrowing History ---
+
+window.toggleHistoryPage = function () {
+    const browse = document.getElementById('browseSection');
+    const overview = document.getElementById('overviewSection');
+    const controls = document.getElementById('controlsSection');
+    const returnSection = document.getElementById('returnSection');
+    const myBorrowingsSection = document.getElementById('myBorrowingsSection');
+    const historySection = document.getElementById('historySection');
+    const historyBtn = document.getElementById('historyBtn');
+    const overviewBtn = document.getElementById('overviewBtn');
+    const t = window.translations[window.currentLang];
+
+    if (historySection.classList.contains('hidden')) {
+        // Show history
+        browse.classList.add('hidden');
+        controls.classList.add('hidden');
+        returnSection.classList.add('hidden');
+        myBorrowingsSection.classList.add('hidden');
+        overview.classList.add('hidden');
+        historySection.classList.remove('hidden');
+        if (historyBtn) historyBtn.textContent = t?.backToBrowse || 'Back';
+        if (overviewBtn) overviewBtn.textContent = t?.overview || 'Overview';
+        window.fetchBorrowingHistory();
+    } else {
+        // Hide history, go back
+        historySection.classList.add('hidden');
+        controls.classList.remove('hidden');
+        if (historyBtn) historyBtn.textContent = t?.history || 'History';
+        if (window.currentFilter === 'returns') {
+            returnSection.classList.remove('hidden');
+            window.fetchReturnData();
+        } else if (window.currentFilter === 'my-items') {
+            myBorrowingsSection.classList.remove('hidden');
+            window.fetchMyBorrowings();
+        } else {
+            browse.classList.remove('hidden');
+            window.fetchEquipments();
+        }
+    }
+};
+
+window.renderHistoryTable = function () {
+    const tbody = document.getElementById('historyTableBody');
+    const emptyState = document.getElementById('historyEmpty');
+    const pagination = document.getElementById('historyPagination');
+    const data = window._historyData || [];
+    const page = window._historyPage || 1;
+    const perPage = window._historyPerPage || 30;
+    const t = window.translations[window.currentLang];
+    const locale = window.currentLang === 'th' ? 'th-TH' : 'en-US';
+    const now = new Date();
+
+    if (data.length === 0) {
+        tbody.innerHTML = '';
+        if (emptyState) emptyState.classList.remove('hidden');
+        if (pagination) pagination.classList.add('hidden');
+        return;
+    }
+
+    if (emptyState) emptyState.classList.add('hidden');
+
+    // Pagination
+    const totalPages = Math.ceil(data.length / perPage);
+    const start = (page - 1) * perPage;
+    const end = Math.min(start + perPage, data.length);
+    const pageData = data.slice(start, end);
+
+    const dateOpts = { day: 'numeric', month: 'short', year: '2-digit' };
+
+    tbody.innerHTML = pageData.map(tr => {
+        const borrowDate = tr.borrow_date
+            ? new Date(tr.borrow_date).toLocaleDateString(locale, dateOpts)
+            : '-';
+        const dueDate = tr.end_date
+            ? new Date(tr.end_date).toLocaleDateString(locale, dateOpts)
+            : '-';
+        const returnDate = tr.return_date
+            ? new Date(tr.return_date).toLocaleDateString(locale, dateOpts)
+            : '-';
+
+        // Determine status badge
+        let statusBadge;
+        if (tr.status === 'returned') {
+            // Check if returned late
+            const wasLate = tr.end_date && tr.return_date && new Date(tr.return_date) > new Date(tr.end_date);
+            if (wasLate) {
+                statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400">${t?.overdueStatus || 'Late'} ✓</span>`;
+            } else {
+                statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">${t?.returnedStatus || 'Returned'}</span>`;
+            }
+        } else {
+            const isOverdue = tr.end_date && new Date(tr.end_date) < now;
+            if (isOverdue) {
+                statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">${t?.overdueStatus || 'Overdue'}</span>`;
+            } else {
+                statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-bold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400">${t?.activeStatus || 'Active'}</span>`;
+            }
+        }
+
+        return `
+            <tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                <td class="px-4 md:px-6 py-3 font-medium text-brand-black dark:text-white">${window.escapeHtml?.(tr.equipments?.name) || tr.equipments?.name || 'Unknown'}</td>
+                <td class="px-4 md:px-6 py-3">${window.escapeHtml?.(tr.borrower_name) || tr.borrower_name}</td>
+                <td class="px-4 md:px-6 py-3 text-gray-500 dark:text-gray-400 text-xs">${borrowDate}</td>
+                <td class="px-4 md:px-6 py-3 text-gray-500 dark:text-gray-400 text-xs">${dueDate}</td>
+                <td class="px-4 md:px-6 py-3 text-gray-500 dark:text-gray-400 text-xs">${returnDate}</td>
+                <td class="px-4 md:px-6 py-3">${statusBadge}</td>
+            </tr>
+        `;
+    }).join('');
+
+    // Update pagination
+    if (pagination) {
+        pagination.classList.remove('hidden');
+        const pageInfo = document.getElementById('historyPageInfo');
+        if (pageInfo) pageInfo.textContent = `${t?.showing || 'Showing'} ${start + 1}-${end} ${t?.of || 'of'} ${data.length} ${t?.records || 'records'}`;
+        const prevBtn = document.getElementById('historyPrevBtn');
+        const nextBtn = document.getElementById('historyNextBtn');
+        if (prevBtn) prevBtn.disabled = page <= 1;
+        if (nextBtn) nextBtn.disabled = page >= totalPages;
+    }
+};
+
+window.changeHistoryPage = function (delta) {
+    const totalPages = Math.ceil((window._historyData || []).length / (window._historyPerPage || 30));
+    const newPage = (window._historyPage || 1) + delta;
+    if (newPage < 1 || newPage > totalPages) return;
+    window._historyPage = newPage;
+    window.renderHistoryTable();
+};
+
+window.applyHistoryFilters = function () {
+    const filters = {
+        equipment: document.getElementById('historySearchEquipment')?.value?.trim() || '',
+        borrower: document.getElementById('historySearchBorrower')?.value?.trim() || '',
+        status: document.getElementById('historyStatusFilter')?.value || 'all',
+        dateFrom: document.getElementById('historyDateFrom')?.value || '',
+        dateTo: document.getElementById('historyDateTo')?.value || ''
+    };
+    window.fetchBorrowingHistory(filters);
+};
+
+window.exportHistoryCSV = function () {
+    const data = window._historyData || [];
+    if (data.length === 0) return;
+
+    const header = ['Equipment', 'Borrower', 'Borrow Date', 'Due Date', 'Return Date', 'Status'];
+    const rows = data.map(tr => [
+        (tr.equipments?.name || 'Unknown').replace(/,/g, ' '),
+        (tr.borrower_name || '').replace(/,/g, ' '),
+        tr.borrow_date ? new Date(tr.borrow_date).toISOString().split('T')[0] : '',
+        tr.end_date ? new Date(tr.end_date).toISOString().split('T')[0] : '',
+        tr.return_date ? new Date(tr.return_date).toISOString().split('T')[0] : '',
+        tr.status || ''
+    ]);
+
+    const csv = [header, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `borrowing_history_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
 };
 
 // --- Analytics Charts ---

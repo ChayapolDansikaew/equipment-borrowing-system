@@ -126,6 +126,84 @@ window.fetchReturnData = async function () {
     }
 };
 
+// --- Borrowing History ---
+window._historyData = [];
+window._historyPage = 1;
+window._historyPerPage = 30;
+
+window.fetchBorrowingHistory = async function (filters = {}) {
+    if (!window.supabaseClient) return;
+
+    const tbody = document.getElementById('historyTableBody');
+    const emptyState = document.getElementById('historyEmpty');
+    const pagination = document.getElementById('historyPagination');
+    if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="py-12 text-center text-gray-400">Loading...</td></tr>`;
+    if (emptyState) emptyState.classList.add('hidden');
+    if (pagination) pagination.classList.add('hidden');
+
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('transactions')
+            .select('*, equipments ( name, image_url, type )')
+            .order('borrow_date', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching history:', error);
+            window.showToast(window.translations[window.currentLang]?.errorGeneral || 'Error', 'error');
+            return;
+        }
+
+        let transactions = data || [];
+        const now = new Date();
+
+        // Apply client-side filters
+        if (filters.equipment) {
+            const q = filters.equipment.toLowerCase();
+            transactions = transactions.filter(t => (t.equipments?.name || '').toLowerCase().includes(q));
+        }
+        if (filters.borrower) {
+            const q = filters.borrower.toLowerCase();
+            transactions = transactions.filter(t => (t.borrower_name || '').toLowerCase().includes(q));
+        }
+        if (filters.status && filters.status !== 'all') {
+            if (filters.status === 'overdue') {
+                transactions = transactions.filter(t => {
+                    if (t.status !== 'active' || !t.end_date) return false;
+                    return new Date(t.end_date) < now;
+                });
+            } else {
+                transactions = transactions.filter(t => t.status === filters.status);
+            }
+        }
+        if (filters.dateFrom) {
+            const from = new Date(filters.dateFrom + 'T00:00:00');
+            transactions = transactions.filter(t => new Date(t.borrow_date) >= from);
+        }
+        if (filters.dateTo) {
+            const to = new Date(filters.dateTo + 'T23:59:59');
+            transactions = transactions.filter(t => new Date(t.borrow_date) <= to);
+        }
+
+        // Update stats
+        const t = window.translations[window.currentLang];
+        const totalEl = document.getElementById('historyStatTotal');
+        const returnedEl = document.getElementById('historyStatReturned');
+        const activeEl = document.getElementById('historyStatActive');
+        const returnedCount = transactions.filter(tr => tr.status === 'returned').length;
+        const activeCount = transactions.filter(tr => tr.status === 'active').length;
+        if (totalEl) totalEl.textContent = `${transactions.length} ${t?.records || 'records'}`;
+        if (returnedEl) returnedEl.textContent = `${returnedCount} ${t?.returned || 'returned'}`;
+        if (activeEl) activeEl.textContent = `${activeCount} ${t?.activeStatus || 'active'}`;
+
+        window._historyData = transactions;
+        window._historyPage = 1;
+        window.renderHistoryTable();
+    } catch (err) {
+        console.error('fetchBorrowingHistory error:', err);
+        window.showToast('Error loading history', 'error');
+    }
+};
+
 window.fetchOverviewData = async function () {
     const total = window.equipments.length;
     const available = window.equipments.filter(e => e.status === 'available').length;
@@ -342,7 +420,7 @@ window.getBookedDatesForEquipment = async function (equipmentId) {
         data.forEach(booking => {
             const start = new Date(booking.start_date);
             const end = booking.end_date ? new Date(booking.end_date) : new Date(start.getTime() + 86400000);
-            
+
             // Add each day in the range
             let current = new Date(start);
             while (current <= end) {
