@@ -737,6 +737,34 @@
 
                             <!-- Menu Items -->
                             <div class="py-2">
+                                <!-- Cart (mobile) -->
+                                <button id="mobileCartBtn" onclick="openCartModal(); closeMobileMenu();"
+                                    class="hidden w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+                                        </path>
+                                    </svg>
+                                    <span data-i18n="cartTitle">ตะกร้า</span>
+                                    <span id="mobileCartBadge" class="hidden ml-auto bg-brand-pink text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                                </button>
+
+                                <!-- My Requests (mobile) -->
+                                <button id="mobileMyRequestsBtn" onclick="openMyRequestsModal(); closeMobileMenu();"
+                                    class="hidden w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                        </path>
+                                    </svg>
+                                    <span data-i18n="myRequests">คำขอของฉัน</span>
+                                </button>
+
+                                <div class="h-px bg-gray-100 dark:bg-gray-700 my-1"></div>
+
+                                <!-- Overview (mobile) -->
                                 <button id="mobileOverviewBtn" onclick="toggleOverview(); closeMobileMenu();"
                                     class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
@@ -748,6 +776,30 @@
                                     <span data-i18n="overview">ภาพรวม</span>
                                 </button>
 
+                                <!-- Pending Requests (mobile, admin only) -->
+                                <button id="mobilePendingBtn" onclick="openPendingRequestsModal(); closeMobileMenu();"
+                                    class="hidden w-full flex items-center gap-3 px-4 py-2.5 text-sm text-orange-500 dark:text-orange-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                                        </path>
+                                    </svg>
+                                    <span>รออนุมัติ</span>
+                                    <span id="mobilePendingBadge" class="hidden ml-auto bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                                </button>
+
+                                <!-- User Management (mobile, admin only) -->
+                                <button id="mobileUserMgmtBtn" onclick="openUserManagementModal(); closeMobileMenu();"
+                                    class="hidden w-full flex items-center gap-3 px-4 py-2.5 text-sm text-purple-500 dark:text-purple-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z">
+                                        </path>
+                                    </svg>
+                                    <span>จัดการผู้ใช้</span>
+                                </button>
+
+                                <!-- Add Equipment (mobile, admin only) -->
                                 <button id="mobileAddBtn" onclick="openManageModal(); closeMobileMenu();"
                                     class="hidden w-full flex items-center gap-3 px-4 py-2.5 text-sm text-brand-pink hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -773,7 +825,7 @@
                         </div>
                     </div>
 
-                    <!-- Cart Button -->
+                    <!-- Cart Button (desktop only) -->
                     <button onclick="openCartModal()" id="cartBtn"
                         class="hidden relative p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300 hover:text-brand-yellow"
                         title="ตะกร้า" aria-label="Shopping cart">
@@ -786,7 +838,7 @@
                             class="hidden absolute -top-1 -right-1 bg-brand-pink text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">0</span>
                     </button>
 
-                    <!-- My Requests Button (icon style) -->
+                    <!-- My Requests Button (desktop only) -->
                     <button onclick="openMyRequestsModal()" id="myRequestsBtn"
                         class="hidden relative p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-300 hover:text-blue-400"
                         title="คำขอของฉัน" aria-label="My requests">

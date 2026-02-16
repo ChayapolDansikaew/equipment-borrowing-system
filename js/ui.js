@@ -278,17 +278,28 @@ window.showMainApp = function () {
 
     const addBtn = document.getElementById('addBtn');
     const mobileOverviewBtn = document.getElementById('mobileOverviewBtn');
+    const mobilePendingBtn = document.getElementById('mobilePendingBtn');
+    const mobileUserMgmtBtn = document.getElementById('mobileUserMgmtBtn');
+    const mobileCartBtn = document.getElementById('mobileCartBtn');
+    const mobileMyRequestsBtn = document.getElementById('mobileMyRequestsBtn');
 
     if (window.currentUser.role === 'admin') {
-        addBtn.classList.remove('hidden');
+        // Desktop admin buttons — hidden on mobile, flex on md+
+        if (addBtn) {
+            addBtn.classList.remove('hidden');
+            addBtn.classList.add('hidden', 'md:block');
+        }
         if (mobileAddBtn) mobileAddBtn.classList.remove('hidden');
-        // Show overview button for admin
+
+        // Overview button (desktop: md only)
         const overviewBtn = document.getElementById('overviewBtn');
         if (overviewBtn) {
             overviewBtn.classList.remove('hidden');
-            overviewBtn.classList.add('md:block');
+            overviewBtn.classList.add('hidden', 'md:flex');
         }
         if (mobileOverviewBtn) mobileOverviewBtn.classList.remove('hidden');
+
+        // Admin: rename "my items" to "returns"
         const myItemsBtn = document.getElementById('btn-my-items');
         if (myItemsBtn) {
             myItemsBtn.setAttribute('onclick', "filterStatus('returns')");
@@ -296,22 +307,37 @@ window.showMainApp = function () {
             myItemsBtn.textContent = window.translations[window.currentLang].returns;
             myItemsBtn.id = 'btn-returns';
         }
-        // Show pending requests button for admin
+
+        // Pending requests (desktop: md only)
         const pendingBtn = document.getElementById('pendingRequestsBtn');
-        if (pendingBtn) pendingBtn.classList.remove('hidden');
-        // Show user management button for admin
+        if (pendingBtn) {
+            pendingBtn.classList.remove('hidden');
+            pendingBtn.classList.add('hidden', 'md:flex');
+        }
+        if (mobilePendingBtn) mobilePendingBtn.classList.remove('hidden');
+
+        // User management (desktop: md only)
         const userMgmtBtn = document.getElementById('userManagementBtn');
-        if (userMgmtBtn) userMgmtBtn.classList.remove('hidden');
+        if (userMgmtBtn) {
+            userMgmtBtn.classList.remove('hidden');
+            userMgmtBtn.classList.add('hidden', 'md:flex');
+        }
+        if (mobileUserMgmtBtn) mobileUserMgmtBtn.classList.remove('hidden');
     } else {
-        addBtn.classList.add('hidden');
+        // NOT admin — hide all admin buttons
+        if (addBtn) {
+            addBtn.classList.add('hidden');
+            addBtn.classList.remove('md:block');
+        }
         if (mobileAddBtn) mobileAddBtn.classList.add('hidden');
-        // Hide overview button for regular users
+
         const overviewBtn = document.getElementById('overviewBtn');
         if (overviewBtn) {
             overviewBtn.classList.add('hidden');
-            overviewBtn.classList.remove('md:block');
+            overviewBtn.classList.remove('md:flex');
         }
         if (mobileOverviewBtn) mobileOverviewBtn.classList.add('hidden');
+
         const returnsBtn = document.getElementById('btn-returns');
         if (returnsBtn) {
             returnsBtn.setAttribute('onclick', "filterStatus('my-items')");
@@ -319,24 +345,38 @@ window.showMainApp = function () {
             returnsBtn.textContent = window.translations[window.currentLang].myItems;
             returnsBtn.id = 'btn-my-items';
         }
-        // Hide pending requests button for regular users
+
         const pendingBtn = document.getElementById('pendingRequestsBtn');
-        if (pendingBtn) pendingBtn.classList.add('hidden');
-        // Hide user management button for regular users
+        if (pendingBtn) {
+            pendingBtn.classList.add('hidden');
+            pendingBtn.classList.remove('md:flex');
+        }
+        if (mobilePendingBtn) mobilePendingBtn.classList.add('hidden');
+
         const userMgmtBtn = document.getElementById('userManagementBtn');
-        if (userMgmtBtn) userMgmtBtn.classList.add('hidden');
+        if (userMgmtBtn) {
+            userMgmtBtn.classList.add('hidden');
+            userMgmtBtn.classList.remove('md:flex');
+        }
+        if (mobileUserMgmtBtn) mobileUserMgmtBtn.classList.add('hidden');
     }
 
-    // Show cart button for all logged in users
+    // Show cart button — desktop: md only, mobile: in dropdown
     const cartBtn = document.getElementById('cartBtn');
     if (cartBtn) {
         cartBtn.classList.remove('hidden');
+        cartBtn.classList.add('hidden', 'md:block');
         window.cart?.load();
     }
+    if (mobileCartBtn) mobileCartBtn.classList.remove('hidden');
 
-    // Show my requests button for all logged in users
+    // Show my requests button — desktop: md only, mobile: in dropdown
     const myRequestsBtn = document.getElementById('myRequestsBtn');
-    if (myRequestsBtn) myRequestsBtn.classList.remove('hidden');
+    if (myRequestsBtn) {
+        myRequestsBtn.classList.remove('hidden');
+        myRequestsBtn.classList.add('hidden', 'md:block');
+    }
+    if (mobileMyRequestsBtn) mobileMyRequestsBtn.classList.remove('hidden');
 
     // Initialize pending badge for admin
     window.initPendingBadge?.();
