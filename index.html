@@ -555,6 +555,24 @@
         .loading-dot:nth-child(3) {
             animation-delay: 0s;
         }
+
+        /* Bell notification animation */
+        .bell-has-notifications {
+            animation: bellRing 2s ease-in-out infinite;
+        }
+
+        .bell-has-notifications svg {
+            color: #facc15;
+        }
+
+        @keyframes bellRing {
+            0%, 100% { transform: rotate(0deg); }
+            5% { transform: rotate(12deg); }
+            10% { transform: rotate(-10deg); }
+            15% { transform: rotate(8deg); }
+            20% { transform: rotate(-6deg); }
+            25% { transform: rotate(0deg); }
+        }
     </style>
 </head>
 

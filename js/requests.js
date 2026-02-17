@@ -163,6 +163,9 @@ window.submitBorrowRequest = function () {
         if (typeof window.renderEquipments === 'function') {
             window.renderEquipments();
         }
+
+        // Update pending badge (in case admin is also browsing)
+        window.initPendingBadge?.();
     }
 };
 
@@ -283,12 +286,26 @@ function formatDate(dateStr) {
     return date.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 }
 
-// Update pending badge
+// Update pending badge (desktop + mobile)
 function updatePendingBadge(count) {
     const badge = document.getElementById('pendingBadge');
-    if (badge) {
-        badge.textContent = count;
-        badge.classList.toggle('hidden', count === 0);
+    const mobileBadge = document.getElementById('mobilePendingBadge');
+    const bellBtn = document.getElementById('pendingRequestsBtn');
+
+    [badge, mobileBadge].forEach(el => {
+        if (el) {
+            el.textContent = count;
+            el.classList.toggle('hidden', count === 0);
+        }
+    });
+
+    // Pulse animation on bell when there are pending items
+    if (bellBtn) {
+        if (count > 0) {
+            bellBtn.classList.add('bell-has-notifications');
+        } else {
+            bellBtn.classList.remove('bell-has-notifications');
+        }
     }
 }
 
@@ -696,6 +713,41 @@ window.sendReminderEmail = async function (transaction, daysUntilDue) {
         return false;
     }
 };
+
+// --- Badge auto-refresh ---
+
+// Periodic polling: refresh pending badge every 10 seconds for admin
+let _badgeInterval = null;
+function startBadgePolling() {
+    stopBadgePolling();
+    _badgeInterval = setInterval(() => {
+        window.initPendingBadge?.();
+    }, 10000);
+}
+function stopBadgePolling() {
+    if (_badgeInterval) {
+        clearInterval(_badgeInterval);
+        _badgeInterval = null;
+    }
+}
+
+// Cross-tab: listen for localStorage changes from other tabs
+window.addEventListener('storage', (e) => {
+    if (e.key === 'borrowRequests') {
+        window.initPendingBadge?.();
+    }
+});
+
+// Start polling after login
+const _origShowMainApp = window.showMainApp;
+if (typeof _origShowMainApp === 'function') {
+    window.showMainApp = function () {
+        _origShowMainApp.apply(this, arguments);
+        if (window.currentUser?.role === 'admin') {
+            startBadgePolling();
+        }
+    };
+}
 
 // Initialize EmailJS on load
 document.addEventListener('DOMContentLoaded', () => {
