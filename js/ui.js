@@ -81,7 +81,7 @@ window.renderEquipments = function () {
             btnAction = `onclick="openEquipmentDetail(${group.items[0].id})"`;
         } else {
             btnClass = 'bg-brand-yellow text-black hover:bg-yellow-400 shadow-md cursor-pointer';
-            btnText = `<svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg> ${t.addToCart}`;
+            btnText = `<svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg> ${t.viewDetails}`;
             btnAction = `onclick="openEquipmentDetail(${group.items[0].id})"`;
         }
 
@@ -1150,27 +1150,43 @@ window.initDetailCalendar = function (bookedDates = [], filterStartDate = null, 
     });
 };
 
-// Submit booking from Equipment Detail Modal
-window.submitBookingFromDetail = async function () {
+// Add to cart from Equipment Detail Modal
+window.addToCartFromDetail = function () {
     const equipmentId = document.getElementById('detailEquipmentId').value;
-    const startDateEl = document.getElementById('detailStartDate');
-    const endDateEl = document.getElementById('detailEndDate');
     const t = window.translations[window.currentLang];
 
-    // Validate dates selected
-    if (!startDateEl.value || !endDateEl.value) {
-        window.showToast(t.dateRequired || 'กรุณาเลือกวันยืม-คืน', 'error');
+    // Find the equipment
+    const equipment = window.equipments.find(e => e.id == equipmentId);
+    if (!equipment) {
+        window.showToast(t.equipmentNotFound || 'ไม่พบอุปกรณ์', 'error');
         return;
     }
 
-    // Set the borrowItemId for confirmBorrow
-    document.getElementById('borrowItemId').value = equipmentId;
+    // Count available units for this equipment name
+    const availableCount = window.equipments.filter(
+        e => e.name === equipment.name && e.status === 'available'
+    ).length;
+
+    if (availableCount === 0) {
+        window.showToast(t.outOfStock || 'ของหมด', 'error');
+        return;
+    }
+
+    // Check current cart quantity for this item
+    const cartItem = window.cart?.getByName(equipment.name);
+    const currentQty = cartItem ? cartItem.quantity : 0;
+    const newQty = currentQty + 1;
+
+    if (newQty > availableCount) {
+        window.showToast(`${equipment.name}: ${t.outOfStock} (${availableCount} ${t.available})`, 'warning');
+        return;
+    }
+
+    // Add/update cart
+    window.cart.addOrUpdate(equipment.name, equipment.image_url, equipment.type, newQty);
 
     // Close detail modal
     window.closeModal('equipmentDetailModal');
-
-    // Call existing confirmBorrow which handles validation & insertion
-    await window.confirmBorrow();
 };
 
 window.openReturnModal = function (id, name) {
