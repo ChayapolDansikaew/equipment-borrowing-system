@@ -377,15 +377,14 @@ window.updateTranslations = function () {
     const noteArea = document.getElementById('requestNote');
     if (noteArea) noteArea.placeholder = t.notePlaceholder;
 
-    // Update tooltip for myRequestsBtn
-    const myReqBtn = document.getElementById('myRequestsBtn');
-    if (myReqBtn) myReqBtn.title = t.myRequests;
-
     const overviewBtn = document.getElementById('overviewBtn');
-    if (document.getElementById('overviewSection').classList.contains('hidden')) {
-        overviewBtn.textContent = t.overview;
-    } else {
-        overviewBtn.textContent = t.backToBrowse;
+    if (overviewBtn) {
+        const overviewSection = document.getElementById('overviewSection');
+        if (overviewSection && overviewSection.classList.contains('hidden')) {
+            overviewBtn.textContent = t.overview;
+        } else {
+            overviewBtn.textContent = t.backToBrowse;
+        }
     }
 };
 
@@ -526,11 +525,30 @@ window.toggleOverview = function () {
         if (historySection) historySection.classList.add('hidden');
         overview.classList.remove('hidden');
         btn.textContent = t.backToBrowse;
-        window.fetchOverviewData();
+
+        // Active nav styling
+        if (btn) {
+            btn.classList.add('text-white', 'bg-white/[0.08]');
+            btn.classList.remove('text-gray-400');
+        }
+
+        // Fetch dashboard data + start auto-refresh
+        window.fetchDashboardData();
+        window.setupDashboardRefresh?.();
     } else {
         overview.classList.add('hidden');
         controls.classList.remove('hidden');
         btn.textContent = t.overview;
+
+        // Remove active nav styling
+        if (btn) {
+            btn.classList.remove('text-white', 'bg-white/[0.08]');
+            btn.classList.add('text-gray-400');
+        }
+
+        // Stop auto-refresh
+        window.stopDashboardRefresh?.();
+
         if (window.currentFilter === 'returns') {
             returnSection.classList.remove('hidden');
             window.fetchReturnData();

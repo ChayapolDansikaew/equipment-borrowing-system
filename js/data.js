@@ -205,16 +205,10 @@ window.fetchBorrowingHistory = async function (filters = {}) {
 };
 
 window.fetchOverviewData = async function () {
-    const total = window.equipments.length;
-    const available = window.equipments.filter(e => e.status === 'available').length;
-    const borrowed = total - available;
-
-    document.getElementById('statTotal').textContent = total;
-    document.getElementById('statAvailable').textContent = available;
-    document.getElementById('statBorrowed').textContent = borrowed;
-
-    // Fetch additional analytics
-    await window.fetchAnalyticsData();
+    // Delegate to new dashboard module
+    if (window.fetchDashboardData) {
+        await window.fetchDashboardData();
+    }
 };
 
 // Fetch comprehensive analytics data
