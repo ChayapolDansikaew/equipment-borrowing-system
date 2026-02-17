@@ -1,80 +1,250 @@
-// Request Module - จัดการคำขอยืมอุปกรณ์
+// Request Module - จัดการคำขอยืมอุปกรณ์ (Supabase)
 window.requests = {
-    // โหลด requests จาก localStorage
-    getAll() {
-        const saved = localStorage.getItem('borrowRequests');
-        return saved ? JSON.parse(saved) : [];
-    },
+    // ดึง requests ทั้งหมดจาก Supabase (พร้อม items)
+    async getAll() {
+        if (!window.supabaseClient) return [];
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('borrow_requests')
+                .select('*, borrow_request_items(*)')
+                .order('created_at', { ascending: false });
 
-    // บันทึก requests ลง localStorage
-    save(requests) {
-        localStorage.setItem('borrowRequests', JSON.stringify(requests));
+            if (error) {
+                console.error('Error fetching requests:', error);
+                return [];
+            }
+
+            // Map to legacy format for compatibility
+            return (data || []).map(r => ({
+                id: r.id,
+                userId: r.user_id,
+                userName: r.user_name,
+                startDate: r.start_date,
+                endDate: r.end_date,
+                note: r.note || '',
+                createdAt: r.created_at,
+                items: (r.borrow_request_items || []).map(item => ({
+                    name: item.name,
+                    image: item.image,
+                    category: item.category,
+                    quantity: item.quantity,
+                    status: item.status,
+                    approvedAt: item.approved_at,
+                    approvedBy: item.approved_by,
+                    rejectionReason: item.rejection_reason || ''
+                }))
+            }));
+        } catch (err) {
+            console.error('getAll exception:', err);
+            return [];
+        }
     },
 
     // สร้างคำขอใหม่
-    create(items, startDate, endDate, note = '') {
-        const requests = this.getAll();
-        const newRequest = {
-            id: 'req_' + Date.now(),
-            userId: window.currentUser?.id || 'unknown',
-            userName: window.currentUser?.username || 'Unknown User',
-            items: items.map(item => ({
-                ...item,
-                status: 'pending' // pending, approved, rejected
-            })),
-            startDate: startDate,
-            endDate: endDate,
-            note: note,
-            createdAt: new Date().toISOString()
-        };
+    async create(items, startDate, endDate, note = '') {
+        if (!window.supabaseClient) return null;
+        try {
+            // 1. Insert request header
+            const { data: reqData, error: reqError } = await window.supabaseClient
+                .from('borrow_requests')
+                .insert([{
+                    user_id: window.currentUser?.id || null,
+                    user_name: window.currentUser?.username || 'Unknown User',
+                    start_date: startDate,
+                    end_date: endDate,
+                    note: note || ''
+                }])
+                .select()
+                .single();
 
-        requests.push(newRequest);
-        this.save(requests);
+            if (reqError) {
+                console.error('Error creating request:', reqError);
+                return null;
+            }
 
-        // Clear cart after submission
-        window.cart.clear();
+            // 2. Insert request items
+            const itemRows = items.map(item => ({
+                request_id: reqData.id,
+                name: item.name,
+                image: item.image || '',
+                category: item.category || '',
+                quantity: item.quantity || 1,
+                status: 'pending'
+            }));
 
-        return newRequest;
+            const { error: itemError } = await window.supabaseClient
+                .from('borrow_request_items')
+                .insert(itemRows);
+
+            if (itemError) {
+                console.error('Error creating request items:', itemError);
+                // Rollback: delete the request header
+                await window.supabaseClient
+                    .from('borrow_requests')
+                    .delete()
+                    .eq('id', reqData.id);
+                return null;
+            }
+
+            // Clear cart after submission
+            window.cart.clear();
+
+            return {
+                id: reqData.id,
+                userId: reqData.user_id,
+                userName: reqData.user_name,
+                startDate: reqData.start_date,
+                endDate: reqData.end_date,
+                note: reqData.note,
+                createdAt: reqData.created_at,
+                items: itemRows
+            };
+        } catch (err) {
+            console.error('create exception:', err);
+            return null;
+        }
     },
 
-    // อัปเดตสถานะ item ใน request (สำหรับ admin) - ใช้ name แทน id
-    updateItemStatus(requestId, itemName, status, rejectionReason = '') {
-        const requests = this.getAll();
-        const request = requests.find(r => r.id === requestId);
-
-        if (request) {
-            const item = request.items.find(i => i.name === itemName);
-            if (item) {
-                item.status = status;
-                item.approvedAt = new Date().toISOString();
-                item.approvedBy = window.currentUser?.username;
-                if (status === 'rejected') {
-                    item.rejectionReason = rejectionReason;
-                }
-                this.save(requests);
-                return true;
+    // อัปเดตสถานะ item ใน request (สำหรับ admin)
+    async updateItemStatus(requestId, itemName, status, rejectionReason = '') {
+        if (!window.supabaseClient) return false;
+        try {
+            const updateData = {
+                status: status,
+                approved_at: new Date().toISOString(),
+                approved_by: window.currentUser?.username || 'admin'
+            };
+            if (status === 'rejected') {
+                updateData.rejection_reason = rejectionReason;
             }
+
+            const { error } = await window.supabaseClient
+                .from('borrow_request_items')
+                .update(updateData)
+                .eq('request_id', requestId)
+                .eq('name', itemName);
+
+            if (error) {
+                console.error('Error updating item status:', error);
+                return false;
+            }
+            return true;
+        } catch (err) {
+            console.error('updateItemStatus exception:', err);
+            return false;
         }
-        return false;
     },
 
     // ดึง requests ของ user ปัจจุบัน
-    getMyRequests() {
+    async getMyRequests() {
+        if (!window.supabaseClient) return [];
         const userId = window.currentUser?.id;
-        return this.getAll().filter(r => r.userId === userId);
+        if (!userId) return [];
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('borrow_requests')
+                .select('*, borrow_request_items(*)')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Error fetching my requests:', error);
+                return [];
+            }
+
+            return (data || []).map(r => ({
+                id: r.id,
+                userId: r.user_id,
+                userName: r.user_name,
+                startDate: r.start_date,
+                endDate: r.end_date,
+                note: r.note || '',
+                createdAt: r.created_at,
+                items: (r.borrow_request_items || []).map(item => ({
+                    name: item.name,
+                    image: item.image,
+                    category: item.category,
+                    quantity: item.quantity,
+                    status: item.status,
+                    approvedAt: item.approved_at,
+                    approvedBy: item.approved_by,
+                    rejectionReason: item.rejection_reason || ''
+                }))
+            }));
+        } catch (err) {
+            console.error('getMyRequests exception:', err);
+            return [];
+        }
     },
 
     // ดึง requests ที่รออนุมัติ (สำหรับ admin)
-    getPendingRequests() {
-        return this.getAll().filter(r =>
-            r.items.some(item => item.status === 'pending')
-        );
+    async getPendingRequests() {
+        if (!window.supabaseClient) return [];
+        try {
+            // Get request IDs that have pending items
+            const { data: pendingItems, error: itemError } = await window.supabaseClient
+                .from('borrow_request_items')
+                .select('request_id')
+                .eq('status', 'pending');
+
+            if (itemError || !pendingItems || pendingItems.length === 0) return [];
+
+            const requestIds = [...new Set(pendingItems.map(i => i.request_id))];
+
+            const { data, error } = await window.supabaseClient
+                .from('borrow_requests')
+                .select('*, borrow_request_items(*)')
+                .in('id', requestIds)
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Error fetching pending requests:', error);
+                return [];
+            }
+
+            return (data || []).map(r => ({
+                id: r.id,
+                userId: r.user_id,
+                userName: r.user_name,
+                startDate: r.start_date,
+                endDate: r.end_date,
+                note: r.note || '',
+                createdAt: r.created_at,
+                items: (r.borrow_request_items || []).map(item => ({
+                    name: item.name,
+                    image: item.image,
+                    category: item.category,
+                    quantity: item.quantity,
+                    status: item.status,
+                    approvedAt: item.approved_at,
+                    approvedBy: item.approved_by,
+                    rejectionReason: item.rejection_reason || ''
+                }))
+            }));
+        } catch (err) {
+            console.error('getPendingRequests exception:', err);
+            return [];
+        }
     },
 
     // ลบ request
-    delete(requestId) {
-        const requests = this.getAll().filter(r => r.id !== requestId);
-        this.save(requests);
+    async delete(requestId) {
+        if (!window.supabaseClient) return false;
+        try {
+            const { error } = await window.supabaseClient
+                .from('borrow_requests')
+                .delete()
+                .eq('id', requestId);
+
+            if (error) {
+                console.error('Error deleting request:', error);
+                return false;
+            }
+            return true;
+        } catch (err) {
+            console.error('delete exception:', err);
+            return false;
+        }
     }
 };
 
@@ -135,7 +305,7 @@ function renderRequestPreview() {
 }
 
 // Submit request
-window.submitBorrowRequest = function () {
+window.submitBorrowRequest = async function () {
     const startDate = document.getElementById('requestStartDate').value;
     const endDate = document.getElementById('requestEndDate').value;
     const note = document.getElementById('requestNote').value;
@@ -152,8 +322,8 @@ window.submitBorrowRequest = function () {
         return;
     }
 
-    // Create request
-    const request = window.requests.create(window.cart.items, startDate, endDate, note);
+    // Create request (async)
+    const request = await window.requests.create(window.cart.items, startDate, endDate, note);
 
     if (request) {
         closeRequestForm();
@@ -164,20 +334,20 @@ window.submitBorrowRequest = function () {
             window.renderEquipments();
         }
 
-        // Update pending badge (in case admin is also browsing)
-        window.initPendingBadge?.();
+        // Update pending badge
+        await window.initPendingBadge?.();
     }
 };
 
 // ============== ADMIN FUNCTIONS ==============
 
 // เปิด Pending Requests Modal
-window.openPendingRequestsModal = function () {
+window.openPendingRequestsModal = async function () {
     const modal = document.getElementById('pendingRequestsModal');
     if (modal) {
-        renderPendingRequests();
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+        await renderPendingRequests();
     }
 };
 
@@ -191,11 +361,11 @@ window.closePendingRequestsModal = function () {
 };
 
 // Render pending requests for admin
-function renderPendingRequests() {
+async function renderPendingRequests() {
     const container = document.getElementById('pendingRequestsList');
     if (!container) return;
 
-    const pendingRequests = window.requests.getPendingRequests();
+    const pendingRequests = await window.requests.getPendingRequests();
 
     if (pendingRequests.length === 0) {
         const t = window.translations[window.currentLang];
@@ -312,7 +482,7 @@ function updatePendingBadge(count) {
 // Approve an item - สร้าง transactions จริงใน Supabase
 window.approveItem = async function (requestId, itemName) {
     // Get the request to find details
-    const requests = window.requests.getAll();
+    const requests = await window.requests.getAll();
     const request = requests.find(r => r.id === requestId);
     const t = window.translations[window.currentLang];
     if (!request) {
@@ -371,12 +541,12 @@ window.approveItem = async function (requestId, itemName) {
             }
         }
 
-        // Update request status in localStorage
-        const success = window.requests.updateItemStatus(requestId, itemName, 'approved');
+        // Update request status in Supabase
+        const success = await window.requests.updateItemStatus(requestId, itemName, 'approved');
 
         if (success) {
             window.showToast?.(`${t.approve} ${itemName} (${quantity} ${t.pieces}) ✓`, 'success');
-            renderPendingRequests();
+            await renderPendingRequests();
             // Refresh equipment list
             window.fetchEquipments?.();
 
@@ -391,20 +561,20 @@ window.approveItem = async function (requestId, itemName) {
 };
 
 // Reject an item
-window.rejectItem = function (requestId, itemName) {
+window.rejectItem = async function (requestId, itemName) {
     const t = window.translations[window.currentLang];
     const reason = prompt(t.rejectionReasonPrompt);
     if (reason === null) return; // User cancelled
-    const success = window.requests.updateItemStatus(requestId, itemName, 'rejected', reason || '');
+    const success = await window.requests.updateItemStatus(requestId, itemName, 'rejected', reason || '');
     if (success) {
         window.showToast?.(t.rejectedSuccess, 'info');
-        renderPendingRequests();
+        await renderPendingRequests();
     }
 };
 
 // Approve ALL pending items in a request - sends only ONE email
 window.approveAllItems = async function (requestId) {
-    const requests = window.requests.getAll();
+    const requests = await window.requests.getAll();
     const request = requests.find(r => r.id === requestId);
     const t = window.translations[window.currentLang];
     if (!request) {
@@ -463,15 +633,15 @@ window.approveAllItems = async function (requestId) {
                     }]);
             }
 
-            // Update localStorage
-            window.requests.updateItemStatus(requestId, itemName, 'approved');
+            // Update Supabase
+            await window.requests.updateItemStatus(requestId, itemName, 'approved');
             approvedItems.push({ name: itemName, quantity: quantity });
             successCount++;
         }
 
         if (successCount > 0) {
             window.showToast?.(`${t.approve} ${successCount} ✓`, 'success');
-            renderPendingRequests();
+            await renderPendingRequests();
             window.fetchEquipments?.();
 
             // Send ONE email for all approved items
@@ -486,9 +656,9 @@ window.approveAllItems = async function (requestId) {
 };
 
 // Initialize pending badge on page load
-window.initPendingBadge = function () {
+window.initPendingBadge = async function () {
     if (window.currentUser?.role === 'admin') {
-        const pendingRequests = window.requests.getPendingRequests();
+        const pendingRequests = await window.requests.getPendingRequests();
         const totalPending = pendingRequests.reduce((sum, req) =>
             sum + req.items.filter(item => item.status === 'pending').length, 0
         );
@@ -499,12 +669,12 @@ window.initPendingBadge = function () {
 // ============== USER FUNCTIONS ==============
 
 // เปิด My Requests Modal
-window.openMyRequestsModal = function () {
+window.openMyRequestsModal = async function () {
     const modal = document.getElementById('myRequestsModal');
     if (modal) {
-        renderMyRequests();
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+        await renderMyRequests();
     }
 };
 
@@ -518,11 +688,14 @@ window.closeMyRequestsModal = function () {
 };
 
 // Render user's own requests
-function renderMyRequests() {
+async function renderMyRequests() {
     const container = document.getElementById('myRequestsList');
     if (!container) return;
 
-    const myRequests = window.requests.getMyRequests();
+    // Show loading
+    container.innerHTML = '<div class="text-center py-8 text-gray-400">กำลังโหลด...</div>';
+
+    const myRequests = await window.requests.getMyRequests();
 
     if (myRequests.length === 0) {
         const t = window.translations[window.currentLang];
@@ -594,13 +767,13 @@ function renderMyRequests() {
 }
 
 // ลบคำขอของ user
-window.deleteMyRequest = function (requestId) {
+window.deleteMyRequest = async function (requestId) {
     const t = window.translations[window.currentLang];
     if (!confirm(t.confirmDeleteRequest)) return;
 
-    window.requests.delete(requestId);
+    await window.requests.delete(requestId);
     window.showToast?.(t.rejectedSuccess, 'info');
-    renderMyRequests();
+    await renderMyRequests();
 };
 
 // --- Email Notification Functions ---
@@ -714,15 +887,15 @@ window.sendReminderEmail = async function (transaction, daysUntilDue) {
     }
 };
 
-// --- Badge auto-refresh ---
+// --- Badge auto-refresh (Supabase polling) ---
 
-// Periodic polling: refresh pending badge every 10 seconds for admin
+// Periodic polling: refresh pending badge every 15 seconds for admin
 let _badgeInterval = null;
 function startBadgePolling() {
     stopBadgePolling();
-    _badgeInterval = setInterval(() => {
-        window.initPendingBadge?.();
-    }, 10000);
+    _badgeInterval = setInterval(async () => {
+        await window.initPendingBadge?.();
+    }, 15000);
 }
 function stopBadgePolling() {
     if (_badgeInterval) {
@@ -730,13 +903,6 @@ function stopBadgePolling() {
         _badgeInterval = null;
     }
 }
-
-// Cross-tab: listen for localStorage changes from other tabs
-window.addEventListener('storage', (e) => {
-    if (e.key === 'borrowRequests') {
-        window.initPendingBadge?.();
-    }
-});
 
 // Start polling after login
 const _origShowMainApp = window.showMainApp;

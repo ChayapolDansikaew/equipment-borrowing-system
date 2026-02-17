@@ -42,7 +42,7 @@ window.fetchDashboardData = async function () {
         const transactions = txResult.data || [];
         const equipments = eqResult.data || [];
         const users = usersResult.data || [];
-        const requests = window.requests?.getAll() || [];
+        const requests = await window.requests?.getAll() || [];
 
         // === Compute KPI Stats ===
         const totalEquipment = equipments.length;
@@ -408,7 +408,7 @@ window.renderKanbanBoard = function (requests, transactions) {
         returned: { title: 'คืนแล้ว', color: 'gray', icon: '✔️', items: [] }
     };
 
-    // From localStorage requests
+    // From Supabase requests
     requests.forEach(req => {
         req.items.forEach(item => {
             const card = {
