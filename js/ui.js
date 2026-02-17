@@ -256,7 +256,7 @@ window.showMainApp = function () {
 
     // Dropdown menu items (mobile)
     const mobileAddBtn = document.getElementById('mobileAddBtn');
-    const mobileOverviewBtn = document.getElementById('mobileOverviewBtn');
+    const dropdownDashboardBtn = document.getElementById('dropdownDashboardBtn');
     const mobilePendingBtn = document.getElementById('mobilePendingBtn');
     const mobileUserMgmtBtn = document.getElementById('mobileUserMgmtBtn');
     const mobileHistoryBtn = document.getElementById('mobileHistoryBtn');
@@ -264,15 +264,9 @@ window.showMainApp = function () {
     if (window.currentUser.role === 'admin') {
         // Show admin items in dropdown (mobile)
         if (mobileAddBtn) mobileAddBtn.classList.remove('hidden');
-        if (mobileOverviewBtn) mobileOverviewBtn.classList.remove('hidden');
+        if (dropdownDashboardBtn) dropdownDashboardBtn.classList.remove('hidden');
         if (mobilePendingBtn) mobilePendingBtn.classList.remove('hidden');
         if (mobileUserMgmtBtn) mobileUserMgmtBtn.classList.remove('hidden');
-
-        // Show admin desktop text nav link (Overview)
-        const overviewBtn = document.getElementById('overviewBtn');
-        if (overviewBtn) {
-            overviewBtn.classList.remove('hidden');
-        }
 
         // Show notification bell (desktop md+)
         const pendingBtn = document.getElementById('pendingRequestsBtn');
@@ -299,14 +293,9 @@ window.showMainApp = function () {
     } else {
         // NOT admin — hide all admin items
         if (mobileAddBtn) mobileAddBtn.classList.add('hidden');
-        if (mobileOverviewBtn) mobileOverviewBtn.classList.add('hidden');
+        if (dropdownDashboardBtn) dropdownDashboardBtn.classList.add('hidden');
         if (mobilePendingBtn) mobilePendingBtn.classList.add('hidden');
         if (mobileUserMgmtBtn) mobileUserMgmtBtn.classList.add('hidden');
-
-        const overviewBtn = document.getElementById('overviewBtn');
-        if (overviewBtn) {
-            overviewBtn.classList.add('hidden');
-        }
         const pendingBtn = document.getElementById('pendingRequestsBtn');
         if (pendingBtn) {
             pendingBtn.classList.add('hidden');
@@ -377,15 +366,6 @@ window.updateTranslations = function () {
     const noteArea = document.getElementById('requestNote');
     if (noteArea) noteArea.placeholder = t.notePlaceholder;
 
-    const overviewBtn = document.getElementById('overviewBtn');
-    if (overviewBtn) {
-        const overviewSection = document.getElementById('overviewSection');
-        if (overviewSection && overviewSection.classList.contains('hidden')) {
-            overviewBtn.textContent = t.overview;
-        } else {
-            overviewBtn.textContent = t.backToBrowse;
-        }
-    }
 };
 
 window.toggleTheme = function () {
@@ -510,7 +490,6 @@ window.toggleOverview = function () {
     const returnSection = document.getElementById('returnSection');
     const myBorrowingsSection = document.getElementById('myBorrowingsSection');
     const historySection = document.getElementById('historySection');
-    const btn = document.getElementById('overviewBtn');
     const t = window.translations[window.currentLang];
 
     // Reset history button text
@@ -524,13 +503,6 @@ window.toggleOverview = function () {
         myBorrowingsSection.classList.add('hidden');
         if (historySection) historySection.classList.add('hidden');
         overview.classList.remove('hidden');
-        btn.textContent = t.backToBrowse;
-
-        // Active nav styling
-        if (btn) {
-            btn.classList.add('text-white', 'bg-white/[0.08]');
-            btn.classList.remove('text-gray-400');
-        }
 
         // Fetch dashboard data + start auto-refresh
         window.fetchDashboardData();
@@ -538,13 +510,6 @@ window.toggleOverview = function () {
     } else {
         overview.classList.add('hidden');
         controls.classList.remove('hidden');
-        btn.textContent = t.overview;
-
-        // Remove active nav styling
-        if (btn) {
-            btn.classList.remove('text-white', 'bg-white/[0.08]');
-            btn.classList.add('text-gray-400');
-        }
 
         // Stop auto-refresh
         window.stopDashboardRefresh?.();
@@ -572,7 +537,6 @@ window.toggleHistoryPage = function () {
     const myBorrowingsSection = document.getElementById('myBorrowingsSection');
     const historySection = document.getElementById('historySection');
     const historyBtn = document.getElementById('historyBtn');
-    const overviewBtn = document.getElementById('overviewBtn');
     const t = window.translations[window.currentLang];
 
     if (historySection.classList.contains('hidden')) {
@@ -584,7 +548,6 @@ window.toggleHistoryPage = function () {
         overview.classList.add('hidden');
         historySection.classList.remove('hidden');
         if (historyBtn) historyBtn.textContent = t?.backToBrowse || 'Back';
-        if (overviewBtn) overviewBtn.textContent = t?.overview || 'Overview';
         window.fetchBorrowingHistory();
     } else {
         // Hide history, go back

@@ -88,12 +88,22 @@ window.fetchDashboardData = async function () {
             utilizationRate, totalUsers: users.length
         };
 
+        // === Update Greeting ===
+        const greeting = document.getElementById('dashGreeting');
+        if (greeting) {
+            const username = window.currentUser?.username || 'Admin';
+            const hour = new Date().getHours();
+            const greetText = hour < 12 ? 'สวัสดีตอนเช้า' : hour < 17 ? 'สวัสดีตอนบ่าย' : 'สวัสดีตอนเย็น';
+            greeting.textContent = `${greetText}, ${username} 👋`;
+        }
+
         // === Render Everything ===
         window.renderKPICards(stats);
         window.renderTrendChart(transactions, monthStart);
         window.renderCategoryChart(equipments);
         window.renderStatusChart(stats);
         window.renderTopBorrowersChart(transactions);
+        window.renderRecentTransactions(transactions);
         window.renderKanbanBoard(requests, transactions);
         window.renderActivityFeed(transactions, requests);
 
@@ -332,6 +342,56 @@ window.renderTopBorrowersChart = function (transactions) {
             }
         }
     });
+};
+
+// ============================================
+// Recent Transactions Table
+// ============================================
+window.renderRecentTransactions = function (transactions) {
+    const tbody = document.getElementById('dashRecentTransactions');
+    if (!tbody) return;
+
+    const recent = transactions.slice(0, 8);
+    const now = new Date();
+
+    if (recent.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-gray-400 text-sm">ไม่มีรายการ</td></tr>';
+        return;
+    }
+
+    const locale = window.currentLang === 'th' ? 'th-TH' : 'en-US';
+
+    tbody.innerHTML = recent.map(tx => {
+        const date = new Date(tx.borrow_date).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: '2-digit' });
+        const isOverdue = tx.status === 'active' && tx.end_date && new Date(tx.end_date) < now;
+
+        let statusBadge;
+        if (tx.status === 'returned') {
+            statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">คืนแล้ว</span>';
+        } else if (isOverdue) {
+            statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400">เลยกำหนด</span>';
+        } else {
+            statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">กำลังยืม</span>';
+        }
+
+        return `
+            <tr class="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors">
+                <td class="py-3 pr-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                        </div>
+                        <span class="text-sm font-medium text-gray-900 dark:text-white truncate">${tx.equipments?.name || 'Unknown'}</span>
+                    </div>
+                </td>
+                <td class="py-3 pr-4 text-sm text-gray-600 dark:text-gray-400">${tx.borrower_name}</td>
+                <td class="py-3 pr-4 text-xs text-gray-500 dark:text-gray-500">${date}</td>
+                <td class="py-3">${statusBadge}</td>
+            </tr>
+        `;
+    }).join('');
 };
 
 // ============================================

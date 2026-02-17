@@ -96,6 +96,7 @@ window.translations = {
         browseEquipments: 'เลือกยืมอุปกรณ์',
         daysRemaining: 'วัน',
         // Cart
+        dashboard: 'แดชบอร์ด',
         viewDetails: 'ดูรายละเอียด',
         addToCart: 'ใส่ตะกร้า',
         inCart: 'ในตะกร้า',
@@ -233,6 +234,7 @@ window.translations = {
         browseEquipments: 'Browse Equipment',
         daysRemaining: 'days',
         // Cart
+        dashboard: 'Dashboard',
         viewDetails: 'View Details',
         addToCart: 'Add to Cart',
         inCart: 'In Cart',
