@@ -1,0 +1,20 @@
+{
+  "name": "equipment-borrowing-system",
+  "version": "1.0.0",
+  "description": "Equipment Borrowing System with Supabase backend",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step needed for static site'",
+    "start": "vercel dev"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0"
+  },
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  },
+  "keywords": ["equipment", "borrowing", "supabase", "vercel"],
+  "author": "Chayapol Dansikaew",
+  "license": "MIT"
+}
