@@ -5,9 +5,18 @@ import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
     try {
-        // Initialize Supabase client
-        const supabaseUrl = process.env.SUPABASE_URL || 'https://gzfzpkllhkuefmsktgor.supabase.co';
-        const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6Znpwa2xsaGt1ZWZtc2t0Z29yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI1Mjg4NzAsImV4cCI6MjA0ODEwNDg3MH0.lPvrrFvioNFVgkiXgKLh3WfpaS-G1VgKfMfqIbvCpxw';
+        // Initialize Supabase client from environment variables
+        const supabaseUrl = process.env.SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+        if (!supabaseUrl || !supabaseKey) {
+            console.error('Missing Supabase configuration in environment variables');
+            return res.status(500).json({
+                success: false,
+                error: 'Missing Supabase configuration',
+                timestamp: new Date().toISOString()
+            });
+        }
 
         const supabase = createClient(supabaseUrl, supabaseKey);
 
