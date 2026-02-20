@@ -147,6 +147,9 @@ window.renderReturnTable = function (transactions) {
                         <button onclick="openReturnModal(${tr.equipment_id}, '${tr.equipments?.name || 'Unknown'}')" class="text-brand-pink hover:text-white hover:bg-brand-pink border border-brand-pink px-3 py-1.5 rounded-lg transition-all text-xs font-bold">
                             ${t.returnNotify}
                         </button>
+                        <button onclick="window.triggerReminder(${tr.id})" class="text-blue-500 hover:text-white hover:bg-blue-500 border border-blue-500 px-3 py-1.5 rounded-lg transition-all text-xs font-bold" title="แจ้งเตือนให้คืนอุปกรณ์">
+                            🔔
+                        </button>
                         <button onclick="window.openPenaltyModal('${tr.borrower_name}', '${tr.borrower_name}', ${tr.equipment_id}, '${tr.equipments?.name || 'Unknown'}', ${tr.id})" class="text-red-500 hover:text-white hover:bg-red-500 border border-red-500 px-3 py-1.5 rounded-lg transition-all text-xs font-bold" title="รายงานปัญหา">
                             ⚠️
                         </button>
@@ -155,6 +158,35 @@ window.renderReturnTable = function (transactions) {
             </tr>
         `;
     }).join('');
+};
+
+window.triggerReminder = async function (transactionId) {
+    const transaction = window._returnTransactions?.find(t => t.id === transactionId);
+    if (!transaction) return;
+
+    // Calculate days until due
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endDate = transaction.end_date ? new Date(transaction.end_date) : new Date(new Date(transaction.borrow_date).getTime() + 86400000);
+    const endDay = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+
+    // Positive if future, negative if overdue
+    const daysUntilDue = Math.ceil((endDay - today) / (1000 * 60 * 60 * 24));
+
+    const formattedTransaction = {
+        borrower: transaction.borrower_name,
+        equipment_name: transaction.equipments?.name || 'Unknown',
+        return_date: endDate.toISOString()
+    };
+
+    window.showToast?.('กำลังส่งการแจ้งเตือน...', 'info');
+    const success = await window.sendReminderEmail(formattedTransaction, daysUntilDue);
+
+    if (success) {
+        window.showToast?.('ส่งการแจ้งเตือนสำเร็จ', 'success');
+    } else {
+        window.showToast?.('ไม่สามารถส่งการแจ้งเตือนได้ โปรดตรวจสอบการตั้งค่า EmailJS', 'error');
+    }
 };
 
 // Render user's borrowed items

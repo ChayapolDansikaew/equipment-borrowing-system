@@ -75,12 +75,14 @@ window.fetchEquipments = async function () {
         // Merge data
         window.equipments = equipData.map(e => {
             const activeTrans = transactionsMap[e.id];
-            const isUnavailable = activeTrans && activeTrans.length > 0;
+            // An item is unavailable if it has overlapping bookings OR if it's physically out (borrowed).
+            // This is crucial for overdue items whose end_date is in the past and thus don't overlap with 'today'.
+            const isUnavailable = (activeTrans && activeTrans.length > 0) || e.status === 'borrowed';
 
             return {
                 ...e,
                 status: isUnavailable ? 'borrowed' : 'available',
-                transaction: isUnavailable ? activeTrans[0] : null
+                transaction: (activeTrans && activeTrans.length > 0) ? activeTrans[0] : null
             };
         });
 
@@ -118,7 +120,8 @@ window.fetchReturnData = async function () {
             return;
         }
 
-        window.renderReturnTable(data || []);
+        window._returnTransactions = data || [];
+        window.renderReturnTable(window._returnTransactions);
     } catch (err) {
         console.error('fetchReturnData exception:', err);
         window.setLoading(false);
