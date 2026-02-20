@@ -1327,8 +1327,9 @@ window.renderUsersList = function (users) {
 
     if (!users || users.length === 0) {
         usersList.innerHTML = `
-            <div class="text-center py-8 text-gray-400">
-                ไม่พบผู้ใช้
+            <div class="col-span-full text-center py-10">
+                <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-3 text-2xl">🔍</div>
+                <p class="text-gray-500 dark:text-gray-400 font-medium pb-2">ไม่พบผู้ใช้ที่ค้นหา</p>
             </div>
         `;
         return;
@@ -1336,29 +1337,17 @@ window.renderUsersList = function (users) {
 
     usersList.innerHTML = users.map(user => {
         const isAdmin = user.role === 'admin';
-        const roleColor = isAdmin ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-600';
-        const toggleBtnClass = isAdmin
-            ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            : 'bg-purple-500 text-white hover:bg-purple-600';
-        const toggleBtnText = isAdmin ? 'ลดเป็น User' : 'เลื่อนเป็น Admin';
-
         return `
-            <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl mb-2">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold">
-                        ${user.username.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                        <p class="font-semibold text-gray-800 dark:text-white">${user.username}</p>
-                        <span class="px-2 py-0.5 text-xs font-bold rounded-full ${roleColor}">
-                            ${user.role}
-                        </span>
-                    </div>
+            <div onclick="window.openUserDetailsModal(${user.id})"
+                class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-500 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col items-center justify-center text-center group">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white text-xl font-bold font-heading shadow-md mb-3 group-hover:scale-110 transition-transform">
+                    ${user.username.charAt(0).toUpperCase()}
                 </div>
-                <button onclick="toggleUserRole(${user.id}, '${user.role}')"
-                    class="px-3 py-1.5 text-sm font-bold rounded-lg transition-colors cursor-pointer ${toggleBtnClass}">
-                    ${toggleBtnText}
-                </button>
+                <p class="font-bold text-gray-900 dark:text-white mb-1 truncate w-full px-2">${user.username}</p>
+                <div class="flex items-center gap-1.5">
+                    <div class="w-2 h-2 rounded-full ${isAdmin ? 'bg-purple-500' : 'bg-gray-400'}"></div>
+                    <p class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">${user.role}</p>
+                </div>
             </div>
         `;
     }).join('');
@@ -1371,16 +1360,123 @@ window.filterUsers = function (query) {
     window.renderUsersList(filtered);
 };
 
+window.currentSelectedUser = null;
+
+window.openUserDetailsModal = async function (userId) {
+    const user = window.allUsers.find(u => u.id === userId);
+    if (!user) return;
+
+    window.currentSelectedUser = user;
+
+    // Elements
+    const modal = document.getElementById('userDetailsModal');
+    const avatar = document.getElementById('detailUserAvatar');
+    const roleBadge = document.getElementById('detailUserRole');
+    const nameText = document.getElementById('detailUserName');
+    const strikesText = document.getElementById('detailUserStrikes');
+    const lastActiveText = document.getElementById('detailUserLastActive');
+    const lastItemText = document.getElementById('detailUserLastItem');
+    const toggleBtn = document.getElementById('toggleRoleBtn');
+
+    // Populate static
+    avatar.textContent = user.username.charAt(0).toUpperCase();
+    nameText.textContent = user.username;
+    strikesText.textContent = user.total_strikes || 0;
+
+    const isAdmin = user.role === 'admin';
+    roleBadge.textContent = isAdmin ? 'Admin Admin' : 'User';
+    roleBadge.className = `px-3 py-1 text-xs font-bold rounded-full ${isAdmin ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`;
+
+    toggleBtn.textContent = isAdmin ? 'ปรับลดสิทธิ์เป็น User' : 'เลื่อนขั้นเป็น Admin';
+    toggleBtn.className = `w-full py-2.5 rounded-xl font-bold text-sm transition-all duration-200 shadow-sm ${isAdmin ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600' : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90'}`;
+    toggleBtn.onclick = () => window.toggleUserRole(user.id, user.role);
+
+    // Initial loading state for dynamic data
+    lastActiveText.textContent = 'กำลังตรวจสอบ...';
+    lastItemText.textContent = 'กำลังตรวจสอบ...';
+    lastActiveText.classList.add('animate-pulse');
+    lastItemText.classList.add('animate-pulse');
+
+    // Show modal
+    modal.classList.remove('hidden');
+
+    // Fetch latest transaction
+    try {
+        const { data: trans, error } = await window.supabaseClient
+            .from('transactions')
+            .select(`
+                borrow_date,
+                equipments ( name )
+            `)
+            .eq('borrower_name', user.username)
+            .order('borrow_date', { ascending: false })
+            .limit(1);
+
+        lastActiveText.classList.remove('animate-pulse');
+        lastItemText.classList.remove('animate-pulse');
+
+        if (!error && trans && trans.length > 0) {
+            const dateObj = new Date(trans[0].borrow_date);
+            lastActiveText.textContent = dateObj.toLocaleDateString('th-TH', {
+                year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+            lastItemText.textContent = trans[0].equipments?.name || 'อุปกรณ์ที่ไม่ระบุ';
+            lastItemText.className = 'text-sm font-bold text-brand-pink truncate';
+        } else {
+            lastActiveText.textContent = 'ไม่เคยเข้าใช้งาน/ยืม';
+            lastItemText.textContent = '-';
+            lastActiveText.className = 'text-sm text-gray-400 dark:text-gray-500';
+            lastItemText.className = 'text-sm text-gray-400 dark:text-gray-500';
+        }
+    } catch (err) {
+        console.error('Failed to fetch user history', err);
+        lastActiveText.textContent = 'ไม่สามารถดึงข้อมูลได้';
+        lastItemText.textContent = '-';
+        lastActiveText.classList.remove('animate-pulse');
+        lastItemText.classList.remove('animate-pulse');
+    }
+};
+
+window.closeUserDetailsModal = function () {
+    document.getElementById('userDetailsModal').classList.add('hidden');
+    window.currentSelectedUser = null;
+};
+
 window.toggleUserRole = async function (userId, currentRole) {
     const newRole = currentRole === 'admin' ? 'user' : 'admin';
+
+    const toggleBtn = document.getElementById('toggleRoleBtn');
+    if (toggleBtn) {
+        toggleBtn.textContent = 'กำลังอัปเดต...';
+        toggleBtn.classList.add('opacity-50', 'cursor-wait');
+    }
 
     const success = await window.updateUserRole(userId, newRole);
 
     if (success) {
         // Refresh the list
         window.allUsers = await window.fetchAllUsers();
-        window.renderUsersList(window.allUsers);
+        window.renderUsersList(window.filterUsersValue ? window.allUsers.filter(u => u.username.toLowerCase().includes(window.filterUsersValue)) : window.allUsers);
+
+        // Update modal immediately if open
+        if (window.currentSelectedUser && window.currentSelectedUser.id === userId) {
+            window.openUserDetailsModal(userId); // Re-render modal details
+        }
+    } else {
+        if (toggleBtn) {
+            toggleBtn.textContent = 'ล้มเหลว ลองใหม่';
+            toggleBtn.classList.remove('opacity-50', 'cursor-wait');
+        }
     }
+};
+
+window.filterUsersValue = '';
+window.filterUsers = function (query) {
+    window.filterUsersValue = query.toLowerCase();
+    const filtered = window.allUsers.filter(user =>
+        user.username.toLowerCase().includes(window.filterUsersValue)
+    );
+    window.renderUsersList(filtered);
 };
 
 // --- Penalty System Functions ---

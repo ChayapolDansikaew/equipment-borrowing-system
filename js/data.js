@@ -693,7 +693,7 @@ window.fetchAllUsers = async function () {
     try {
         const { data, error } = await window.supabaseClient
             .from('users')
-            .select('id, username, role')
+            .select('id, username, role, total_strikes')
             .order('id', { ascending: true });
 
         if (error) {
