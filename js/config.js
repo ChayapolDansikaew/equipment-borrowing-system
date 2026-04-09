@@ -160,7 +160,11 @@ window.translations = {
         searchBorrower: 'ค้นหาผู้ยืม...',
         total: 'ทั้งหมด',
         returned: 'คืนแล้ว',
-        filterBy: 'กรอง'
+        filterBy: 'กรอง',
+        logoutConfirmTitle: 'ยืนยันการออกจากระบบ',
+        logoutConfirmDesc: 'คุณต้องการออกจากระบบหรือไม่?',
+        logoutCancel: 'ยกเลิก',
+        logoutConfirm: 'ออกจากระบบ'
     },
     en: {
         overview: 'Overview',
@@ -298,7 +302,11 @@ window.translations = {
         searchBorrower: 'Search borrower...',
         total: 'Total',
         returned: 'Returned',
-        filterBy: 'Filter'
+        filterBy: 'Filter',
+        logoutConfirmTitle: 'Confirm Logout',
+        logoutConfirmDesc: 'Are you sure you want to log out?',
+        logoutCancel: 'Cancel',
+        logoutConfirm: 'Log Out'
     }
 };
 

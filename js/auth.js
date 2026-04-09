@@ -97,7 +97,41 @@ window.handleLogin = async function () {
     }
 };
 
+// Show logout confirmation modal instead of logging out immediately
 window.handleLogout = function () {
+    openLogoutModal();
+};
+
+// Open the logout confirmation modal with animation
+window.openLogoutModal = function () {
+    const modal = document.getElementById('logoutModal');
+    const card = document.getElementById('logoutModalCard');
+    modal.classList.remove('hidden');
+    // Trigger entrance animation
+    requestAnimationFrame(() => {
+        card.classList.remove('scale-95', 'opacity-0');
+        card.classList.add('scale-100', 'opacity-100');
+    });
+    // Close the user dropdown if open
+    if (typeof closeUserMenu === 'function') {
+        closeUserMenu();
+    }
+};
+
+// Close the logout confirmation modal with animation
+window.closeLogoutModal = function () {
+    const modal = document.getElementById('logoutModal');
+    const card = document.getElementById('logoutModalCard');
+    card.classList.remove('scale-100', 'opacity-100');
+    card.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 200);
+};
+
+// Actually perform the logout
+window.confirmLogout = function () {
+    closeLogoutModal();
     window.currentUser = null;
     localStorage.removeItem('currentUser');
     document.getElementById('mainApp').classList.add('hidden');
