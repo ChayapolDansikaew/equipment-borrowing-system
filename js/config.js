@@ -164,7 +164,27 @@ window.translations = {
         logoutConfirmTitle: 'ยืนยันการออกจากระบบ',
         logoutConfirmDesc: 'คุณต้องการออกจากระบบหรือไม่?',
         logoutCancel: 'ยกเลิก',
-        logoutConfirm: 'ออกจากระบบ'
+        logoutConfirm: 'ออกจากระบบ',
+        // User Notifications
+        notifications: 'การแจ้งเตือน',
+        noNotifications: 'ไม่มีการแจ้งเตือน',
+        noNotificationsDesc: 'ยังไม่มีรายการแจ้งเตือนในขณะนี้',
+        dueSoon: 'ใกล้ถึงกำหนดคืน',
+        overdueAlert: 'เลยกำหนดคืน',
+        requestApproved: 'คำขอได้รับการอนุมัติ',
+        requestRejected: 'คำขอถูกปฏิเสธ',
+        daysLeft: 'เหลืออีก',
+        dayUnit: 'วัน',
+        dueToday: 'ครบกำหนดวันนี้',
+        overdueBy: 'เกินกำหนด',
+        markAllRead: 'อ่านทั้งหมด',
+        // User Profile
+        profile: 'ข้อมูลส่วนตัว',
+        totalStrikes: 'คะแนนทำผิดเงื่อนไข',
+        myHistory: 'ประวัติการยืมของฉัน',
+        myHistoryDesc: 'รายการอุปกรณ์ที่เคยทำรายการ',
+        strikeUnit: 'ครั้ง',
+        profileBackBtn: 'กลับหน้าหลัก'
     },
     en: {
         overview: 'Overview',
@@ -306,7 +326,27 @@ window.translations = {
         logoutConfirmTitle: 'Confirm Logout',
         logoutConfirmDesc: 'Are you sure you want to log out?',
         logoutCancel: 'Cancel',
-        logoutConfirm: 'Log Out'
+        logoutConfirm: 'Log Out',
+        // User Notifications
+        notifications: 'Notifications',
+        noNotifications: 'No notifications',
+        noNotificationsDesc: 'You have no notifications at this time',
+        dueSoon: 'Due soon',
+        overdueAlert: 'Overdue',
+        requestApproved: 'Request approved',
+        requestRejected: 'Request rejected',
+        daysLeft: 'left',
+        dayUnit: 'days',
+        dueToday: 'Due today',
+        overdueBy: 'Overdue by',
+        markAllRead: 'Mark all read',
+        // User Profile
+        profile: 'My Profile',
+        totalStrikes: 'Total Strikes',
+        myHistory: 'My Borrowing History',
+        myHistoryDesc: 'Equipment you have previously borrowed',
+        strikeUnit: 'strikes',
+        profileBackBtn: 'Back to Browse'
     }
 };
 

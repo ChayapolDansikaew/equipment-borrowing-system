@@ -207,6 +207,166 @@ window.fetchBorrowingHistory = async function (filters = {}) {
     }
 };
 
+// --- User Notifications ---
+window.fetchUserNotifications = async function () {
+    if (!window.supabaseClient || !window.currentUser) return [];
+    const notifications = [];
+    const t = window.translations[window.currentLang];
+    const locale = window.currentLang === 'th' ? 'th-TH' : 'en-US';
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    try {
+        // 1. Fetch user's request items with non-pending statuses (approved/rejected)
+        const userId = window.currentUser?.id || window.currentUser?.dbId;
+        if (userId) {
+            const { data: requests } = await window.supabaseClient
+                .from('borrow_requests')
+                .select('*, borrow_request_items(*)')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            if (requests) {
+                requests.forEach(req => {
+                    (req.borrow_request_items || []).forEach(item => {
+                        if (item.status === 'approved') {
+                            notifications.push({
+                                type: 'approved',
+                                icon: '✅',
+                                color: 'text-emerald-500',
+                                bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
+                                title: t.requestApproved,
+                                message: item.name,
+                                time: item.approved_at || req.created_at
+                            });
+                        } else if (item.status === 'rejected') {
+                            notifications.push({
+                                type: 'rejected',
+                                icon: '❌',
+                                color: 'text-red-500',
+                                bgColor: 'bg-red-50 dark:bg-red-900/20',
+                                title: t.requestRejected,
+                                message: `${item.name}${item.rejection_reason ? ' — ' + item.rejection_reason : ''}`,
+                                time: item.approved_at || req.created_at
+                            });
+                        }
+                    });
+                });
+            }
+        }
+
+        // 2. Fetch due-soon / overdue transactions for user
+        const { data: activeTransactions } = await window.supabaseClient
+            .from('transactions')
+            .select('*, equipments ( name )')
+            .eq('borrower_name', window.currentUser.username)
+            .eq('status', 'active');
+
+        if (activeTransactions) {
+            activeTransactions.forEach(tr => {
+                if (!tr.end_date) return;
+                const endDate = new Date(tr.end_date);
+                const endDay = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+                const daysUntilDue = Math.ceil((endDay - today) / (1000 * 60 * 60 * 24));
+                const equipName = tr.equipments?.name || 'Unknown';
+
+                if (daysUntilDue < 0) {
+                    // Overdue
+                    notifications.push({
+                        type: 'overdue',
+                        icon: '🔴',
+                        color: 'text-red-500',
+                        bgColor: 'bg-red-50 dark:bg-red-900/20',
+                        title: t.overdueAlert,
+                        message: `${equipName} — ${t.overdueBy} ${Math.abs(daysUntilDue)} ${t.dayUnit}`,
+                        time: tr.end_date,
+                        priority: 1
+                    });
+                } else if (daysUntilDue === 0) {
+                    // Due today
+                    notifications.push({
+                        type: 'due_today',
+                        icon: '🟡',
+                        color: 'text-yellow-500',
+                        bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
+                        title: t.dueToday,
+                        message: equipName,
+                        time: tr.end_date,
+                        priority: 2
+                    });
+                } else if (daysUntilDue <= 2) {
+                    // Due soon
+                    notifications.push({
+                        type: 'due_soon',
+                        icon: '🟠',
+                        color: 'text-orange-500',
+                        bgColor: 'bg-orange-50 dark:bg-orange-900/20',
+                        title: t.dueSoon,
+                        message: `${equipName} — ${t.daysLeft} ${daysUntilDue} ${t.dayUnit}`,
+                        time: tr.end_date,
+                        priority: 3
+                    });
+                }
+            });
+        }
+
+        // Sort: priority items first (overdue > due_today > due_soon), then by time desc
+        notifications.sort((a, b) => {
+            if (a.priority && b.priority) return a.priority - b.priority;
+            if (a.priority) return -1;
+            if (b.priority) return 1;
+            return new Date(b.time) - new Date(a.time);
+        });
+
+    } catch (err) {
+        console.error('fetchUserNotifications error:', err);
+    }
+
+    return notifications;
+};
+
+// --- User Profile Data ---
+window.fetchUserProfile = async function () {
+    if (!window.supabaseClient || !window.currentUser) return null;
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('users')
+            .select('id, username, role, total_strikes')
+            .eq('username', window.currentUser.username)
+            .single();
+
+        if (error) {
+            console.error('fetchUserProfile error:', error);
+            return null;
+        }
+        return data;
+    } catch (err) {
+        console.error('fetchUserProfile exception:', err);
+        return null;
+    }
+};
+
+window.fetchUserHistory = async function () {
+    if (!window.supabaseClient || !window.currentUser) return [];
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('transactions')
+            .select('*, equipments ( name, image_url, type )')
+            .eq('borrower_name', window.currentUser.username)
+            .order('borrow_date', { ascending: false });
+
+        if (error) {
+            console.error('fetchUserHistory error:', error);
+            return [];
+        }
+        return data || [];
+    } catch (err) {
+        console.error('fetchUserHistory exception:', err);
+        return [];
+    }
+};
+
 window.fetchOverviewData = async function () {
     // Delegate to new dashboard module
     if (window.fetchDashboardData) {

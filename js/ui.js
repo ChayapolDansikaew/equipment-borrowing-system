@@ -322,6 +322,12 @@ window.showMainApp = function () {
             myItemsBtn.textContent = window.translations[window.currentLang].returns;
             myItemsBtn.id = 'btn-returns';
         }
+
+        // Hide user-only items for admin
+        const userNotifBtn = document.getElementById('userNotifBtn');
+        if (userNotifBtn) userNotifBtn.classList.add('hidden');
+        const dropdownProfileBtn = document.getElementById('dropdownProfileBtn');
+        if (dropdownProfileBtn) dropdownProfileBtn.classList.add('hidden');
     } else {
         // NOT admin — hide all admin items
         if (mobileAddBtn) mobileAddBtn.classList.add('hidden');
@@ -346,6 +352,12 @@ window.showMainApp = function () {
             returnsBtn.textContent = window.translations[window.currentLang].myItems;
             returnsBtn.id = 'btn-my-items';
         }
+
+        // Show user-only items
+        const userNotifBtn = document.getElementById('userNotifBtn');
+        if (userNotifBtn) userNotifBtn.classList.remove('hidden');
+        const dropdownProfileBtn = document.getElementById('dropdownProfileBtn');
+        if (dropdownProfileBtn) dropdownProfileBtn.classList.remove('hidden');
     }
 
     // Show cart button (visible on ALL screen sizes)
@@ -364,6 +376,9 @@ window.showMainApp = function () {
 
     // Initialize pending badge for admin
     window.initPendingBadge?.();
+
+    // Initialize user notification badge for regular users
+    window.initUserNotifBadge?.();
 
     window.fetchEquipments();
 };
@@ -486,6 +501,8 @@ window.filterStatus = function (status) {
     controls.classList.remove('hidden');
     overview.classList.add('hidden');
     if (historySection) historySection.classList.add('hidden');
+    const profileSection = document.getElementById('userProfileSection');
+    if (profileSection) profileSection.classList.add('hidden');
 
     // Reset history button text
     const historyBtn = document.getElementById('historyBtn');
@@ -534,6 +551,8 @@ window.toggleOverview = function () {
         returnSection.classList.add('hidden');
         myBorrowingsSection.classList.add('hidden');
         if (historySection) historySection.classList.add('hidden');
+        const profileSection = document.getElementById('userProfileSection');
+        if (profileSection) profileSection.classList.add('hidden');
         overview.classList.remove('hidden');
 
         // Fetch dashboard data + start auto-refresh
@@ -578,6 +597,8 @@ window.toggleHistoryPage = function () {
         returnSection.classList.add('hidden');
         myBorrowingsSection.classList.add('hidden');
         overview.classList.add('hidden');
+        const profileSection = document.getElementById('userProfileSection');
+        if (profileSection) profileSection.classList.add('hidden');
         historySection.classList.remove('hidden');
         if (historyBtn) historyBtn.textContent = t?.backToBrowse || 'Back';
         window.fetchBorrowingHistory();
@@ -724,7 +745,290 @@ window.exportHistoryCSV = function () {
     URL.revokeObjectURL(url);
 };
 
+// --- User Notifications ---
+
+window.toggleUserNotifications = async function () {
+    const dropdown = document.getElementById('userNotifDropdown');
+    if (!dropdown) return;
+
+    if (dropdown.classList.contains('hidden')) {
+        dropdown.classList.remove('hidden');
+        // Fetch and render notifications
+        const list = document.getElementById('userNotifList');
+        if (list) list.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">กำลังโหลด...</div>';
+        const notifications = await window.fetchUserNotifications();
+        renderUserNotifications(notifications);
+    } else {
+        dropdown.classList.add('hidden');
+    }
+};
+
+window.closeUserNotifications = function () {
+    const dropdown = document.getElementById('userNotifDropdown');
+    if (dropdown) dropdown.classList.add('hidden');
+};
+
+// Close notification dropdown when clicking outside
+document.addEventListener('click', function (e) {
+    const wrapper = document.getElementById('userNotifWrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+        window.closeUserNotifications();
+    }
+});
+
+function renderUserNotifications(notifications) {
+    const list = document.getElementById('userNotifList');
+    const badge = document.getElementById('userNotifBadge');
+    const bellBtn = document.getElementById('userNotifBtn');
+    const t = window.translations[window.currentLang];
+
+    if (!list) return;
+
+    // Update badge
+    const urgentCount = notifications.filter(n => n.priority).length;
+    if (badge) {
+        badge.textContent = urgentCount || notifications.length;
+        badge.classList.toggle('hidden', notifications.length === 0);
+    }
+    if (bellBtn) {
+        bellBtn.classList.toggle('bell-has-notifications', urgentCount > 0);
+    }
+
+    if (notifications.length === 0) {
+        list.innerHTML = `
+            <div class="text-center py-8 px-4">
+                <div class="w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-3">
+                    <svg class="w-7 h-7 text-gray-300 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                    </svg>
+                </div>
+                <p class="text-sm font-medium text-gray-400 dark:text-gray-500">${t.noNotifications}</p>
+                <p class="text-xs text-gray-300 dark:text-gray-600 mt-1">${t.noNotificationsDesc}</p>
+            </div>
+        `;
+        return;
+    }
+
+    const locale = window.currentLang === 'th' ? 'th-TH' : 'en-US';
+
+    list.innerHTML = notifications.slice(0, 15).map(n => {
+        const timeStr = n.time ? new Date(n.time).toLocaleDateString(locale, {
+            day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+        }) : '';
+
+        return `
+            <div class="flex items-start gap-3 px-4 py-3 border-b border-gray-100/80 dark:border-white/[0.04] hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors">
+                <div class="w-9 h-9 rounded-lg ${n.bgColor} flex items-center justify-center flex-shrink-0 text-sm">
+                    ${n.icon}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold ${n.color}">${n.title}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">${window.escapeHtml?.(n.message) || n.message}</p>
+                    <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-1">${timeStr}</p>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+window.clearUserNotifications = function () {
+    const list = document.getElementById('userNotifList');
+    const badge = document.getElementById('userNotifBadge');
+    const bellBtn = document.getElementById('userNotifBtn');
+    const t = window.translations[window.currentLang];
+
+    if (badge) {
+        badge.classList.add('hidden');
+        badge.textContent = '0';
+    }
+    if (bellBtn) bellBtn.classList.remove('bell-has-notifications');
+
+    if (list) {
+        list.innerHTML = `
+            <div class="text-center py-8 px-4">
+                <div class="w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-3">
+                    <svg class="w-7 h-7 text-gray-300 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                    </svg>
+                </div>
+                <p class="text-sm font-medium text-gray-400 dark:text-gray-500">${t.noNotifications}</p>
+                <p class="text-xs text-gray-300 dark:text-gray-600 mt-1">${t.noNotificationsDesc}</p>
+            </div>
+        `;
+    }
+};
+
+// Initialize user notification badge on page load
+window.initUserNotifBadge = async function () {
+    if (!window.currentUser || window.currentUser.role === 'admin') return;
+    const notifications = await window.fetchUserNotifications();
+    const badge = document.getElementById('userNotifBadge');
+    const bellBtn = document.getElementById('userNotifBtn');
+    const urgentCount = notifications.filter(n => n.priority).length;
+
+    if (badge) {
+        const count = urgentCount || notifications.length;
+        badge.textContent = count;
+        badge.classList.toggle('hidden', count === 0);
+    }
+    if (bellBtn) {
+        bellBtn.classList.toggle('bell-has-notifications', urgentCount > 0);
+    }
+};
+
+// --- User Profile ---
+
+window.toggleUserProfile = async function () {
+    const browse = document.getElementById('browseSection');
+    const overview = document.getElementById('overviewSection');
+    const controls = document.getElementById('controlsSection');
+    const returnSection = document.getElementById('returnSection');
+    const myBorrowingsSection = document.getElementById('myBorrowingsSection');
+    const historySection = document.getElementById('historySection');
+    const profileSection = document.getElementById('userProfileSection');
+
+    if (!profileSection) return;
+
+    if (profileSection.classList.contains('hidden')) {
+        // Show profile
+        browse.classList.add('hidden');
+        controls.classList.add('hidden');
+        returnSection.classList.add('hidden');
+        myBorrowingsSection.classList.add('hidden');
+        if (overview) overview.classList.add('hidden');
+        if (historySection) historySection.classList.add('hidden');
+        profileSection.classList.remove('hidden');
+
+        // Load profile data
+        await loadUserProfileData();
+    } else {
+        // Hide profile, go back
+        profileSection.classList.add('hidden');
+        controls.classList.remove('hidden');
+        if (window.currentFilter === 'returns') {
+            returnSection.classList.remove('hidden');
+            window.fetchReturnData();
+        } else if (window.currentFilter === 'my-items') {
+            myBorrowingsSection.classList.remove('hidden');
+            window.fetchMyBorrowings();
+        } else {
+            browse.classList.remove('hidden');
+            window.fetchEquipments();
+        }
+    }
+};
+
+async function loadUserProfileData() {
+    // Set basic info
+    const profileAvatar = document.getElementById('profileAvatar');
+    const profileUsername = document.getElementById('profileUsername');
+    const profileRole = document.getElementById('profileRole');
+
+    if (profileAvatar && window.currentUser) {
+        profileAvatar.textContent = window.currentUser.username.charAt(0).toUpperCase();
+    }
+    if (profileUsername && window.currentUser) {
+        profileUsername.textContent = window.currentUser.username;
+    }
+    if (profileRole && window.currentUser) {
+        profileRole.textContent = window.currentUser.role;
+    }
+
+    // Fetch profile from DB (for strikes)
+    const profile = await window.fetchUserProfile();
+    const strikesEl = document.getElementById('profileStrikes');
+    if (strikesEl && profile) {
+        strikesEl.textContent = profile.total_strikes || 0;
+    }
+
+    // Fetch and render history
+    const tbody = document.getElementById('profileHistoryTableBody');
+    const emptyState = document.getElementById('profileHistoryEmpty');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="py-12 text-center text-gray-400">กำลังโหลด...</td></tr>';
+
+    const history = await window.fetchUserHistory();
+
+    // Update stats
+    const totalEl = document.getElementById('profileTotalBorrows');
+    const returnedEl = document.getElementById('profileReturned');
+    if (totalEl) totalEl.textContent = history.length;
+    if (returnedEl) returnedEl.textContent = history.filter(tr => tr.status === 'returned').length;
+
+    renderUserProfileHistory(history, profile?.total_strikes || 0);
+}
+
+function renderUserProfileHistory(transactions, totalStrikes) {
+    const tbody = document.getElementById('profileHistoryTableBody');
+    const emptyState = document.getElementById('profileHistoryEmpty');
+    const t = window.translations[window.currentLang];
+    const locale = window.currentLang === 'th' ? 'th-TH' : 'en-US';
+    const now = new Date();
+    const dateOpts = { day: 'numeric', month: 'short', year: '2-digit' };
+
+    if (!tbody) return;
+
+    if (!transactions || transactions.length === 0) {
+        tbody.innerHTML = '';
+        if (emptyState) emptyState.classList.remove('hidden');
+        return;
+    }
+
+    if (emptyState) emptyState.classList.add('hidden');
+
+    tbody.innerHTML = transactions.map((tr, index) => {
+        const borrowDate = tr.borrow_date
+            ? new Date(tr.borrow_date).toLocaleDateString(locale, dateOpts)
+            : '-';
+        const dueDate = tr.end_date
+            ? new Date(tr.end_date).toLocaleDateString(locale, dateOpts)
+            : '-';
+        const returnDate = tr.return_date
+            ? new Date(tr.return_date).toLocaleDateString(locale, dateOpts)
+            : '-';
+
+        // Status badge
+        let statusBadge;
+        if (tr.status === 'returned') {
+            const wasLate = tr.end_date && tr.return_date && new Date(tr.return_date) > new Date(tr.end_date);
+            if (wasLate) {
+                statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400">${t?.overdueStatus || 'Late'} ✓</span>`;
+            } else {
+                statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">${t?.returnedStatus || 'Returned'}</span>`;
+            }
+        } else {
+            const isOverdue = tr.end_date && new Date(tr.end_date) < now;
+            if (isOverdue) {
+                statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">${t?.overdueStatus || 'Overdue'}</span>`;
+            } else {
+                statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-bold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400">${t?.activeStatus || 'Active'}</span>`;
+            }
+        }
+
+        // Show total strikes only in the first row
+        const strikesCell = index === 0
+            ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${totalStrikes > 0 ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    ${totalStrikes} ${t?.strikeUnit || 'strikes'}
+               </span>`
+            : '';
+
+        return `
+            <tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                <td class="px-4 md:px-6 py-3 font-medium text-brand-black dark:text-white">${window.escapeHtml?.(tr.equipments?.name) || tr.equipments?.name || 'Unknown'}</td>
+                <td class="px-4 md:px-6 py-3 text-gray-500 dark:text-gray-400 text-xs">${borrowDate}</td>
+                <td class="px-4 md:px-6 py-3 text-gray-500 dark:text-gray-400 text-xs">${dueDate}</td>
+                <td class="px-4 md:px-6 py-3 text-gray-500 dark:text-gray-400 text-xs">${returnDate}</td>
+                <td class="px-4 md:px-6 py-3">${statusBadge}</td>
+                <td class="px-4 md:px-6 py-3">${strikesCell}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
 // --- Analytics Charts ---
+
 
 // Store chart instances for cleanup
 window.chartInstances = {};
