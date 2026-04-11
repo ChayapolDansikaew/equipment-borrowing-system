@@ -333,6 +333,11 @@ window.submitBorrowRequest = async function () {
     }
 
     try {
+        // Save a snapshot of cart items and dates before clearing
+        const submittedItems = [...window.cart.items];
+        const submittedStartDate = startDate;
+        const submittedEndDate = endDate;
+
         // Create request (async)
         const result = await window.requests.create(window.cart.items, startDate, endDate, note);
 
@@ -340,7 +345,9 @@ window.submitBorrowRequest = async function () {
             // Success: clear cart and close form
             window.cart.clear();
             closeRequestForm();
-            window.showToast?.(t.requestSentSuccess, 'success');
+
+            // Show success confirmation modal (centered, like logout modal)
+            openRequestSuccessModal(submittedItems, submittedStartDate, submittedEndDate);
 
             // Refresh equipment list
             if (typeof window.renderEquipments === 'function') {
@@ -365,6 +372,66 @@ window.submitBorrowRequest = async function () {
             submitBtn.classList.remove('opacity-50', 'cursor-wait');
         }
     }
+};
+
+// Open success confirmation modal with animation (same pattern as logout modal)
+window.openRequestSuccessModal = function (items, startDate, endDate) {
+    const modal = document.getElementById('requestSuccessModal');
+    const card = document.getElementById('requestSuccessCard');
+    const details = document.getElementById('requestSuccessDetails');
+    if (!modal || !card) return;
+
+    const t = window.translations[window.currentLang];
+    const locale = window.currentLang === 'th' ? 'th-TH' : 'en-US';
+    const dateOpts = { day: 'numeric', month: 'short', year: 'numeric' };
+
+    const startFormatted = new Date(startDate).toLocaleDateString(locale, dateOpts);
+    const endFormatted = new Date(endDate).toLocaleDateString(locale, dateOpts);
+
+    // Build detail summary
+    if (details) {
+        const itemNames = items.map(i => `${i.name} (${i.quantity} ${t.pieces})`).join(', ');
+        details.innerHTML = `
+            <div class="flex items-start gap-2">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                </svg>
+                <div>
+                    <p class="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">${t.requestSuccessItems}</p>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">${itemNames}</p>
+                </div>
+            </div>
+            <div class="flex items-start gap-2">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                <div>
+                    <p class="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">${t.requestSuccessDate}</p>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">${startFormatted} — ${endFormatted}</p>
+                </div>
+            </div>
+        `;
+    }
+
+    // Show modal with entrance animation
+    modal.classList.remove('hidden');
+    requestAnimationFrame(() => {
+        card.classList.remove('scale-95', 'opacity-0');
+        card.classList.add('scale-100', 'opacity-100');
+    });
+};
+
+// Close success confirmation modal with animation
+window.closeRequestSuccessModal = function () {
+    const modal = document.getElementById('requestSuccessModal');
+    const card = document.getElementById('requestSuccessCard');
+    if (!modal || !card) return;
+
+    card.classList.remove('scale-100', 'opacity-100');
+    card.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 200);
 };
 
 // ============== ADMIN FUNCTIONS ==============

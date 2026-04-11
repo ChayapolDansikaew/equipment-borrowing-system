@@ -184,7 +184,13 @@ window.translations = {
         myHistory: 'ประวัติการยืมของฉัน',
         myHistoryDesc: 'รายการอุปกรณ์ที่เคยทำรายการ',
         strikeUnit: 'ครั้ง',
-        profileBackBtn: 'กลับหน้าหลัก'
+        profileBackBtn: 'กลับหน้าหลัก',
+        // Request Success Modal
+        requestSuccessTitle: 'ส่งคำขอยืมสำเร็จ!',
+        requestSuccessDesc: 'คำขอของคุณถูกส่งเรียบร้อยแล้ว กรุณารอการอนุมัติจากผู้ดูแลระบบ',
+        requestSuccessClose: 'ตกลง',
+        requestSuccessItems: 'อุปกรณ์',
+        requestSuccessDate: 'ช่วงวันที่ยืม'
     },
     en: {
         overview: 'Overview',
@@ -346,7 +352,13 @@ window.translations = {
         myHistory: 'My Borrowing History',
         myHistoryDesc: 'Equipment you have previously borrowed',
         strikeUnit: 'strikes',
-        profileBackBtn: 'Back to Browse'
+        profileBackBtn: 'Back to Browse',
+        // Request Success Modal
+        requestSuccessTitle: 'Request Submitted!',
+        requestSuccessDesc: 'Your request has been submitted successfully. Please wait for admin approval.',
+        requestSuccessClose: 'OK',
+        requestSuccessItems: 'Equipment',
+        requestSuccessDate: 'Borrow Period'
     }
 };
 
