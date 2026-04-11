@@ -42,13 +42,19 @@ window.requests = {
 
     // สร้างคำขอใหม่
     async create(items, startDate, endDate, note = '') {
-        if (!window.supabaseClient) return null;
+        if (!window.supabaseClient) {
+            console.error('create: Supabase client not initialized');
+            return null;
+        }
         try {
+            // Resolve user_id: prefer dbId (DB primary key) over id
+            const userId = window.currentUser?.dbId || window.currentUser?.id || null;
+
             // 1. Insert request header
             const { data: reqData, error: reqError } = await window.supabaseClient
                 .from('borrow_requests')
                 .insert([{
-                    user_id: window.currentUser?.id || null,
+                    user_id: userId,
                     user_name: window.currentUser?.username || 'Unknown User',
                     start_date: startDate,
                     end_date: endDate,
@@ -59,7 +65,7 @@ window.requests = {
 
             if (reqError) {
                 console.error('Error creating request:', reqError);
-                return null;
+                return { error: reqError.message || 'ไม่สามารถสร้างคำขอได้' };
             }
 
             // 2. Insert request items
@@ -83,11 +89,8 @@ window.requests = {
                     .from('borrow_requests')
                     .delete()
                     .eq('id', reqData.id);
-                return null;
+                return { error: itemError.message || 'ไม่สามารถเพิ่มรายการอุปกรณ์ได้' };
             }
-
-            // Clear cart after submission
-            window.cart.clear();
 
             return {
                 id: reqData.id,
@@ -101,7 +104,7 @@ window.requests = {
             };
         } catch (err) {
             console.error('create exception:', err);
-            return null;
+            return { error: err.message || 'เกิดข้อผิดพลาดที่ไม่คาดคิด' };
         }
     },
 
@@ -322,20 +325,45 @@ window.submitBorrowRequest = async function () {
         return;
     }
 
-    // Create request (async)
-    const request = await window.requests.create(window.cart.items, startDate, endDate, note);
+    // Prevent double-click: disable submit button
+    const submitBtn = document.querySelector('#requestFormModal button[onclick="submitBorrowRequest()"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50', 'cursor-wait');
+    }
 
-    if (request) {
-        closeRequestForm();
-        window.showToast?.(t.requestSentSuccess, 'success');
+    try {
+        // Create request (async)
+        const result = await window.requests.create(window.cart.items, startDate, endDate, note);
 
-        // Refresh equipment list
-        if (typeof window.renderEquipments === 'function') {
-            window.renderEquipments();
+        if (result && !result.error) {
+            // Success: clear cart and close form
+            window.cart.clear();
+            closeRequestForm();
+            window.showToast?.(t.requestSentSuccess, 'success');
+
+            // Refresh equipment list
+            if (typeof window.renderEquipments === 'function') {
+                window.renderEquipments();
+            }
+
+            // Update pending badge
+            await window.initPendingBadge?.();
+        } else {
+            // Failure: show error message to user
+            const errorMsg = result?.error || t.errorGeneral || 'เกิดข้อผิดพลาดในการส่งคำขอ';
+            console.error('Submit request failed:', errorMsg);
+            window.showToast?.(errorMsg, 'error');
         }
-
-        // Update pending badge
-        await window.initPendingBadge?.();
+    } catch (err) {
+        console.error('submitBorrowRequest exception:', err);
+        window.showToast?.(t.errorGeneral || 'เกิดข้อผิดพลาดในการส่งคำขอ', 'error');
+    } finally {
+        // Re-enable submit button
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50', 'cursor-wait');
+        }
     }
 };
 
