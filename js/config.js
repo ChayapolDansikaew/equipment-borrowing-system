@@ -81,7 +81,7 @@ window.translations = {
         // Booking Calendar
         selectDates: 'เลือกวันยืม-คืน',
         dateRequired: 'กรุณาเลือกวันยืม-คืน',
-        booked: 'ถูกจองแล้ว',
+        booked: 'ไม่สามารถทำรายการ',
         selected: 'เลือกไว้',
         requestToBorrow: 'ขอยืมอุปกรณ์',
         useCartToBook: 'ใช้ปุ่มตะกร้าเพื่อยืม',
