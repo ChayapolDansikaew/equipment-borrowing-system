@@ -1426,7 +1426,7 @@ window.initDetailCalendar = function (bookedDates = [], filterStartDate = null, 
                 dayElem.style.color = 'white';
                 dayElem.innerHTML = `<span class="day-content">${dayElem.textContent}</span>
                     <span class="day-icon" style="position:absolute;top:2px;right:2px;font-size:8px;">⊘</span>`;
-                dayElem.title = window.translations[window.currentLang].booked || 'ถูกจองแล้ว';
+                dayElem.title = window.translations[window.currentLang].booked || 'ไม่สามารถทำรายการ';
             }
             // Style: Past dates - Gray
             else if (isPast && !isPrevMonth && !isNextMonth) {
