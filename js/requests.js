@@ -251,6 +251,22 @@ window.requests = {
     }
 };
 
+// Helper: skip weekends — if a date falls on Sat/Sun, advance to next Monday
+function skipWeekend(date) {
+    const d = new Date(date);
+    const day = d.getDay(); // 0=Sun, 6=Sat
+    if (day === 6) d.setDate(d.getDate() + 2); // Sat -> Mon
+    if (day === 0) d.setDate(d.getDate() + 1); // Sun -> Mon
+    return d;
+}
+
+// Helper: check if a date falls on a weekend
+function isWeekend(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const day = d.getDay();
+    return day === 0 || day === 6; // Sun or Sat
+}
+
 // เปิด Request Form Modal
 window.openRequestForm = function () {
     if (window.cart.items.length === 0) {
@@ -265,10 +281,11 @@ window.openRequestForm = function () {
     // Open request form modal
     const modal = document.getElementById('requestFormModal');
     if (modal) {
-        // Set default dates
-        const today = new Date();
-        const tomorrow = new Date(today);
+        // Set default dates (skip weekends)
+        let today = skipWeekend(new Date());
+        let tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow = skipWeekend(tomorrow);
 
         document.getElementById('requestStartDate').value = today.toISOString().split('T')[0];
         document.getElementById('requestEndDate').value = tomorrow.toISOString().split('T')[0];
@@ -322,6 +339,12 @@ window.submitBorrowRequest = async function () {
 
     if (new Date(startDate) > new Date(endDate)) {
         window.showToast?.(t.endDateAfterStart, 'warning');
+        return;
+    }
+
+    // Block weekends (Saturday & Sunday)
+    if (isWeekend(startDate) || isWeekend(endDate)) {
+        window.showToast?.(t.weekendNotAllowed, 'warning');
         return;
     }
 
