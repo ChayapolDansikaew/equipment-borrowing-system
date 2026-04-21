@@ -281,14 +281,32 @@ window.openRequestForm = function () {
     // Open request form modal
     const modal = document.getElementById('requestFormModal');
     if (modal) {
-        // Set default dates (skip weekends)
-        let today = skipWeekend(new Date());
-        let tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow = skipWeekend(tomorrow);
+        // Use filter bar dates if available, otherwise fall back to today/tomorrow (skip weekends)
+        const filterStart = document.getElementById('startDate')?.value;
+        const filterEnd = document.getElementById('endDate')?.value;
 
-        document.getElementById('requestStartDate').value = today.toISOString().split('T')[0];
-        document.getElementById('requestEndDate').value = tomorrow.toISOString().split('T')[0];
+        let startVal, endVal;
+        if (filterStart && filterEnd) {
+            startVal = filterStart;
+            endVal = filterEnd;
+        } else if (filterStart) {
+            startVal = filterStart;
+            // End = filter start + 1 day (skip weekends)
+            let nextDay = new Date(filterStart + 'T00:00:00');
+            nextDay.setDate(nextDay.getDate() + 1);
+            nextDay = skipWeekend(nextDay);
+            endVal = nextDay.toISOString().split('T')[0];
+        } else {
+            let today = skipWeekend(new Date());
+            let tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow = skipWeekend(tomorrow);
+            startVal = today.toISOString().split('T')[0];
+            endVal = tomorrow.toISOString().split('T')[0];
+        }
+
+        document.getElementById('requestStartDate').value = startVal;
+        document.getElementById('requestEndDate').value = endVal;
         document.getElementById('requestNote').value = '';
 
         // Render cart items preview
