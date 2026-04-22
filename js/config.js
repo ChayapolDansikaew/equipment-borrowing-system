@@ -141,6 +141,8 @@ window.translations = {
         rejectedSuccess: 'ปฏิเสธคำขอแล้ว',
         approveError: 'เกิดข้อผิดพลาดในการอนุมัติ',
         noPendingItems: 'ไม่มีรายการรออนุมัติ',
+        doubleBookingError: 'อุปกรณ์ถูกจองในช่วงวันที่นี้แล้ว',
+        insufficientStock: 'มีอุปกรณ์ว่างไม่เพียงพอสำหรับช่วงวันที่นี้',
         // Borrowing History
         history: 'ประวัติ',
         borrowingHistory: 'ประวัติการยืม-คืน',
@@ -310,6 +312,8 @@ window.translations = {
         rejectedSuccess: 'Request rejected',
         approveError: 'Error approving request',
         noPendingItems: 'No items pending approval',
+        doubleBookingError: 'Equipment already booked for this period',
+        insufficientStock: 'Insufficient equipment available for this period',
         // Borrowing History
         history: 'History',
         borrowingHistory: 'Borrowing History',

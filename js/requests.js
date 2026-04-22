@@ -615,6 +615,61 @@ function updatePendingBadge(count) {
     }
 }
 
+// Helper: Check available equipment units from DB in real-time with date overlap detection
+async function checkAvailableUnits(itemName, startDate, endDate, quantity) {
+    if (!window.supabaseClient) return { available: [], shortage: quantity };
+
+    try {
+        // 1. Get all equipment units with this name from DB (real-time)
+        const { data: allUnits, error: unitsError } = await window.supabaseClient
+            .from('equipments')
+            .select('id, name, status')
+            .eq('name', itemName);
+
+        if (unitsError || !allUnits) {
+            console.error('checkAvailableUnits: error fetching units', unitsError);
+            return { available: [], shortage: quantity };
+        }
+
+        // 2. Get active transactions that overlap with the requested date range
+        const reqStart = new Date(startDate + 'T00:00:00');
+        const reqEnd = new Date(endDate + 'T23:59:59');
+
+        const unitIds = allUnits.map(u => u.id);
+        const { data: activeTransactions, error: transError } = await window.supabaseClient
+            .from('transactions')
+            .select('equipment_id, start_date, end_date')
+            .in('equipment_id', unitIds)
+            .eq('status', 'active');
+
+        if (transError) {
+            console.error('checkAvailableUnits: error fetching transactions', transError);
+            return { available: [], shortage: quantity };
+        }
+
+        // 3. Find which unit IDs have overlapping bookings
+        const bookedUnitIds = new Set();
+        (activeTransactions || []).forEach(tr => {
+            const tStart = new Date(tr.start_date || 0);
+            const tEnd = tr.end_date ? new Date(tr.end_date) : new Date(tStart.getTime() + 86400000);
+
+            // Overlap check: (start1 < end2) && (end1 > start2)
+            if (reqStart < tEnd && reqEnd > tStart) {
+                bookedUnitIds.add(tr.equipment_id);
+            }
+        });
+
+        // 4. Filter to units that are NOT booked in this date range
+        const availableUnits = allUnits.filter(u => !bookedUnitIds.has(u.id));
+        const shortage = Math.max(0, quantity - availableUnits.length);
+
+        return { available: availableUnits.slice(0, quantity), shortage };
+    } catch (err) {
+        console.error('checkAvailableUnits exception:', err);
+        return { available: [], shortage: quantity };
+    }
+}
+
 // Approve an item - สร้าง transactions จริงใน Supabase
 window.approveItem = async function (requestId, itemName) {
     // Get the request to find details
@@ -634,18 +689,21 @@ window.approveItem = async function (requestId, itemName) {
 
     const quantity = item.quantity || 1;
 
-    // Find available equipment units with this name
-    const availableUnits = window.equipments.filter(e =>
-        e.name === itemName && e.status === 'available'
+    // Real-time DB check with date overlap detection
+    const availability = await checkAvailableUnits(
+        itemName, request.startDate, request.endDate, quantity
     );
 
-    if (availableUnits.length < quantity) {
-        window.showToast?.(`มีอุปกรณ์ว่างไม่พอ (ว่าง ${availableUnits.length}/${quantity})`, 'error');
+    if (availability.shortage > 0) {
+        window.showToast?.(
+            `${t.insufficientStock} (${t.available} ${availability.available.length}/${quantity})`,
+            'error'
+        );
         return;
     }
 
-    // Get units to borrow
-    const unitsToBorrow = availableUnits.slice(0, quantity);
+    // Get units to borrow (from real-time DB result)
+    const unitsToBorrow = availability.available;
 
     try {
         // Create transactions for each unit
@@ -737,17 +795,20 @@ window.approveAllItems = async function (requestId) {
             const itemName = item.name;
             const quantity = item.quantity || 1;
 
-            // Find available equipment units
-            const availableUnits = window.equipments.filter(e =>
-                e.name === itemName && e.status === 'available'
+            // Real-time DB check with date overlap detection
+            const availability = await checkAvailableUnits(
+                itemName, request.startDate, request.endDate, quantity
             );
 
-            if (availableUnits.length < quantity) {
-                window.showToast?.(`${itemName}: มีไม่พอ (ว่าง ${availableUnits.length}/${quantity})`, 'error');
+            if (availability.shortage > 0) {
+                window.showToast?.(
+                    `${itemName}: ${t.insufficientStock} (${t.available} ${availability.available.length}/${quantity})`,
+                    'error'
+                );
                 continue;
             }
 
-            const unitsToBorrow = availableUnits.slice(0, quantity);
+            const unitsToBorrow = availability.available;
 
             // Create transactions
             for (const unit of unitsToBorrow) {
