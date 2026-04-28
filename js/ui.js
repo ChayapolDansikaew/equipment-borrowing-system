@@ -1471,18 +1471,30 @@ window.addToCartFromDetail = function () {
         return;
     }
 
-    // Check current cart quantity for this item
-    const cartItem = window.cart?.getByName(equipment.name);
-    const currentQty = cartItem ? cartItem.quantity : 0;
-    const newQty = currentQty + 1;
-
-    if (newQty > availableCount) {
-        window.showToast(`${equipment.name}: ${t.outOfStock} (${availableCount} ${t.available})`, 'warning');
+    // === RULE 1: Only 1 item per category (type) ===
+    const existingCategoryItem = window.cart.items.find(
+        item => item.category === equipment.type && item.name !== equipment.name
+    );
+    if (existingCategoryItem) {
+        window.showToast(
+            `${t.alreadyHaveCategory} (${equipment.type}: ${existingCategoryItem.name})`,
+            'warning'
+        );
         return;
     }
 
-    // Add/update cart
-    window.cart.addOrUpdate(equipment.name, equipment.image_url, equipment.type, newQty);
+    // If this exact item is already in cart, it's already 1 per category — don't allow more
+    const cartItem = window.cart?.getByName(equipment.name);
+    if (cartItem) {
+        window.showToast(
+            `${t.onlyOnePerCategory} (${equipment.type})`,
+            'warning'
+        );
+        return;
+    }
+
+    // Always add quantity = 1 (one per category)
+    window.cart.addOrUpdate(equipment.name, equipment.image_url, equipment.type, 1);
 
     // Close detail modal
     window.closeModal('equipmentDetailModal');

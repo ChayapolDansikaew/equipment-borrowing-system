@@ -275,6 +275,38 @@ window.openRequestForm = function () {
         return;
     }
 
+    // Auto-remove out-of-stock items before showing form
+    if (window.equipments && window.equipments.length > 0) {
+        const t = window.translations[window.currentLang];
+        const removedItems = [];
+        window.cart.items = window.cart.items.filter(cartItem => {
+            const availableCount = window.equipments.filter(
+                e => e.name === cartItem.name && e.status === 'available'
+            ).length;
+            if (availableCount === 0) {
+                removedItems.push(cartItem.name);
+                return false;
+            }
+            return true;
+        });
+
+        if (removedItems.length > 0) {
+            window.cart.save();
+            removedItems.forEach(name => {
+                window.showToast?.(`${name} ${t.cartItemRemoved}`, 'warning');
+            });
+            if (typeof window.renderEquipments === 'function') {
+                window.renderEquipments();
+            }
+        }
+
+        // If cart is now empty after cleanup, abort
+        if (window.cart.items.length === 0) {
+            window.showToast?.(t.selectEquipmentFirst, 'warning');
+            return;
+        }
+    }
+
     // Close cart modal
     closeCartModal();
 
@@ -311,6 +343,21 @@ window.openRequestForm = function () {
 
         // Render cart items preview
         renderRequestPreview();
+
+        // Show item limit info
+        const limitInfo = document.getElementById('requestLimitInfo');
+        if (limitInfo) {
+            const t = window.translations[window.currentLang];
+            const isOverLimit = window.cart.items.length > 3;
+            const colorClass = isOverLimit ? 'text-red-500' : 'text-amber-500';
+            limitInfo.className = `text-xs font-semibold mt-2 ${colorClass} flex items-center gap-1`;
+            limitInfo.innerHTML = `
+                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                ${t.maxBorrowLimit} (${window.cart.items.length}/3)
+            `;
+        }
 
         modal.classList.remove('hidden');
         modal.classList.add('flex');
@@ -364,6 +411,105 @@ window.submitBorrowRequest = async function () {
     if (isWeekend(startDate) || isWeekend(endDate)) {
         window.showToast?.(t.weekendNotAllowed, 'warning');
         return;
+    }
+
+    // === RULE 2: Max 3 items per borrow request ===
+    if (window.cart.items.length > 3) {
+        window.showToast?.(t.selectMaxItems, 'warning');
+        return;
+    }
+
+    // === RULE 3: Check active borrowings + pending requests ===
+    // User must return all borrowed items before making a new request
+    let activeBorrowCount = 0;
+    let pendingItemCount = 0;
+
+    try {
+        // Check active transactions for current user
+        if (window.supabaseClient && window.currentUser) {
+            const { data: activeTrans } = await window.supabaseClient
+                .from('transactions')
+                .select('id')
+                .eq('borrower_name', window.currentUser.username)
+                .eq('status', 'active');
+
+            activeBorrowCount = activeTrans?.length || 0;
+
+            // Check pending request items for current user
+            const userId = window.currentUser?.dbId || window.currentUser?.id;
+            if (userId) {
+                const { data: pendingReqs } = await window.supabaseClient
+                    .from('borrow_requests')
+                    .select('id, borrow_request_items!inner(id, status)')
+                    .eq('user_id', userId);
+
+                if (pendingReqs) {
+                    pendingReqs.forEach(req => {
+                        (req.borrow_request_items || []).forEach(item => {
+                            if (item.status === 'pending') {
+                                pendingItemCount++;
+                            }
+                        });
+                    });
+                }
+            }
+        }
+
+        // Total current obligations
+        const totalCurrentItems = activeBorrowCount + pendingItemCount;
+        const newRequestItems = window.cart.items.length;
+
+        // Block if user already has active borrowings or pending requests
+        if (totalCurrentItems > 0) {
+            let msg = t.mustReturnFirst;
+            if (activeBorrowCount > 0) {
+                msg += ` (${t.currentlyBorrowing}: ${activeBorrowCount} ${t.itemsLabel})`;
+            }
+            if (pendingItemCount > 0) {
+                msg += ` (${t.pendingRequests}: ${pendingItemCount} ${t.itemsLabel})`;
+            }
+            window.showToast?.(msg, 'warning');
+            return;
+        }
+
+        // Block if new request exceeds 3 items
+        if (newRequestItems > 3) {
+            window.showToast?.(t.borrowLimitExceeded, 'warning');
+            return;
+        }
+
+    } catch (err) {
+        console.error('Error checking borrow limits:', err);
+        // Continue anyway - don't block on check failure
+    }
+
+    // === Auto-remove out-of-stock items from cart before submitting ===
+    if (window.equipments && window.equipments.length > 0) {
+        const removedItems = [];
+        window.cart.items = window.cart.items.filter(cartItem => {
+            const availableCount = window.equipments.filter(
+                e => e.name === cartItem.name && e.status === 'available'
+            ).length;
+            if (availableCount === 0) {
+                removedItems.push(cartItem.name);
+                return false;
+            }
+            return true;
+        });
+
+        if (removedItems.length > 0) {
+            window.cart.save();
+            removedItems.forEach(name => {
+                window.showToast?.(`${name} ${t.cartItemRemoved}`, 'warning');
+            });
+            // Re-render preview
+            renderRequestPreview();
+            // If cart is now empty, stop submission
+            if (window.cart.items.length === 0) {
+                window.showToast?.(t.selectEquipmentFirst, 'warning');
+                return;
+            }
+        }
     }
 
     // Prevent double-click: disable submit button

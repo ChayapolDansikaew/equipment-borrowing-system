@@ -94,15 +94,54 @@ window.cart = {
     }
 };
 
-// เปิด Cart Modal
+// เปิด Cart Modal (พร้อมตรวจสอบสต๊อกอัตโนมัติ)
 window.openCartModal = function () {
     const modal = document.getElementById('cartModal');
     if (modal) {
+        // Auto-remove out-of-stock items from cart
+        validateCartStock();
         renderCartItems();
         modal.classList.remove('hidden');
         modal.classList.add('flex');
     }
 };
+
+// ตรวจสอบสต๊อกและลบอุปกรณ์ที่หมดออกจากตะกร้าอัตโนมัติ
+function validateCartStock() {
+    if (!window.equipments || window.equipments.length === 0) return;
+    const t = window.translations[window.currentLang];
+    const removedItems = [];
+
+    // Check each cart item against current stock
+    window.cart.items = window.cart.items.filter(cartItem => {
+        const availableCount = window.equipments.filter(
+            e => e.name === cartItem.name && e.status === 'available'
+        ).length;
+
+        if (availableCount === 0) {
+            removedItems.push(cartItem.name);
+            return false; // Remove from cart
+        }
+
+        // If cart quantity exceeds available, cap it to 1 (since we now allow only 1 per category)
+        if (cartItem.quantity > availableCount) {
+            cartItem.quantity = 1;
+        }
+
+        return true;
+    });
+
+    if (removedItems.length > 0) {
+        window.cart.save();
+        removedItems.forEach(name => {
+            window.showToast?.(`${name} ${t.cartItemRemoved}`, 'warning');
+        });
+        // Refresh UI
+        if (typeof window.renderEquipments === 'function') {
+            window.renderEquipments();
+        }
+    }
+}
 
 // ปิด Cart Modal
 window.closeCartModal = function () {

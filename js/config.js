@@ -193,7 +193,18 @@ window.translations = {
         requestSuccessDesc: 'คำขอของคุณถูกส่งเรียบร้อยแล้ว กรุณารอการอนุมัติจากผู้ดูแลระบบ',
         requestSuccessClose: 'ตกลง',
         requestSuccessItems: 'อุปกรณ์',
-        requestSuccessDate: 'ช่วงวันที่ยืม'
+        requestSuccessDate: 'ช่วงวันที่ยืม',
+        // Borrowing Limits
+        onlyOnePerCategory: 'ยืมได้เพียงประเภทละ 1 ชิ้นเท่านั้น',
+        alreadyHaveCategory: 'คุณมีอุปกรณ์ประเภทนี้ในตะกร้าแล้ว',
+        maxBorrowLimit: 'สามารถยืมได้สูงสุด 3 อุปกรณ์ต่อครั้ง',
+        mustReturnFirst: 'กรุณาคืนอุปกรณ์ที่ยืมอยู่ก่อนทำรายการใหม่',
+        currentlyBorrowing: 'กำลังยืมอยู่',
+        pendingRequests: 'รออนุมัติ',
+        itemsLabel: 'รายการ',
+        cartItemRemoved: 'ถูกลบออกจากตะกร้าเนื่องจากของหมด',
+        borrowLimitExceeded: 'เกินจำนวนที่สามารถยืมได้ (สูงสุด 3 รายการ)',
+        selectMaxItems: 'กรุณาเลือกอุปกรณ์ไม่เกิน 3 รายการ'
     },
     en: {
         overview: 'Overview',
@@ -364,7 +375,18 @@ window.translations = {
         requestSuccessDesc: 'Your request has been submitted successfully. Please wait for admin approval.',
         requestSuccessClose: 'OK',
         requestSuccessItems: 'Equipment',
-        requestSuccessDate: 'Borrow Period'
+        requestSuccessDate: 'Borrow Period',
+        // Borrowing Limits
+        onlyOnePerCategory: 'Only 1 item per category allowed',
+        alreadyHaveCategory: 'You already have this category in your cart',
+        maxBorrowLimit: 'Maximum 3 items per borrow request',
+        mustReturnFirst: 'Please return your current items before borrowing again',
+        currentlyBorrowing: 'Currently borrowing',
+        pendingRequests: 'Pending requests',
+        itemsLabel: 'items',
+        cartItemRemoved: 'removed from cart (out of stock)',
+        borrowLimitExceeded: 'Exceeds borrow limit (max 3 items)',
+        selectMaxItems: 'Please select no more than 3 items'
     }
 };
 
