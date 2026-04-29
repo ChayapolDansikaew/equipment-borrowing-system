@@ -114,7 +114,7 @@ window.renderReturnTable = function (transactions) {
     const t = window.translations[window.currentLang];
 
     if (transactions.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-gray-400">${t.noActiveTransactions}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-gray-400">${t.noActiveTransactions}</td></tr>`;
         return;
     }
 
@@ -132,6 +132,12 @@ window.renderReturnTable = function (transactions) {
             isOverdue = today > endDay;
         }
 
+        const dueDateFormatted = endDate
+            ? endDate.toLocaleDateString(window.currentLang === 'th' ? 'th-TH' : 'en-US', {
+                day: 'numeric', month: 'short', year: 'numeric'
+            })
+            : '-';
+
         const statusBadge = isOverdue
             ? `<span class="px-2 py-1 rounded-full text-xs font-bold bg-brand-pink text-white">${t.overdue}</span>`
             : `<span class="px-2 py-1 rounded-full text-xs font-bold bg-brand-yellow text-black">${t.active}</span>`;
@@ -141,6 +147,7 @@ window.renderReturnTable = function (transactions) {
                 <td class="px-6 py-4 font-medium text-brand-black dark:text-white">${tr.equipments?.name || 'Unknown'}</td>
                 <td class="px-6 py-4 dark:text-gray-300">${tr.borrower_name}</td>
                 <td class="px-6 py-4 text-gray-500 dark:text-gray-400">${date}</td>
+                <td class="px-6 py-4 ${isOverdue ? 'text-red-500 font-semibold' : 'text-gray-500 dark:text-gray-400'}">${dueDateFormatted}</td>
                 <td class="px-6 py-4">${statusBadge}</td>
                 <td class="px-6 py-4">
                     <div class="flex gap-2">
@@ -1242,6 +1249,7 @@ window.showTableSkeletonLoading = function () {
                 <td class="px-6 py-4"><div class="skeleton h-4 w-32"></div></td>
                 <td class="px-6 py-4"><div class="skeleton h-4 w-24"></div></td>
                 <td class="px-6 py-4"><div class="skeleton h-4 w-28"></div></td>
+                <td class="px-6 py-4"><div class="skeleton h-4 w-24"></div></td>
                 <td class="px-6 py-4"><div class="skeleton h-6 w-16 rounded-full"></div></td>
                 <td class="px-6 py-4"><div class="skeleton h-8 w-20 rounded-lg"></div></td>
             </tr>`;
