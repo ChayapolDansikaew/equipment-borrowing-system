@@ -1912,15 +1912,15 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                 </div>
-                <h3 class="text-xl font-bold mb-2 text-brand-black dark:text-gray-100">Confirm Return</h3>
-                <p class="text-gray-500 text-sm mb-6 dark:text-gray-400">Mark <span id="returnItemName"
-                        class="font-bold text-brand-black dark:text-gray-200"></span> as returned?</p>
+                <h3 class="text-xl font-bold mb-2 text-brand-black dark:text-gray-100" data-i18n="confirmReturnTitle">ยืนยันการรับคืน</h3>
+                <p class="text-gray-500 text-sm mb-6 dark:text-gray-400"><span id="returnDescPrefix" data-i18n="confirmReturnDesc">ต้องการรับคืน</span> <span id="returnItemName"
+                        class="font-bold text-brand-black dark:text-gray-200"></span> <span id="returnDescSuffix" data-i18n="confirmReturnDescSuffix">หรือไม่?</span></p>
 
                 <div class="grid grid-cols-2 gap-3">
                     <button onclick="closeModal('returnModal')"
-                        class="px-4 py-2 rounded-lg text-gray-500 hover:bg-gray-100 font-bold transition-colors dark:text-gray-400 dark:hover:bg-gray-700">Cancel</button>
+                        class="px-4 py-2 rounded-lg text-gray-500 hover:bg-gray-100 font-bold transition-colors dark:text-gray-400 dark:hover:bg-gray-700" data-i18n="confirmReturnCancel">ยกเลิก</button>
                     <button onclick="confirmReturn()"
-                        class="px-4 py-2 rounded-lg bg-brand-black text-brand-yellow font-bold hover:bg-gray-800 shadow-lg transition-all border border-brand-yellow/50">Confirm</button>
+                        class="px-4 py-2 rounded-lg bg-brand-black text-brand-yellow font-bold hover:bg-gray-800 shadow-lg transition-all border border-brand-yellow/50" data-i18n="confirmReturnConfirm">ยืนยัน</button>
                 </div>
                 <input type="hidden" id="returnItemId">
             </div>

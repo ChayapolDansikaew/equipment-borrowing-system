@@ -204,7 +204,13 @@ window.translations = {
         itemsLabel: 'รายการ',
         cartItemRemoved: 'ถูกลบออกจากตะกร้าเนื่องจากของหมด',
         borrowLimitExceeded: 'เกินจำนวนที่สามารถยืมได้ (สูงสุด 3 รายการ)',
-        selectMaxItems: 'กรุณาเลือกอุปกรณ์ไม่เกิน 3 รายการ'
+        selectMaxItems: 'กรุณาเลือกอุปกรณ์ไม่เกิน 3 รายการ',
+        // Return Modal
+        confirmReturnTitle: 'ยืนยันการรับคืน',
+        confirmReturnDesc: 'ต้องการรับคืน',
+        confirmReturnDescSuffix: 'หรือไม่?',
+        confirmReturnCancel: 'ยกเลิก',
+        confirmReturnConfirm: 'ยืนยัน'
     },
     en: {
         overview: 'Overview',
@@ -386,7 +392,13 @@ window.translations = {
         itemsLabel: 'items',
         cartItemRemoved: 'removed from cart (out of stock)',
         borrowLimitExceeded: 'Exceeds borrow limit (max 3 items)',
-        selectMaxItems: 'Please select no more than 3 items'
+        selectMaxItems: 'Please select no more than 3 items',
+        // Return Modal
+        confirmReturnTitle: 'Confirm Return',
+        confirmReturnDesc: 'Mark',
+        confirmReturnDescSuffix: 'as returned?',
+        confirmReturnCancel: 'Cancel',
+        confirmReturnConfirm: 'Confirm'
     }
 };
 
