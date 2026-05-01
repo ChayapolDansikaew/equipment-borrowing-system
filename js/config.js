@@ -205,6 +205,8 @@ window.translations = {
         cartItemRemoved: 'ถูกลบออกจากตะกร้าเนื่องจากของหมด',
         borrowLimitExceeded: 'เกินจำนวนที่สามารถยืมได้ (สูงสุด 3 รายการ)',
         selectMaxItems: 'กรุณาเลือกอุปกรณ์ไม่เกิน 3 รายการ',
+        categoryAlreadyBorrowedForDate: 'ไม่สามารถทำรายการได้ เนื่องจากคุณได้ทำการยืมอุปกรณ์ในหมวดหมู่นี้สำหรับวันดังกล่าวไปแล้ว',
+        checkingCategoryConflict: 'กำลังตรวจสอบเงื่อนไขการยืม...',
         // Return Modal
         confirmReturnTitle: 'ยืนยันการรับคืน',
         confirmReturnDesc: 'ต้องการรับคืน',
@@ -393,6 +395,8 @@ window.translations = {
         cartItemRemoved: 'removed from cart (out of stock)',
         borrowLimitExceeded: 'Exceeds borrow limit (max 3 items)',
         selectMaxItems: 'Please select no more than 3 items',
+        categoryAlreadyBorrowedForDate: 'Cannot proceed — you have already borrowed equipment in this category for the selected date',
+        checkingCategoryConflict: 'Checking borrow eligibility...',
         // Return Modal
         confirmReturnTitle: 'Confirm Return',
         confirmReturnDesc: 'Mark',

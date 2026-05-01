@@ -1458,7 +1458,7 @@ window.initDetailCalendar = function (bookedDates = [], filterStartDate = null, 
 };
 
 // Add to cart from Equipment Detail Modal
-window.addToCartFromDetail = function () {
+window.addToCartFromDetail = async function () {
     const equipmentId = document.getElementById('detailEquipmentId').value;
     const t = window.translations[window.currentLang];
 
@@ -1499,6 +1499,29 @@ window.addToCartFromDetail = function () {
             'warning'
         );
         return;
+    }
+
+    // === Cross-transaction category duplicate check ===
+    // ตรวจสอบว่า user มีการยืมอุปกรณ์หมวดหมู่เดียวกันข้ามรายการในวันที่ทับซ้อนหรือไม่
+    const filterStart = document.getElementById('startDate')?.value;
+    const filterEnd = document.getElementById('endDate')?.value;
+
+    if (filterStart && filterEnd && typeof window.checkCrossCategoryConflict === 'function') {
+        try {
+            const conflict = await window.checkCrossCategoryConflict(
+                equipment.type, filterStart, filterEnd
+            );
+            if (conflict.hasConflict) {
+                window.showToast(
+                    `${t.categoryAlreadyBorrowedForDate} (${conflict.conflictCategory}: ${conflict.conflictItem})`,
+                    'warning'
+                );
+                return;
+            }
+        } catch (err) {
+            console.error('Cross-category check error in addToCart:', err);
+            // Continue anyway — don't block on check failure
+        }
     }
 
     // Always add quantity = 1 (one per category)

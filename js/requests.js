@@ -389,6 +389,79 @@ function renderRequestPreview() {
     `).join('');
 }
 
+// === Cross-Transaction Category Conflict Check ===
+// ตรวจสอบว่า user มีการยืมอุปกรณ์ในหมวดหมู่เดียวกันข้ามรายการ
+// สำหรับช่วงวันที่ที่ทับซ้อนหรือไม่
+window.checkCrossCategoryConflict = async function (category, startDate, endDate) {
+    if (!window.supabaseClient || !window.currentUser) {
+        return { hasConflict: false };
+    }
+
+    const userId = window.currentUser?.dbId || window.currentUser?.id;
+    const userName = window.currentUser?.username;
+
+    try {
+        // 1. Check pending/approved borrow_request_items in the same category
+        //    with overlapping date range
+        if (userId) {
+            const { data: conflictRequests, error: reqError } = await window.supabaseClient
+                .from('borrow_requests')
+                .select('id, start_date, end_date, borrow_request_items!inner(name, category, status)')
+                .eq('user_id', userId)
+                .lte('start_date', endDate)     // request starts before our end
+                .gte('end_date', startDate);    // request ends after our start
+
+            if (!reqError && conflictRequests) {
+                for (const req of conflictRequests) {
+                    const matchingItems = (req.borrow_request_items || []).filter(
+                        item => item.category === category &&
+                            (item.status === 'pending' || item.status === 'approved')
+                    );
+                    if (matchingItems.length > 0) {
+                        return {
+                            hasConflict: true,
+                            conflictSource: 'request',
+                            conflictItem: matchingItems[0].name,
+                            conflictCategory: category
+                        };
+                    }
+                }
+            }
+        }
+
+        // 2. Check active transactions in the same category
+        //    with overlapping date range
+        if (userName) {
+            const { data: activeTrans, error: transError } = await window.supabaseClient
+                .from('transactions')
+                .select('id, start_date, end_date, equipments!inner(name, type)')
+                .eq('borrower_name', userName)
+                .eq('status', 'active')
+                .lte('start_date', endDate)
+                .gte('end_date', startDate);
+
+            if (!transError && activeTrans) {
+                const matchingTrans = activeTrans.filter(
+                    tr => tr.equipments?.type === category
+                );
+                if (matchingTrans.length > 0) {
+                    return {
+                        hasConflict: true,
+                        conflictSource: 'transaction',
+                        conflictItem: matchingTrans[0].equipments?.name || '',
+                        conflictCategory: category
+                    };
+                }
+            }
+        }
+
+        return { hasConflict: false };
+    } catch (err) {
+        console.error('checkCrossCategoryConflict exception:', err);
+        return { hasConflict: false };
+    }
+};
+
 // Submit request
 window.submitBorrowRequest = async function () {
     const startDate = document.getElementById('requestStartDate').value;
@@ -480,6 +553,27 @@ window.submitBorrowRequest = async function () {
 
     } catch (err) {
         console.error('Error checking borrow limits:', err);
+        // Continue anyway - don't block on check failure
+    }
+
+    // === RULE 4: Cross-transaction category duplicate check ===
+    // ตรวจสอบว่าแต่ละ item ในตะกร้า ไม่ซ้ำหมวดหมู่กับรายการที่เคยส่งไปแล้ว
+    // ในช่วงวันที่เดียวกัน
+    try {
+        for (const cartItem of window.cart.items) {
+            const conflict = await window.checkCrossCategoryConflict(
+                cartItem.category, startDate, endDate
+            );
+            if (conflict.hasConflict) {
+                window.showToast?.(
+                    `${t.categoryAlreadyBorrowedForDate} (${conflict.conflictCategory}: ${conflict.conflictItem})`,
+                    'warning'
+                );
+                return;
+            }
+        }
+    } catch (err) {
+        console.error('Error checking cross-category conflicts:', err);
         // Continue anyway - don't block on check failure
     }
 
