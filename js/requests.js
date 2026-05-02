@@ -987,6 +987,9 @@ window.approveItem = async function (requestId, itemName) {
             // Send approval email notification
             const approvedItem = { name: itemName, quantity: quantity };
             window.sendApprovalEmail?.(request, [approvedItem]);
+
+            // Auto-reject conflicting requests for the same equipment
+            await autoRejectConflictingRequests(requestId, itemName, request.startDate, request.endDate);
         }
     } catch (err) {
         console.error('Approve error:', err);
@@ -1003,6 +1006,13 @@ window.rejectItem = async function (requestId, itemName) {
     if (success) {
         window.showToast?.(t.rejectedSuccess, 'info');
         await renderPendingRequests();
+
+        // Send rejection email notification
+        const requests = await window.requests.getAll();
+        const request = requests.find(r => r.id === requestId);
+        if (request) {
+            window.sendRejectionEmail?.(request, [{ name: itemName }], reason || t.rejectedSuccess);
+        }
     }
 };
 
@@ -1084,6 +1094,11 @@ window.approveAllItems = async function (requestId) {
             // Send ONE email for all approved items
             if (approvedItems.length > 0) {
                 window.sendApprovalEmail?.(request, approvedItems);
+            }
+
+            // Auto-reject conflicting requests for each approved item
+            for (const item of approvedItems) {
+                await autoRejectConflictingRequests(requestId, item.name, request.startDate, request.endDate);
             }
         }
     } catch (err) {
@@ -1260,8 +1275,8 @@ window.sendApprovalEmail = async function (request, approvedItems) {
             to_email: toEmail,
             items: itemsList,
             items_html: approvedItems.map(item => `<li>${item.name} (x${item.quantity})</li>`).join(''),
-            start_date: new Date(request.startDate).toLocaleDateString('th-TH'),
-            return_date: new Date(request.endDate).toLocaleDateString('th-TH'),
+            start_date: new Date(request.startDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }),
+            return_date: new Date(request.endDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }),
             approved_by: window.currentUser?.username || 'Admin',
             request_id: request.id
         };
@@ -1282,44 +1297,157 @@ window.sendApprovalEmail = async function (request, approvedItems) {
     }
 };
 
-// ส่ง email เตือนก่อนครบกำหนดคืน
-window.sendReminderEmail = async function (transaction, daysUntilDue) {
+// --- Auto-Reject Conflicting Requests ---
+
+// เมื่ออนุมัติอุปกรณ์ให้ user คนหนึ่ง ให้ auto-reject คำขอ pending อื่นๆ
+// ที่จองอุปกรณ์ชิ้นเดียวกันในช่วงวันที่ทับซ้อน
+async function autoRejectConflictingRequests(approvedRequestId, itemName, startDate, endDate) {
+    if (!window.supabaseClient) return;
+    const t = window.translations[window.currentLang];
+
+    try {
+        // 1. ดึง pending items ทั้งหมดที่ชื่ออุปกรณ์ตรงกัน
+        const { data: pendingItems, error: itemsError } = await window.supabaseClient
+            .from('borrow_request_items')
+            .select('id, request_id, name, status')
+            .eq('name', itemName)
+            .eq('status', 'pending');
+
+        if (itemsError || !pendingItems || pendingItems.length === 0) return;
+
+        // 2. กรองเฉพาะ request ที่ไม่ใช่ request ที่เพิ่งอนุมัติ
+        const otherItems = pendingItems.filter(item => item.request_id !== approvedRequestId);
+        if (otherItems.length === 0) return;
+
+        // 3. ดึง borrow_requests ของ items เหล่านั้น เพื่อเช็ควันที่
+        const requestIds = [...new Set(otherItems.map(item => item.request_id))];
+        const { data: requests, error: reqError } = await window.supabaseClient
+            .from('borrow_requests')
+            .select('id, user_name, start_date, end_date')
+            .in('id', requestIds);
+
+        if (reqError || !requests) return;
+
+        // 4. ตรวจสอบ date overlap และ reject items ที่ทับซ้อน
+        const approvedStart = new Date(startDate + 'T00:00:00');
+        const approvedEnd = new Date(endDate + 'T23:59:59');
+        let rejectedCount = 0;
+        const rejectedUsers = new Map(); // Map<requestId, { userName, items[], startDate, endDate }>
+
+        for (const req of requests) {
+            const reqStart = new Date(req.start_date + 'T00:00:00');
+            const reqEnd = new Date(req.end_date + 'T23:59:59');
+
+            // Overlap check: (start1 < end2) && (end1 > start2)
+            const hasOverlap = approvedStart < reqEnd && approvedEnd > reqStart;
+            if (!hasOverlap) continue;
+
+            // ดึง items ของ request นี้ที่ตรงกับอุปกรณ์ที่ถูกอนุมัติ
+            const matchingItems = otherItems.filter(item => item.request_id === req.id);
+
+            for (const item of matchingItems) {
+                // อัปเดตสถานะเป็น rejected
+                const { error: updateError } = await window.supabaseClient
+                    .from('borrow_request_items')
+                    .update({
+                        status: 'rejected',
+                        rejection_reason: t.autoRejectedReason,
+                        approved_at: new Date().toISOString(),
+                        approved_by: 'ระบบอัตโนมัติ / Auto'
+                    })
+                    .eq('id', item.id);
+
+                if (!updateError) {
+                    rejectedCount++;
+                    // เก็บข้อมูลสำหรับส่ง email
+                    if (!rejectedUsers.has(req.id)) {
+                        rejectedUsers.set(req.id, {
+                            userName: req.user_name,
+                            items: [],
+                            startDate: req.start_date,
+                            endDate: req.end_date
+                        });
+                    }
+                    rejectedUsers.get(req.id).items.push({ name: item.name });
+                }
+            }
+        }
+
+        // 5. ส่ง rejection email ให้ผู้ใช้แต่ละคนที่ถูก auto-reject
+        for (const [reqId, info] of rejectedUsers) {
+            const fakeRequest = {
+                id: reqId,
+                userName: info.userName,
+                startDate: info.startDate,
+                endDate: info.endDate
+            };
+            window.sendRejectionEmail?.(fakeRequest, info.items, t.autoRejectedReason);
+        }
+
+        if (rejectedCount > 0) {
+            console.log(`Auto-rejected ${rejectedCount} conflicting items for "${itemName}"`);
+            window.showToast?.(`${t.autoRejectedNotice}: ${rejectedCount} ${t.autoRejectedCount}`, 'info');
+            // Re-render pending list to reflect changes
+            await renderPendingRequests();
+        }
+    } catch (err) {
+        console.error('autoRejectConflictingRequests error:', err);
+    }
+}
+
+// --- Rejection Email Notification ---
+
+// ส่ง email แจ้งเตือนเมื่อคำขอถูกปฏิเสธ
+window.sendRejectionEmail = async function (request, rejectedItems, reason = '') {
+    // ตรวจสอบว่า EmailJS configured หรือยัง
     if (!EMAILJS_PUBLIC_KEY || EMAILJS_PUBLIC_KEY.startsWith('YOUR_')) {
+        console.log('EmailJS not configured - skipping rejection email');
         return false;
     }
 
-    if (!EMAILJS_REMINDER_TEMPLATE || EMAILJS_REMINDER_TEMPLATE.startsWith('YOUR_')) {
+    if (!EMAILJS_SERVICE_ID || EMAILJS_SERVICE_ID.startsWith('YOUR_')) {
+        console.log('EmailJS Service ID not configured');
+        return false;
+    }
+
+    if (!EMAILJS_REJECTION_TEMPLATE || EMAILJS_REJECTION_TEMPLATE.startsWith('YOUR_')) {
+        console.log('EmailJS Rejection Template not configured - skipping rejection email');
         return false;
     }
 
     try {
-        let toEmail = transaction.borrower;
+        // สร้าง email ของผู้ใช้จาก username (สำหรับ Chula SSO)
+        let toEmail = request.userName;
         if (!toEmail.includes('@')) {
-            toEmail = transaction.borrower + '@student.chula.ac.th';
+            toEmail = request.userName + '@student.chula.ac.th';
         }
 
-        const whenText = daysUntilDue === 0 ? 'วันนี้ / today' :
-            daysUntilDue === 1 ? 'พรุ่งนี้ / tomorrow' :
-                `ใน ${daysUntilDue} วัน / in ${daysUntilDue} days`;
+        // Format items list
+        const itemsList = rejectedItems.map(item => `• ${item.name}`).join('\n');
 
+        // Template parameters
         const templateParams = {
-            to_name: transaction.borrower,
+            to_name: request.userName,
             to_email: toEmail,
-            items: transaction.equipment_name,
-            return_date: new Date(transaction.return_date).toLocaleDateString('th-TH'),
-            when: whenText
+            items: itemsList,
+            items_html: rejectedItems.map(item => `<li>${item.name}</li>`).join(''),
+            start_date: new Date(request.startDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }),
+            return_date: new Date(request.endDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }),
+            reason: reason || 'ไม่ระบุเหตุผล',
+            rejected_by: window.currentUser?.username || 'ระบบอัตโนมัติ',
+            request_id: request.id
         };
 
         const response = await emailjs.send(
             EMAILJS_SERVICE_ID,
-            EMAILJS_REMINDER_TEMPLATE,
+            EMAILJS_REJECTION_TEMPLATE,
             templateParams
         );
 
-        console.log('Reminder email sent:', response);
+        console.log('Rejection email sent:', response);
         return true;
     } catch (error) {
-        console.error('Failed to send reminder email:', error);
+        console.error('Failed to send rejection email:', error);
         return false;
     }
 };

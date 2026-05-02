@@ -21,7 +21,7 @@
 | **Vercel** | Hosting, Serverless Functions, Cron Jobs |
 | **Chart.js** | แสดงกราฟและ Analytics บน Dashboard |
 | **Flatpickr** | Date Picker สำหรับเลือกวันยืม-คืน |
-| **EmailJS** | ส่งอีเมลแจ้งเตือนผู้ใช้ (อนุมัติ, เตือนคืน) |
+| **EmailJS** | ส่งอีเมลแจ้งเตือนผู้ใช้ (อนุมัติ, ปฏิเสธ) |
 | **Google Fonts (Kanit)** | ฟอนต์ภาษาไทย |
 | **Chula SSO** | Single Sign-On สำหรับบัญชีจุฬาฯ |
 
@@ -50,7 +50,6 @@ senior-project/
 │
 ├── api/                    # Vercel Serverless Functions
 │   ├── sso-validate.js     # Validate Chula SSO ticket
-│   ├── cron-reminders.js   # Cron job: ส่งเตือนก่อนครบกำหนดคืน (ทุกวัน 09:00)
 │   └── keep-alive.js       # Cron job: Ping Supabase เพื่อป้องกัน cold start (ทุก 5 วัน)
 │
 ├── DB/                     # SQL Scripts
@@ -192,8 +191,9 @@ senior-project/
 
 ### 📧 ระบบแจ้งเตือน (Notifications)
 - อีเมลแจ้งเมื่อคำขอได้รับการอนุมัติ (EmailJS)
-- อีเมลเตือนก่อนครบกำหนดคืน (Cron Job ทุกวัน 09:00)
-- Bell notification badge สำหรับ Admin
+- อีเมลแจ้งเมื่อคำขอถูกปฏิเสธ หรือถูก auto-reject (EmailJS)
+- Auto-reject คำขอที่ทับซ้อนเมื่ออุปกรณ์ถูกอนุมัติให้ผู้ใช้อื่น
+- Bell notification badge สำหรับ Admin และ User
 
 ### 🌐 อื่นๆ
 - **Dark Mode / Light Mode:** สลับธีมได้
@@ -262,7 +262,6 @@ vercel
 ### Cron Jobs (อัตโนมัติ)
 | Cron | Schedule | หน้าที่ |
 |---|---|---|
-| `/api/cron-reminders` | ทุกวัน 09:00 UTC | ส่งอีเมลเตือนก่อนครบกำหนดคืน |
 | `/api/keep-alive` | ทุก 5 วัน | Ping Supabase ป้องกัน cold start |
 
 ---

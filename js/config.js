@@ -10,7 +10,7 @@ const SUPABASE_KEY = window.ENV?.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
 const EMAILJS_PUBLIC_KEY = window.ENV?.EMAILJS_PUBLIC_KEY || 'YOUR_EMAILJS_PUBLIC_KEY';
 const EMAILJS_SERVICE_ID = window.ENV?.EMAILJS_SERVICE_ID || 'YOUR_EMAILJS_SERVICE_ID';
 const EMAILJS_APPROVAL_TEMPLATE = window.ENV?.EMAILJS_APPROVAL_TEMPLATE || 'YOUR_TEMPLATE_ID';
-const EMAILJS_REMINDER_TEMPLATE = window.ENV?.EMAILJS_REMINDER_TEMPLATE || 'YOUR_TEMPLATE_ID';
+const EMAILJS_REJECTION_TEMPLATE = window.ENV?.EMAILJS_REJECTION_TEMPLATE || 'YOUR_TEMPLATE_ID';
 
 // --- GLOBAL STATE ---
 // We attach these to window so they are accessible by other scripts and HTML attributes
@@ -212,7 +212,12 @@ window.translations = {
         confirmReturnDesc: 'ต้องการรับคืน',
         confirmReturnDescSuffix: 'หรือไม่?',
         confirmReturnCancel: 'ยกเลิก',
-        confirmReturnConfirm: 'ยืนยัน'
+        confirmReturnConfirm: 'ยืนยัน',
+        // Rejection Notifications
+        autoRejectedReason: 'อุปกรณ์ถูกอนุมัติให้ผู้ใช้รายอื่นแล้วในช่วงวันที่ที่ทับซ้อนกัน',
+        rejectionEmailSent: 'ส่ง email แจ้งเตือนการปฏิเสธแล้ว',
+        autoRejectedNotice: 'คำขอที่ทับซ้อนถูกปฏิเสธอัตโนมัติ',
+        autoRejectedCount: 'รายการที่ถูกปฏิเสธอัตโนมัติ'
     },
     en: {
         overview: 'Overview',
@@ -402,7 +407,12 @@ window.translations = {
         confirmReturnDesc: 'Mark',
         confirmReturnDescSuffix: 'as returned?',
         confirmReturnCancel: 'Cancel',
-        confirmReturnConfirm: 'Confirm'
+        confirmReturnConfirm: 'Confirm',
+        // Rejection Notifications
+        autoRejectedReason: 'Equipment was approved for another user in the overlapping period',
+        rejectionEmailSent: 'Rejection notification email sent',
+        autoRejectedNotice: 'Overlapping requests auto-rejected',
+        autoRejectedCount: 'auto-rejected requests'
     }
 };
 

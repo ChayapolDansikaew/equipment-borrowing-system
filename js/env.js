@@ -16,7 +16,7 @@ const ENV = {
     EMAILJS_PUBLIC_KEY: 'qtaXmNDcVNTOs8-RE',
     EMAILJS_SERVICE_ID: 'service_bnaqk1g',
     EMAILJS_APPROVAL_TEMPLATE: 'template_n5p48z8',
-    EMAILJS_REMINDER_TEMPLATE: 'template_u6643nq'
+    EMAILJS_REJECTION_TEMPLATE: 'template_u6643nq'
 };
 
 // Make available globally
