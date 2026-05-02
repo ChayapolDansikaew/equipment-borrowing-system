@@ -116,7 +116,7 @@ senior-project/
 | `user_id` | VARCHAR | username ผู้กระทำผิด |
 | `transaction_id` | INTEGER (FK) | อ้างอิง transactions |
 | `equipment_id` | INTEGER (FK) | อ้างอิง equipments |
-| `penalty_type` | VARCHAR | ประเภท: `late_return`, `minor_damage`, `major_damage`, `lost` |
+| `penalty_type` | VARCHAR | ประเภท: `late_return`, `no_show`, `minor_damage`, `major_damage`, `lost` |
 | `severity` | VARCHAR | ระดับ: `low`, `medium`, `high`, `critical` |
 | `days_late` | INTEGER | จำนวนวันที่ล่าช้า |
 | `strikes_given` | INTEGER | จำนวน strike ที่ได้ |

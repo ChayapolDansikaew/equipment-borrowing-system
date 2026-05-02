@@ -1543,7 +1543,7 @@
             </div>
 
             <!-- Charts Grid -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <!-- Borrowing Trend (Line) -->
                 <div
                     class="bg-white dark:bg-[#1e2028] rounded-xl p-5 border border-gray-100 dark:border-white/[0.06] hover:shadow-lg transition-shadow duration-300">
@@ -1617,6 +1617,24 @@
                     </div>
                     <div class="h-56">
                         <canvas id="dashBorrowersChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Penalty Types (Doughnut) -->
+                <div
+                    class="bg-white dark:bg-[#1e2028] rounded-xl p-5 border border-gray-100 dark:border-white/[0.06] hover:shadow-lg transition-shadow duration-300">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-7 h-7 rounded-lg bg-red-500/10 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-sm font-bold text-gray-900 dark:text-white">สถิติความผิด</h3>
+                    </div>
+                    <div class="h-56">
+                        <canvas id="dashPenaltyChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -2301,6 +2319,7 @@
                         class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500">
                         <option value="">-- เลือกประเภท --</option>
                         <option value="late_return">คืนล่าช้า</option>
+                        <option value="no_show">ไม่มารับของ (No Show)</option>
                         <option value="minor_damage">เสียหายเล็กน้อย (รอยขีดข่วน)</option>
                         <option value="major_damage">เสียหายปานกลาง (ต้องซ่อม)</option>
                         <option value="severe_damage">เสียหายรุนแรง (ใช้งานไม่ได้)</option>

@@ -1876,6 +1876,11 @@ window.onPenaltyTypeChange = function () {
         daysLateContainer.classList.add('hidden');
     }
 
+    // Reset days late when switching away from late_return
+    if (penaltyType !== 'late_return') {
+        document.getElementById('penaltyDaysLate').value = '1';
+    }
+
     // Show compensation for damage/lost
     if (['major_damage', 'severe_damage', 'lost'].includes(penaltyType)) {
         compensationContainer.classList.remove('hidden');
@@ -1926,6 +1931,7 @@ window.openPenaltyHistoryModal = async function (userId = null) {
 
     const penaltyTypeLabels = {
         'late_return': 'คืนล่าช้า',
+        'no_show': 'ไม่มารับของ',
         'minor_damage': 'เสียหายเล็กน้อย',
         'major_damage': 'เสียหายปานกลาง',
         'severe_damage': 'เสียหายรุนแรง',

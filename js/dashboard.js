@@ -26,7 +26,7 @@ window.fetchDashboardData = async function () {
         monthStart.setDate(today.getDate() - 30);
 
         // Fetch all data in parallel
-        const [txResult, eqResult, usersResult] = await Promise.all([
+        const [txResult, eqResult, usersResult, penaltyStats] = await Promise.all([
             window.supabaseClient
                 .from('transactions')
                 .select('*, equipments(name, type)')
@@ -36,7 +36,8 @@ window.fetchDashboardData = async function () {
                 .select('*'),
             window.supabaseClient
                 .from('users')
-                .select('id, username, role, created_at')
+                .select('id, username, role, created_at'),
+            window.fetchPenaltyStats ? window.fetchPenaltyStats() : Promise.resolve({ late_return: 0, no_show: 0 })
         ]);
 
         const transactions = txResult.data || [];
@@ -103,6 +104,7 @@ window.fetchDashboardData = async function () {
         window.renderCategoryChart(equipments);
         window.renderStatusChart(stats);
         window.renderTopBorrowersChart(transactions);
+        window.renderPenaltyStatsChart(penaltyStats);
         window.renderRecentTransactions(transactions);
         window.renderKanbanBoard(requests, transactions);
         window.renderActivityFeed(transactions, requests);
@@ -472,6 +474,58 @@ window.renderKanbanBoard = function (requests, transactions) {
             </div>
         `;
     }).join('');
+};
+
+// ============================================
+// Penalty Stats Chart (Late Return vs No Show)
+// ============================================
+window.renderPenaltyStatsChart = function (stats) {
+    const canvas = document.getElementById('dashPenaltyChart');
+    if (!canvas) return;
+    if (window.chartInstances.dashPenalty) window.chartInstances.dashPenalty.destroy();
+
+    const isDark = document.documentElement.classList.contains('dark');
+    const labels = ['คืนล่าช้า', 'ไม่มารับของ'];
+    const data = [stats.late_return || 0, stats.no_show || 0];
+
+    window.chartInstances.dashPenalty = new Chart(canvas.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels,
+            datasets: [{
+                data,
+                backgroundColor: ['#EF4444', '#F59E0B'],
+                borderWidth: 0,
+                spacing: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '60%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: isDark ? '#9CA3AF' : '#6B7280',
+                        padding: 16,
+                        usePointStyle: true,
+                        pointStyleWidth: 8,
+                        font: { size: 11 }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: isDark ? '#1e2028' : '#fff',
+                    titleColor: isDark ? '#fff' : '#111',
+                    bodyColor: isDark ? '#9CA3AF' : '#6B7280',
+                    borderColor: isDark ? '#374151' : '#E5E7EB',
+                    borderWidth: 1,
+                    padding: 10,
+                    cornerRadius: 8
+                }
+            }
+        }
+    });
 };
 
 // ============================================

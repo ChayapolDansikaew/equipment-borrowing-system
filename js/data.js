@@ -953,6 +953,8 @@ window.calculateStrikes = function (penaltyType, daysLate = 0) {
             if (daysLate <= 3) return { strikes: 1, severity: 'low' };
             if (daysLate <= 7) return { strikes: 2, severity: 'medium' };
             return { strikes: 3, severity: 'high' };
+        case 'no_show':
+            return { strikes: 1, severity: 'low' };
         case 'minor_damage':
             return { strikes: 1, severity: 'low' };
         case 'major_damage':
@@ -1148,5 +1150,33 @@ window.fetchAllPenalties = async function () {
     } catch (err) {
         console.error('fetchAllPenalties exception:', err);
         return [];
+    }
+};
+
+// Get aggregated penalty stats for late_return vs no_show
+window.fetchPenaltyStats = async function () {
+    if (!window.supabaseClient) return { late_return: 0, no_show: 0 };
+
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('penalties')
+            .select('penalty_type')
+            .in('penalty_type', ['late_return', 'no_show']);
+
+        if (error) {
+            console.error('Error fetching penalty stats:', error);
+            return { late_return: 0, no_show: 0 };
+        }
+
+        const counts = { late_return: 0, no_show: 0 };
+        (data || []).forEach(row => {
+            if (counts[row.penalty_type] !== undefined) {
+                counts[row.penalty_type]++;
+            }
+        });
+        return counts;
+    } catch (err) {
+        console.error('fetchPenaltyStats exception:', err);
+        return { late_return: 0, no_show: 0 };
     }
 };
