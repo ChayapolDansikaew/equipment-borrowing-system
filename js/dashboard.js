@@ -10,6 +10,9 @@ window._dashboardTxPage = 0;
 window._dashboardFeedPage = 0;
 window._dashboardItemsPerPage = 10;
 window._feedEvents = [];
+window._kanbanPage = 0;
+window._kanbanRequests = [];
+window._kanbanTransactions = [];
 
 // ============================================
 // Main Data Fetcher
@@ -111,7 +114,7 @@ window.fetchDashboardData = async function () {
         window.renderStatusChart(stats);
         window.renderTopBorrowersChart(transactions);
         window.renderPenaltyStatsChart(penaltyStats);
-        window.renderKanbanBoard(requests, transactions);
+        window.fetchKanbanBoardData();
 
         // Fetch paged/filtered data for lists (separate from all-time charts)
         window._dashboardTxPage = 0;
@@ -569,15 +572,53 @@ window.renderRecentTransactions = function (transactions, hasMore = false) {
 // ============================================
 // Kanban Pipeline
 // ============================================
-window.renderKanbanBoard = function (requests, transactions) {
+window.fetchKanbanBoardData = async function () {
+    if (!window.supabaseClient) return;
+
+    const today = new Date();
+    const monthStart = new Date(today);
+    monthStart.setDate(today.getDate() - 30);
+    const monthStartStr = monthStart.toISOString();
+
+    try {
+        const [reqResult, txResult] = await Promise.all([
+            window.requests?.getAll(monthStartStr) || [],
+            window.supabaseClient
+                .from('transactions')
+                .select('*, equipments(name, type)')
+                .gte('borrow_date', monthStartStr)
+                .order('borrow_date', { ascending: false })
+        ]);
+
+        window._kanbanRequests = Array.isArray(reqResult) ? reqResult : [];
+        window._kanbanTransactions = txResult.data || [];
+        window._kanbanPage = 0;
+        window.renderKanbanBoard();
+    } catch (err) {
+        console.error('fetchKanbanBoardData exception:', err);
+        window._kanbanRequests = [];
+        window._kanbanTransactions = [];
+        window._kanbanPage = 0;
+        window.renderKanbanBoard();
+    }
+};
+
+window.renderKanbanBoard = function () {
     const container = document.getElementById('kanbanBoard');
     if (!container) return;
 
+    const requests = window._kanbanRequests || [];
+    const transactions = window._kanbanTransactions || [];
+    const page = window._kanbanPage || 0;
+    const itemsPerPage = window._dashboardItemsPerPage || 10;
+    const start = page * itemsPerPage;
+    const end = start + itemsPerPage;
+
     const columns = {
-        pending: { title: 'รออนุมัติ', color: 'yellow', icon: '⏳', items: [] },
-        approved: { title: 'อนุมัติแล้ว', color: 'blue', icon: '✅', items: [] },
-        active: { title: 'กำลังยืม', color: 'green', icon: '📦', items: [] },
-        returned: { title: 'คืนแล้ว', color: 'gray', icon: '✔️', items: [] }
+        pending: { title: 'รออนุมัติ', color: 'yellow', icon: '⏳', items: [], total: 0 },
+        approved: { title: 'อนุมัติแล้ว', color: 'blue', icon: '✅', items: [], total: 0 },
+        active: { title: 'กำลังยืม', color: 'green', icon: '📦', items: [], total: 0 },
+        returned: { title: 'คืนแล้ว', color: 'gray', icon: '✔️', items: [], total: 0 }
     };
 
     // From Supabase requests
@@ -596,8 +637,7 @@ window.renderKanbanBoard = function (requests, transactions) {
     });
 
     // From Supabase transactions
-    const recentTx = transactions.slice(0, 30); // last 30
-    recentTx.forEach(tx => {
+    transactions.forEach(tx => {
         const card = {
             user: tx.borrower_name,
             equipment: tx.equipments?.name || 'Unknown',
@@ -607,8 +647,11 @@ window.renderKanbanBoard = function (requests, transactions) {
         else if (tx.status === 'returned') columns.returned.items.push(card);
     });
 
-    // Limit returned to last 10
-    columns.returned.items = columns.returned.items.slice(0, 10);
+    // Store total counts before pagination
+    Object.keys(columns).forEach(key => {
+        columns[key].total = columns[key].items.length;
+        columns[key].items = columns[key].items.slice(start, end);
+    });
 
     const colorMap = {
         yellow: { bg: 'bg-yellow-500/10 dark:bg-yellow-500/5', border: 'border-yellow-500/30', text: 'text-yellow-600 dark:text-yellow-400', dot: 'bg-yellow-500' },
@@ -636,7 +679,7 @@ window.renderKanbanBoard = function (requests, transactions) {
                 <div class="flex items-center gap-2 mb-3 px-1">
                     <span class="w-2 h-2 rounded-full ${c.dot}"></span>
                     <h4 class="text-xs font-bold uppercase tracking-wider ${c.text}">${col.title}</h4>
-                    <span class="ml-auto text-[10px] font-bold ${c.text} ${c.bg} px-1.5 py-0.5 rounded-full">${col.items.length}</span>
+                    <span class="ml-auto text-[10px] font-bold ${c.text} ${c.bg} px-1.5 py-0.5 rounded-full">${col.total}</span>
                 </div>
                 <div class="space-y-2 ${c.bg} rounded-xl p-2 min-h-[120px] border ${c.border}">
                     ${cardsHtml}
@@ -644,6 +687,21 @@ window.renderKanbanBoard = function (requests, transactions) {
             </div>
         `;
     }).join('');
+
+    // Determine if any column has more items for next page
+    const hasMore = Object.values(columns).some(col => col.total > end);
+    window.renderPagination('kanbanPagination', page, hasMore, 'window.prevKanbanPage', 'window.nextKanbanPage');
+};
+
+window.prevKanbanPage = function () {
+    if (window._kanbanPage <= 0) return;
+    window._kanbanPage--;
+    window.renderKanbanBoard();
+};
+
+window.nextKanbanPage = function () {
+    window._kanbanPage++;
+    window.renderKanbanBoard();
 };
 
 // ============================================
