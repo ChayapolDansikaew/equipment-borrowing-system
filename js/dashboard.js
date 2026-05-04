@@ -362,11 +362,20 @@ window.renderTopBorrowersChart = function (transactions) {
 // ============================================
 // Filtered / Paged Data Fetchers
 // ============================================
+
+// Stack-like pagination: page 0 = 5 items, page >=1 = 10 items
+// Returns {start, end} for Array.slice() (exclusive end)
+function _getPageSlice(page) {
+    if (page === 0) return { start: 0, end: 5 };
+    return { start: 5 + (page - 1) * 10, end: 5 + page * 10 };
+}
+
 window.fetchRecentTransactionsPage = async function (page) {
     if (!window.supabaseClient) return;
-    const itemsPerPage = window._dashboardItemsPerPage;
-    const start = page * itemsPerPage;
-    const end = start + itemsPerPage - 1;
+    const { start, end } = _getPageSlice(page);
+    const itemsPerPage = (page === 0) ? 5 : 10;
+    // Supabase range() uses inclusive end
+    const rangeEnd = end - 1;
 
     const today = new Date();
     const monthStart = new Date(today);
@@ -379,7 +388,7 @@ window.fetchRecentTransactionsPage = async function (page) {
             .select('*, equipments(name, type)')
             .gte('borrow_date', monthStartStr)
             .order('borrow_date', { ascending: false })
-            .range(start, end);
+            .range(start, rangeEnd);
 
         if (error) {
             console.error('Error fetching recent transactions:', error);
@@ -610,9 +619,7 @@ window.renderKanbanBoard = function () {
     const requests = window._kanbanRequests || [];
     const transactions = window._kanbanTransactions || [];
     const page = window._kanbanPage || 0;
-    const itemsPerPage = window._dashboardItemsPerPage || 10;
-    const start = page * itemsPerPage;
-    const end = start + itemsPerPage;
+    const { start, end } = _getPageSlice(page);
 
     const columns = {
         pending: { title: 'รออนุมัติ', color: 'yellow', icon: '⏳', items: [], total: 0 },
@@ -764,9 +771,7 @@ window.renderActivityFeedPage = function (page) {
     if (!container) return;
 
     const events = window._feedEvents || [];
-    const itemsPerPage = window._dashboardItemsPerPage;
-    const start = page * itemsPerPage;
-    const end = start + itemsPerPage;
+    const { start, end } = _getPageSlice(page);
     const pageEvents = events.slice(start, end);
     const hasMore = end < events.length;
 
