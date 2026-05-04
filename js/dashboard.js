@@ -10,9 +10,8 @@ window._dashboardTxPage = 0;
 window._dashboardFeedPage = 0;
 window._dashboardItemsPerPage = 10;
 window._feedEvents = [];
-window._kanbanPage = 0;
-window._kanbanRequests = [];
-window._kanbanTransactions = [];
+window._dashboardTxHasMore = false;
+window._dashboardFeedHasMore = false;
 
 // ============================================
 // Main Data Fetcher
@@ -114,7 +113,6 @@ window.fetchDashboardData = async function () {
         window.renderStatusChart(stats);
         window.renderTopBorrowersChart(transactions);
         window.renderPenaltyStatsChart(penaltyStats);
-        window.fetchKanbanBoardData();
 
         // Fetch paged/filtered data for lists (separate from all-time charts)
         window._dashboardTxPage = 0;
@@ -363,19 +361,22 @@ window.renderTopBorrowersChart = function (transactions) {
 // Filtered / Paged Data Fetchers
 // ============================================
 
-// Stack-like pagination: page 0 = 5 items, page >=1 = 10 items
+// Stack-like pagination based on total items
 // Returns {start, end} for Array.slice() (exclusive end)
-function _getPageSlice(page) {
-    if (page === 0) return { start: 0, end: 5 };
-    return { start: 5 + (page - 1) * 10, end: 5 + page * 10 };
+function _getPageSlice(page, totalItems) {
+    const safeTotal = Math.max(0, Number(totalItems) || 0);
+    if (safeTotal === 0) return { start: 0, end: 0 };
+
+    const firstPageSize = safeTotal <= 10 ? safeTotal : (safeTotal % 10 || 10);
+    if (page === 0) return { start: 0, end: firstPageSize };
+
+    const start = firstPageSize + ((page - 1) * 10);
+    const end = Math.min(start + 10, safeTotal);
+    return { start, end };
 }
 
 window.fetchRecentTransactionsPage = async function (page) {
     if (!window.supabaseClient) return;
-    const { start, end } = _getPageSlice(page);
-    const itemsPerPage = (page === 0) ? 5 : 10;
-    // Supabase range() uses inclusive end
-    const rangeEnd = end - 1;
 
     const today = new Date();
     const monthStart = new Date(today);
@@ -383,22 +384,46 @@ window.fetchRecentTransactionsPage = async function (page) {
     const monthStartStr = monthStart.toISOString();
 
     try {
+        const { count, error: countError } = await window.supabaseClient
+            .from('transactions')
+            .select('*', { count: 'exact', head: true })
+            .gte('borrow_date', monthStartStr);
+
+        if (countError) {
+            console.error('Error counting recent transactions:', countError);
+            window._dashboardTxHasMore = false;
+            window.renderRecentTransactions([], false);
+            return;
+        }
+
+        const totalItems = count || 0;
+        const { start, end } = _getPageSlice(page, totalItems);
+
+        if (totalItems === 0 || start >= totalItems) {
+            window._dashboardTxHasMore = false;
+            window.renderRecentTransactions([], false);
+            return;
+        }
+
         const { data, error } = await window.supabaseClient
             .from('transactions')
             .select('*, equipments(name, type)')
             .gte('borrow_date', monthStartStr)
             .order('borrow_date', { ascending: false })
-            .range(start, rangeEnd);
+            .range(start, end - 1);
 
         if (error) {
             console.error('Error fetching recent transactions:', error);
+            window._dashboardTxHasMore = false;
             window.renderRecentTransactions([], false);
             return;
         }
-        const hasMore = data && data.length === itemsPerPage;
+        const hasMore = end < totalItems;
+        window._dashboardTxHasMore = hasMore;
         window.renderRecentTransactions(data || [], hasMore);
     } catch (err) {
         console.error('fetchRecentTransactionsPage exception:', err);
+        window._dashboardTxHasMore = false;
         window.renderRecentTransactions([], false);
     }
 };
@@ -476,6 +501,8 @@ window.renderPagination = function (containerId, currentPage, hasMore, onPrev, o
     if (!container) return;
 
     const totalPages = hasMore ? currentPage + 2 : currentPage + 1;
+    const isPrevDisabled = currentPage === 0;
+    const isNextDisabled = !hasMore;
     if (totalPages <= 1) {
         container.innerHTML = '';
         return;
@@ -484,24 +511,26 @@ window.renderPagination = function (containerId, currentPage, hasMore, onPrev, o
     container.innerHTML = `
         <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-white/[0.06]">
             <button onclick="${onPrev}()"
-                class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors
-                ${currentPage === 0
-                    ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.05] cursor-pointer'}">
-                ← ก่อนหน้า
-            </button>
-            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                หน้า ${currentPage + 1}
-            </span>
-            <button onclick="${onNext}()"
-                class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors
-                ${!hasMore
-                    ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.05] cursor-pointer'}">
-                ถัดไป →
-            </button>
-        </div>
-    `;
+                ${isPrevDisabled ? 'disabled' : ''}
+                 class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors
+                 ${isPrevDisabled
+                     ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.05] cursor-pointer'}">
+                 ← ก่อนหน้า
+             </button>
+             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                 หน้า ${currentPage + 1}
+             </span>
+             <button onclick="${onNext}()"
+                ${isNextDisabled ? 'disabled' : ''}
+                 class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors
+                 ${isNextDisabled
+                     ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.05] cursor-pointer'}">
+                 ถัดไป →
+             </button>
+         </div>
+     `;
 };
 
 window.prevTxPage = function () {
@@ -511,6 +540,7 @@ window.prevTxPage = function () {
 };
 
 window.nextTxPage = function () {
+    if (!window._dashboardTxHasMore) return;
     window._dashboardTxPage++;
     window.fetchRecentTransactionsPage(window._dashboardTxPage);
 };
@@ -522,6 +552,7 @@ window.prevFeedPage = function () {
 };
 
 window.nextFeedPage = function () {
+    if (!window._dashboardFeedHasMore) return;
     window._dashboardFeedPage++;
     window.renderActivityFeedPage(window._dashboardFeedPage);
 };
@@ -576,139 +607,6 @@ window.renderRecentTransactions = function (transactions, hasMore = false) {
     }).join('');
 
     window.renderPagination('recentTxPagination', window._dashboardTxPage, hasMore, 'window.prevTxPage', 'window.nextTxPage');
-};
-
-// ============================================
-// Kanban Pipeline
-// ============================================
-window.fetchKanbanBoardData = async function () {
-    if (!window.supabaseClient) return;
-
-    const today = new Date();
-    const monthStart = new Date(today);
-    monthStart.setDate(today.getDate() - 30);
-    const monthStartStr = monthStart.toISOString();
-
-    try {
-        const [reqResult, txResult] = await Promise.all([
-            window.requests?.getAll(monthStartStr) || [],
-            window.supabaseClient
-                .from('transactions')
-                .select('*, equipments(name, type)')
-                .gte('borrow_date', monthStartStr)
-                .order('borrow_date', { ascending: false })
-        ]);
-
-        window._kanbanRequests = Array.isArray(reqResult) ? reqResult : [];
-        window._kanbanTransactions = txResult.data || [];
-        window._kanbanPage = 0;
-        window.renderKanbanBoard();
-    } catch (err) {
-        console.error('fetchKanbanBoardData exception:', err);
-        window._kanbanRequests = [];
-        window._kanbanTransactions = [];
-        window._kanbanPage = 0;
-        window.renderKanbanBoard();
-    }
-};
-
-window.renderKanbanBoard = function () {
-    const container = document.getElementById('kanbanBoard');
-    if (!container) return;
-
-    const requests = window._kanbanRequests || [];
-    const transactions = window._kanbanTransactions || [];
-    const page = window._kanbanPage || 0;
-    const { start, end } = _getPageSlice(page);
-
-    const columns = {
-        pending: { title: 'รออนุมัติ', color: 'yellow', icon: '⏳', items: [], total: 0 },
-        approved: { title: 'อนุมัติแล้ว', color: 'blue', icon: '✅', items: [], total: 0 },
-        active: { title: 'กำลังยืม', color: 'green', icon: '📦', items: [], total: 0 },
-        returned: { title: 'คืนแล้ว', color: 'gray', icon: '✔️', items: [], total: 0 }
-    };
-
-    // From Supabase requests
-    requests.forEach(req => {
-        req.items.forEach(item => {
-            const card = {
-                user: req.userName,
-                equipment: item.name,
-                date: new Date(req.createdAt).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }),
-                requestId: req.id
-            };
-            if (item.status === 'pending') columns.pending.items.push(card);
-            else if (item.status === 'approved') columns.approved.items.push(card);
-            else if (item.status === 'rejected') { /* skip */ }
-        });
-    });
-
-    // From Supabase transactions
-    transactions.forEach(tx => {
-        const card = {
-            user: tx.borrower_name,
-            equipment: tx.equipments?.name || 'Unknown',
-            date: new Date(tx.borrow_date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' })
-        };
-        if (tx.status === 'active') columns.active.items.push(card);
-        else if (tx.status === 'returned') columns.returned.items.push(card);
-    });
-
-    // Store total counts before pagination
-    Object.keys(columns).forEach(key => {
-        columns[key].total = columns[key].items.length;
-        columns[key].items = columns[key].items.slice(start, end);
-    });
-
-    const colorMap = {
-        yellow: { bg: 'bg-yellow-500/10 dark:bg-yellow-500/5', border: 'border-yellow-500/30', text: 'text-yellow-600 dark:text-yellow-400', dot: 'bg-yellow-500' },
-        blue: { bg: 'bg-blue-500/10 dark:bg-blue-500/5', border: 'border-blue-500/30', text: 'text-blue-600 dark:text-blue-400', dot: 'bg-blue-500' },
-        green: { bg: 'bg-emerald-500/10 dark:bg-emerald-500/5', border: 'border-emerald-500/30', text: 'text-emerald-600 dark:text-emerald-400', dot: 'bg-emerald-500' },
-        gray: { bg: 'bg-gray-500/10 dark:bg-gray-500/5', border: 'border-gray-500/30', text: 'text-gray-600 dark:text-gray-400', dot: 'bg-gray-400' }
-    };
-
-    container.innerHTML = Object.entries(columns).map(([key, col]) => {
-        const c = colorMap[col.color];
-        const cardsHtml = col.items.length > 0
-            ? col.items.map(item => `
-                <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700/50 hover:shadow-md transition-all duration-200 cursor-pointer group">
-                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">${item.equipment}</p>
-                    <div class="flex items-center justify-between mt-2">
-                        <span class="text-xs text-gray-500 dark:text-gray-400">${item.user}</span>
-                        <span class="text-[10px] text-gray-400 dark:text-gray-500">${item.date}</span>
-                    </div>
-                </div>
-            `).join('')
-            : `<p class="text-xs text-gray-400 dark:text-gray-600 text-center py-6">ไม่มีรายการ</p>`;
-
-        return `
-            <div class="min-w-[220px] flex-1">
-                <div class="flex items-center gap-2 mb-3 px-1">
-                    <span class="w-2 h-2 rounded-full ${c.dot}"></span>
-                    <h4 class="text-xs font-bold uppercase tracking-wider ${c.text}">${col.title}</h4>
-                    <span class="ml-auto text-[10px] font-bold ${c.text} ${c.bg} px-1.5 py-0.5 rounded-full">${col.total}</span>
-                </div>
-                <div class="space-y-2 ${c.bg} rounded-xl p-2 min-h-[120px] border ${c.border}">
-                    ${cardsHtml}
-                </div>
-            </div>
-        `;
-    }).join('');
-
-    // Determine if any column has more items for next page
-    const hasMore = Object.values(columns).some(col => col.total > end);
-    window.renderPagination('kanbanPagination', page, hasMore, 'window.prevKanbanPage', 'window.nextKanbanPage');
-};
-
-window.prevKanbanPage = function () {
-    if (window._kanbanPage <= 0) return;
-    window._kanbanPage--;
-    window.renderKanbanBoard();
-};
-
-window.nextKanbanPage = function () {
-    window._kanbanPage++;
-    window.renderKanbanBoard();
 };
 
 // ============================================
@@ -771,9 +669,10 @@ window.renderActivityFeedPage = function (page) {
     if (!container) return;
 
     const events = window._feedEvents || [];
-    const { start, end } = _getPageSlice(page);
+    const { start, end } = _getPageSlice(page, events.length);
     const pageEvents = events.slice(start, end);
     const hasMore = end < events.length;
+    window._dashboardFeedHasMore = hasMore;
 
     if (pageEvents.length === 0) {
         container.innerHTML = '<p class="text-gray-400 dark:text-gray-600 text-center py-8 text-sm">ยังไม่มีกิจกรรม</p>';
