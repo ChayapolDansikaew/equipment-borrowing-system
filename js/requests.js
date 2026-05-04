@@ -1,13 +1,18 @@
 // Request Module - จัดการคำขอยืมอุปกรณ์ (Supabase)
 window.requests = {
     // ดึง requests ทั้งหมดจาก Supabase (พร้อม items)
-    async getAll() {
+    // since: ISO string สำหรับกรอง created_at >= since (optional)
+    async getAll(since = null) {
         if (!window.supabaseClient) return [];
         try {
-            const { data, error } = await window.supabaseClient
+            let query = window.supabaseClient
                 .from('borrow_requests')
                 .select('*, borrow_request_items(*)')
                 .order('created_at', { ascending: false });
+            if (since) {
+                query = query.gte('created_at', since);
+            }
+            const { data, error } = await query;
 
             if (error) {
                 console.error('Error fetching requests:', error);

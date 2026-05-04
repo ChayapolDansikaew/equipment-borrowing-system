@@ -5,6 +5,12 @@ window.chartInstances = window.chartInstances || {};
 window._dashboardInitialized = false;
 window._dashboardRefreshInterval = null;
 
+// Pagination state
+window._dashboardTxPage = 0;
+window._dashboardFeedPage = 0;
+window._dashboardItemsPerPage = 10;
+window._feedEvents = [];
+
 // ============================================
 // Main Data Fetcher
 // ============================================
@@ -105,9 +111,13 @@ window.fetchDashboardData = async function () {
         window.renderStatusChart(stats);
         window.renderTopBorrowersChart(transactions);
         window.renderPenaltyStatsChart(penaltyStats);
-        window.renderRecentTransactions(transactions);
         window.renderKanbanBoard(requests, transactions);
-        window.renderActivityFeed(transactions, requests);
+
+        // Fetch paged/filtered data for lists (separate from all-time charts)
+        window._dashboardTxPage = 0;
+        window._dashboardFeedPage = 0;
+        await window.fetchRecentTransactionsPage(0);
+        await window.fetchActivityFeedData();
 
     } catch (err) {
         console.error('Dashboard fetch error:', err);
@@ -347,23 +357,181 @@ window.renderTopBorrowersChart = function (transactions) {
 };
 
 // ============================================
+// Filtered / Paged Data Fetchers
+// ============================================
+window.fetchRecentTransactionsPage = async function (page) {
+    if (!window.supabaseClient) return;
+    const itemsPerPage = window._dashboardItemsPerPage;
+    const start = page * itemsPerPage;
+    const end = start + itemsPerPage - 1;
+
+    const today = new Date();
+    const monthStart = new Date(today);
+    monthStart.setDate(today.getDate() - 30);
+    const monthStartStr = monthStart.toISOString();
+
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('transactions')
+            .select('*, equipments(name, type)')
+            .gte('borrow_date', monthStartStr)
+            .order('borrow_date', { ascending: false })
+            .range(start, end);
+
+        if (error) {
+            console.error('Error fetching recent transactions:', error);
+            window.renderRecentTransactions([], false);
+            return;
+        }
+        const hasMore = data && data.length === itemsPerPage;
+        window.renderRecentTransactions(data || [], hasMore);
+    } catch (err) {
+        console.error('fetchRecentTransactionsPage exception:', err);
+        window.renderRecentTransactions([], false);
+    }
+};
+
+window.fetchActivityFeedData = async function () {
+    if (!window.supabaseClient) return;
+
+    const today = new Date();
+    const monthStart = new Date(today);
+    monthStart.setDate(today.getDate() - 30);
+    const monthStartStr = monthStart.toISOString();
+
+    try {
+        const [txResult, requests] = await Promise.all([
+            window.supabaseClient
+                .from('transactions')
+                .select('*, equipments(name, type)')
+                .gte('borrow_date', monthStartStr)
+                .order('borrow_date', { ascending: false }),
+            window.requests?.getAll(monthStartStr) || []
+        ]);
+
+        const transactions = txResult.data || [];
+        const events = [];
+
+        transactions.forEach(tx => {
+            const action = tx.status === 'returned' ? 'คืน' : 'ยืม';
+            const icon = tx.status === 'returned' ? '↩️' : '📤';
+            const eqName = tx.equipments?.name || 'อุปกรณ์';
+            events.push({
+                icon,
+                text: `<b>${tx.borrower_name}</b> ${action} <span class="text-gray-900 dark:text-white font-medium">${eqName}</span>`,
+                time: new Date(tx.status === 'returned' && tx.return_date ? tx.return_date : tx.borrow_date),
+                type: tx.status
+            });
+        });
+
+        requests.forEach(req => {
+            const hasApproved = req.items.some(i => i.status === 'approved');
+            const hasPending = req.items.some(i => i.status === 'pending');
+            if (hasPending) {
+                events.push({
+                    icon: '📋',
+                    text: `<b>${req.userName}</b> ส่งคำขอยืม ${req.items.length} รายการ`,
+                    time: new Date(req.createdAt),
+                    type: 'request'
+                });
+            }
+            if (hasApproved) {
+                const approver = req.items.find(i => i.approvedBy)?.approvedBy || 'admin';
+                events.push({
+                    icon: '✅',
+                    text: `<b>${approver}</b> อนุมัติคำขอของ <b>${req.userName}</b>`,
+                    time: new Date(req.items.find(i => i.approvedAt)?.approvedAt || req.createdAt),
+                    type: 'approved'
+                });
+            }
+        });
+
+        events.sort((a, b) => b.time - a.time);
+        window._feedEvents = events;
+        window.renderActivityFeedPage(0);
+    } catch (err) {
+        console.error('fetchActivityFeedData exception:', err);
+        window._feedEvents = [];
+        window.renderActivityFeedPage(0);
+    }
+};
+
+// ============================================
+// Pagination Controls
+// ============================================
+window.renderPagination = function (containerId, currentPage, hasMore, onPrev, onNext) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const totalPages = hasMore ? currentPage + 2 : currentPage + 1;
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-white/[0.06]">
+            <button onclick="${onPrev}()"
+                class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors
+                ${currentPage === 0
+                    ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.05] cursor-pointer'}">
+                ← ก่อนหน้า
+            </button>
+            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                หน้า ${currentPage + 1}
+            </span>
+            <button onclick="${onNext}()"
+                class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors
+                ${!hasMore
+                    ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.05] cursor-pointer'}">
+                ถัดไป →
+            </button>
+        </div>
+    `;
+};
+
+window.prevTxPage = function () {
+    if (window._dashboardTxPage <= 0) return;
+    window._dashboardTxPage--;
+    window.fetchRecentTransactionsPage(window._dashboardTxPage);
+};
+
+window.nextTxPage = function () {
+    window._dashboardTxPage++;
+    window.fetchRecentTransactionsPage(window._dashboardTxPage);
+};
+
+window.prevFeedPage = function () {
+    if (window._dashboardFeedPage <= 0) return;
+    window._dashboardFeedPage--;
+    window.renderActivityFeedPage(window._dashboardFeedPage);
+};
+
+window.nextFeedPage = function () {
+    window._dashboardFeedPage++;
+    window.renderActivityFeedPage(window._dashboardFeedPage);
+};
+
+// ============================================
 // Recent Transactions Table
 // ============================================
-window.renderRecentTransactions = function (transactions) {
+window.renderRecentTransactions = function (transactions, hasMore = false) {
     const tbody = document.getElementById('dashRecentTransactions');
     if (!tbody) return;
 
-    const recent = transactions.slice(0, 8);
     const now = new Date();
 
-    if (recent.length === 0) {
+    if (transactions.length === 0) {
         tbody.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-gray-400 text-sm">ไม่มีรายการ</td></tr>';
+        window.renderPagination('recentTxPagination', window._dashboardTxPage, hasMore, 'window.prevTxPage', 'window.nextTxPage');
         return;
     }
 
     const locale = window.currentLang === 'th' ? 'th-TH' : 'en-US';
 
-    tbody.innerHTML = recent.map(tx => {
+    tbody.innerHTML = transactions.map(tx => {
         const date = new Date(tx.borrow_date).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: '2-digit' });
         const isOverdue = tx.status === 'active' && tx.end_date && new Date(tx.end_date) < now;
 
@@ -394,6 +562,8 @@ window.renderRecentTransactions = function (transactions) {
             </tr>
         `;
     }).join('');
+
+    window.renderPagination('recentTxPagination', window._dashboardTxPage, hasMore, 'window.prevTxPage', 'window.nextTxPage');
 };
 
 // ============================================
@@ -531,57 +701,24 @@ window.renderPenaltyStatsChart = function (stats) {
 // ============================================
 // Activity Feed
 // ============================================
-window.renderActivityFeed = function (transactions, requests) {
+window.renderActivityFeedPage = function (page) {
     const container = document.getElementById('activityFeed');
     if (!container) return;
 
-    const events = [];
+    const events = window._feedEvents || [];
+    const itemsPerPage = window._dashboardItemsPerPage;
+    const start = page * itemsPerPage;
+    const end = start + itemsPerPage;
+    const pageEvents = events.slice(start, end);
+    const hasMore = end < events.length;
 
-    // From transactions
-    transactions.slice(0, 15).forEach(tx => {
-        const action = tx.status === 'returned' ? 'คืน' : 'ยืม';
-        const icon = tx.status === 'returned' ? '↩️' : '📤';
-        const eqName = tx.equipments?.name || 'อุปกรณ์';
-        events.push({
-            icon,
-            text: `<b>${tx.borrower_name}</b> ${action} <span class="text-gray-900 dark:text-white font-medium">${eqName}</span>`,
-            time: new Date(tx.status === 'returned' && tx.return_date ? tx.return_date : tx.borrow_date),
-            type: tx.status
-        });
-    });
-
-    // From requests
-    requests.slice(0, 10).forEach(req => {
-        const hasApproved = req.items.some(i => i.status === 'approved');
-        const hasPending = req.items.some(i => i.status === 'pending');
-        if (hasPending) {
-            events.push({
-                icon: '📋',
-                text: `<b>${req.userName}</b> ส่งคำขอยืม ${req.items.length} รายการ`,
-                time: new Date(req.createdAt),
-                type: 'request'
-            });
-        }
-        if (hasApproved) {
-            const approver = req.items.find(i => i.approvedBy)?.approvedBy || 'admin';
-            events.push({
-                icon: '✅',
-                text: `<b>${approver}</b> อนุมัติคำขอของ <b>${req.userName}</b>`,
-                time: new Date(req.items.find(i => i.approvedAt)?.approvedAt || req.createdAt),
-                type: 'approved'
-            });
-        }
-    });
-
-    // Sort by time descending
-    events.sort((a, b) => b.time - a.time);
-
-    if (events.length === 0) {
+    if (pageEvents.length === 0) {
         container.innerHTML = '<p class="text-gray-400 dark:text-gray-600 text-center py-8 text-sm">ยังไม่มีกิจกรรม</p>';
+        window.renderPagination('activityFeedPagination', page, hasMore, 'window.prevFeedPage', 'window.nextFeedPage');
         return;
     }
 
-    container.innerHTML = events.slice(0, 12).map(ev => {
+    container.innerHTML = pageEvents.map(ev => {
         const ago = window.timeAgo(ev.time);
         return `
             <div class="flex items-start gap-3 py-2.5 px-1 hover:bg-gray-50 dark:hover:bg-white/[0.02] rounded-lg transition-colors group">
@@ -593,6 +730,8 @@ window.renderActivityFeed = function (transactions, requests) {
             </div>
         `;
     }).join('');
+
+    window.renderPagination('activityFeedPagination', page, hasMore, 'window.prevFeedPage', 'window.nextFeedPage');
 };
 
 // ============================================
