@@ -141,6 +141,11 @@ window.confirmLogout = function () {
     document.getElementById('loginUsername').value = '';
     document.getElementById('loginPassword').value = '';
     document.getElementById('loginError').classList.add('hidden');
+
+    // Reset to SSO tab as default
+    if (typeof window.switchLoginTab === 'function') {
+        window.switchLoginTab('sso');
+    }
 };
 
 window.checkSession = async function () {
@@ -213,6 +218,11 @@ window.checkSession = async function () {
         console.log('No saved session, showing login page');
         document.getElementById('loginSection').classList.remove('hidden');
         document.getElementById('mainApp').classList.add('hidden');
+
+        // Ensure SSO tab is the default
+        if (typeof window.switchLoginTab === 'function') {
+            window.switchLoginTab('sso');
+        }
     }
 };
 
