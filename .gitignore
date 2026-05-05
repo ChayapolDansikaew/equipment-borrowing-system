@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+package-lock.json
 
 # Database
 DB/
@@ -15,6 +16,8 @@ js/env.js
 .idea/
 *.swp
 *.swo
+.agents/
+.windsurf/
 
 # OS
 .DS_Store
