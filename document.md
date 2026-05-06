@@ -13,16 +13,21 @@
 
 ## เทคโนโลยีที่ใช้ (Tech Stack)
 
+### Front-end
 | เทคโนโลยี | หน้าที่ |
 |---|---|
 | **HTML / JavaScript (ES Module)** | โครงสร้างหน้าเว็บและ Logic หลัก |
 | **Tailwind CSS (CDN)** | การจัดสไตล์ UI ทั้งหมด |
-| **Supabase** | ฐานข้อมูล PostgreSQL, Row Level Security (RLS) |
-| **Vercel** | Hosting, Serverless Functions, Cron Jobs |
 | **Chart.js** | แสดงกราฟและ Analytics บน Dashboard |
 | **Flatpickr** | Date Picker สำหรับเลือกวันยืม-คืน |
-| **EmailJS** | ส่งอีเมลแจ้งเตือนผู้ใช้ (อนุมัติ, ปฏิเสธ) |
 | **Google Fonts (Kanit)** | ฟอนต์ภาษาไทย |
+
+### Back-end & Services
+| เทคโนโลยี | หน้าที่ |
+|---|---|
+| **Supabase** | ฐานข้อมูล PostgreSQL, Row Level Security (RLS) |
+| **Vercel** | Hosting, Serverless Functions, Cron Jobs |
+| **EmailJS** | ส่งอีเมลแจ้งเตือนผู้ใช้ (อนุมัติ, ปฏิเสธ) |
 | **Chula SSO** | Single Sign-On สำหรับบัญชีจุฬาฯ |
 
 ---
