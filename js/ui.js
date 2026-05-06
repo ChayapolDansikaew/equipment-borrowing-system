@@ -97,7 +97,27 @@ window.renderEquipments = function () {
             </div>
             <div class="p-5">
                 <p class="text-xs font-bold text-brand-pink uppercase tracking-wide mb-1">${group.type}</p>
-                <h3 class="font-bold text-lg mb-4 text-brand-black dark:text-white">${group.name}</h3>
+                <h3 class="font-bold text-lg mb-2 text-brand-black dark:text-white">${group.name}</h3>
+                ${(() => {
+                    const purchaseYear = group.items[0]?.purchase_year;
+                    if (!purchaseYear) return '';
+                    const age = window.calculateEquipmentAge(purchaseYear);
+                    if (age === null) return '';
+                    const t = window.translations[window.currentLang];
+                    let ageColor = 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400';
+                    let ageIcon = '📅';
+                    if (age >= 10) {
+                        ageColor = 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400';
+                        ageIcon = '⚠️';
+                    } else if (age === 0) {
+                        ageColor = 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400';
+                        ageIcon = '✨';
+                    }
+                    const ageText = age === 0 
+                        ? (t?.newEquipment || 'New') 
+                        : `${t?.ageCalculation || 'Age'}: ${age} ${t?.yearUnit || 'yrs'}`;
+                    return `<p class="mb-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${ageColor}">${ageIcon} ${ageText}</p>`;
+                })()}
                 
                 <button ${btnAction}
                     class="w-full py-2.5 rounded-lg font-bold uppercase text-sm tracking-wider transition-all transform active:scale-95 btn-ripple ${btnClass}"
@@ -1274,6 +1294,24 @@ window.openEquipmentDetail = async function (equipmentId) {
     document.getElementById('detailEquipmentType').textContent = equipment.type;
     document.getElementById('detailEquipmentId').value = equipmentId;
 
+    // Show equipment age if purchase year exists
+    const ageContainer = document.getElementById('detailEquipmentAge');
+    const ageText = document.getElementById('detailEquipmentAgeText');
+    if (ageContainer && ageText) {
+        if (equipment.purchase_year) {
+            const age = window.calculateEquipmentAge(equipment.purchase_year);
+            const t = window.translations[window.currentLang];
+            if (age === 0) {
+                ageText.textContent = `${t?.purchaseYear || 'Purchased'}: ${equipment.purchase_year} — ${t?.newEquipment || 'New'}`;
+            } else if (age !== null) {
+                ageText.textContent = `${t?.purchaseYear || 'Purchased'}: ${equipment.purchase_year} (${t?.ageCalculation || 'Age'}: ${age} ${t?.yearUnit || 'yrs'})`;
+            }
+            ageContainer.classList.remove('hidden');
+        } else {
+            ageContainer.classList.add('hidden');
+        }
+    }
+
     // Get dates from top filter
     const filterStartDate = document.getElementById('startDate')?.value;
     const filterEndDate = document.getElementById('endDate')?.value;
@@ -1510,6 +1548,8 @@ window.openManageModal = function (groupName = null) {
     const nameInput = document.getElementById('manageName');
     const typeInput = document.getElementById('manageType');
     const imageInput = document.getElementById('manageImage');
+    const purchaseYearInput = document.getElementById('managePurchaseYear');
+    const purchaseYearHint = document.getElementById('managePurchaseYearHint');
     const qtyGroup = document.getElementById('manageQuantityGroup');
     const qtyLabel = document.getElementById('manageQuantityLabel');
     const qtyHint = document.getElementById('manageQuantityHint');
@@ -1527,6 +1567,12 @@ window.openManageModal = function (groupName = null) {
         imageInput.value = firstItem.image_url;
         document.getElementById('manageOriginalName').value = groupName;
 
+        // Set purchase year
+        if (purchaseYearInput) {
+            purchaseYearInput.value = firstItem.purchase_year || '';
+        }
+        window.updatePurchaseYearHint();
+
         // Show quantity for editing
         document.getElementById('manageQuantity').value = totalCount;
         if (qtyLabel) qtyLabel.textContent = 'จำนวนทั้งหมด (Total Quantity)';
@@ -1539,11 +1585,53 @@ window.openManageModal = function (groupName = null) {
         imageInput.value = '';
         document.getElementById('manageQuantity').value = 1;
         document.getElementById('manageOriginalName').value = '';
+        if (purchaseYearInput) purchaseYearInput.value = '';
+        if (purchaseYearHint) purchaseYearHint.textContent = '';
         if (qtyLabel) qtyLabel.textContent = 'Quantity';
         if (qtyHint) qtyHint.textContent = 'Creates multiple items with the same name';
         qtyGroup.classList.remove('hidden');
     }
     window.openModal('manageModal');
+};
+
+// Calculate equipment age from purchase year
+window.calculateEquipmentAge = function (purchaseYear) {
+    if (!purchaseYear) return null;
+    const currentYear = new Date().getFullYear();
+    return currentYear - purchaseYear;
+};
+
+// Update the purchase year hint to show calculated age
+window.updatePurchaseYearHint = function () {
+    const input = document.getElementById('managePurchaseYear');
+    const hint = document.getElementById('managePurchaseYearHint');
+    const t = window.translations[window.currentLang];
+    if (!input || !hint) return;
+
+    const year = parseInt(input.value);
+    if (!year || isNaN(year)) {
+        hint.textContent = t?.purchaseYearHint || '';
+        hint.className = 'text-xs text-gray-400 mt-1';
+        return;
+    }
+
+    const age = window.calculateEquipmentAge(year);
+    if (age === null || age < 0) {
+        hint.textContent = t?.purchaseYearHint || '';
+        hint.className = 'text-xs text-gray-400 mt-1';
+        return;
+    }
+
+    if (age === 0) {
+        hint.textContent = `✨ ${t?.newEquipment || 'New (this year)'}`;
+        hint.className = 'text-xs text-green-500 mt-1 font-medium';
+    } else if (age >= 10) {
+        hint.textContent = `⚠️ ${t?.ageCalculation || 'Age'}: ${age} ${t?.yearUnit || 'years'} (ควรพิจารณาเปลี่ยนทดแทน)`;
+        hint.className = 'text-xs text-amber-500 mt-1 font-medium';
+    } else {
+        hint.textContent = `${t?.ageCalculation || 'Age'}: ${age} ${t?.yearUnit || 'years'}`;
+        hint.className = 'text-xs text-gray-400 mt-1';
+    }
 };
 
 // Date Init

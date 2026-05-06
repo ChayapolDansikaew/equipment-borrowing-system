@@ -745,6 +745,8 @@ window.saveEquipment = async function () {
         const name = document.getElementById('manageName')?.value?.trim() || '';
         const type = document.getElementById('manageType')?.value || '';
         const image = document.getElementById('manageImage')?.value?.trim() || '';
+        const purchaseYearRaw = document.getElementById('managePurchaseYear')?.value;
+        const purchaseYear = purchaseYearRaw ? parseInt(purchaseYearRaw) : null;
         const quantityEl = document.getElementById('manageQuantity');
         const newQuantity = quantityEl ? parseInt(quantityEl.value) || 1 : 1;
 
@@ -761,12 +763,16 @@ window.saveEquipment = async function () {
             window.showToast('กรุณาเลือกประเภทอุปกรณ์', 'error');
             return;
         }
+        if (purchaseYear !== null && (purchaseYear < 1990 || purchaseYear > new Date().getFullYear() + 1)) {
+            window.showToast('ปีที่ซื้อไม่ถูกต้อง (ระบุ 1990-' + (new Date().getFullYear() + 1) + ')', 'error');
+            return;
+        }
         if (newQuantity < 0 || newQuantity > 100) {
             window.showToast('จำนวนต้องอยู่ระหว่าง 0-100', 'error');
             return;
         }
 
-        const payload = { name, type, image_url: image };
+        const payload = { name, type, image_url: image, purchase_year: purchaseYear };
         let error = null;
 
         if (originalName) {

@@ -217,7 +217,15 @@ window.translations = {
         autoRejectedReason: 'อุปกรณ์ถูกอนุมัติให้ผู้ใช้รายอื่นแล้วในช่วงวันที่ที่ทับซ้อนกัน',
         rejectionEmailSent: 'ส่ง email แจ้งเตือนการปฏิเสธแล้ว',
         autoRejectedNotice: 'คำขอที่ทับซ้อนถูกปฏิเสธอัตโนมัติ',
-        autoRejectedCount: 'รายการที่ถูกปฏิเสธอัตโนมัติ'
+        autoRejectedCount: 'รายการที่ถูกปฏิเสธอัตโนมัติ',
+        // Equipment Age
+        purchaseYear: 'ปีที่ซื้อ',
+        equipmentAge: 'อายุอุปกรณ์',
+        yearUnit: 'ปี',
+        purchaseYearHint: 'ระบุปี พ.ศ. หรือ ค.ศ. ที่ซื้ออุปกรณ์',
+        ageCalculation: 'อายุการใช้งาน',
+        newEquipment: 'อุปกรณ์ใหม่ (ปีนี้)',
+        noPurchaseYear: 'ไม่ระบุปีที่ซื้อ'
     },
     en: {
         overview: 'Overview',
@@ -412,7 +420,15 @@ window.translations = {
         autoRejectedReason: 'Equipment was approved for another user in the overlapping period',
         rejectionEmailSent: 'Rejection notification email sent',
         autoRejectedNotice: 'Overlapping requests auto-rejected',
-        autoRejectedCount: 'auto-rejected requests'
+        autoRejectedCount: 'auto-rejected requests',
+        // Equipment Age
+        purchaseYear: 'Purchase Year',
+        equipmentAge: 'Equipment Age',
+        yearUnit: 'years',
+        purchaseYearHint: 'Enter the year the equipment was purchased',
+        ageCalculation: 'Age',
+        newEquipment: 'New (this year)',
+        noPurchaseYear: 'Purchase year not specified'
     }
 };
 
