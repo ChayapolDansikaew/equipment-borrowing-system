@@ -22,11 +22,15 @@
 | **Flatpickr** | Date Picker สำหรับเลือกวันยืม-คืน |
 | **Google Fonts (Kanit)** | ฟอนต์ภาษาไทย |
 
-### Back-end & Services
+### Back-end
 | เทคโนโลยี | หน้าที่ |
 |---|---|
 | **Supabase** | ฐานข้อมูล PostgreSQL, Row Level Security (RLS) |
 | **Vercel** | Hosting, Serverless Functions, Cron Jobs |
+
+### Services / 3rd Party
+| เทคโนโลยี | หน้าที่ |
+|---|---|
 | **EmailJS** | ส่งอีเมลแจ้งเตือนผู้ใช้ (อนุมัติ, ปฏิเสธ) |
 | **Chula SSO** | Single Sign-On สำหรับบัญชีจุฬาฯ |
 
