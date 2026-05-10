@@ -1299,7 +1299,7 @@
                                 ประวัติการยืม-คืนอุปกรณ์ทั้งหมด</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 flex-wrap">
                         <!-- Summary Stats Badges -->
                         <span id="historyStatTotal"
                             class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">0
@@ -1310,13 +1310,29 @@
                         <span id="historyStatActive"
                             class="px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400">0
                             กำลังยืม</span>
+                        <div class="flex items-center gap-1.5 ml-1">
+                            <button onclick="window.historyGoBack()"
+                                class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 rounded-lg transition-all shadow-sm">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                                </svg>
+                                <span data-i18n="historyGoBack">ย้อนกลับ</span>
+                            </button>
+                            <button onclick="window.historyGoHome()"
+                                class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-brand-pink hover:bg-pink-600 rounded-lg transition-all shadow-sm">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                </svg>
+                                <span data-i18n="backToBrowse">กลับหน้าหลัก</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Filter Bar -->
                 <div
                     class="px-4 md:px-6 py-4 bg-gray-50/50 dark:bg-gray-900/30 border-b border-gray-200/50 dark:border-gray-700/50">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
                         <!-- Equipment Search -->
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -1357,6 +1373,9 @@
                         <!-- Date To -->
                         <input type="date" id="historyDateTo" onchange="applyHistoryFilters()"
                             class="w-full bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-white rounded-lg px-3 py-2 border border-gray-200 dark:border-gray-600 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 cursor-pointer transition-all">
+                        <button id="historyClearBtn" onclick="clearHistoryFilters()"
+                            class="w-full px-3 py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-all"
+                            data-i18n="historyClearFilters">ล้างตัวกรอง</button>
                     </div>
                 </div>
 
@@ -1367,6 +1386,7 @@
                             <tr
                                 class="bg-gray-50 dark:bg-gray-900/40 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider border-b border-gray-200/50 dark:border-gray-700/50">
                                 <th class="px-4 md:px-6 py-3 font-bold" data-i18n="equipment">อุปกรณ์</th>
+                                <th class="px-4 md:px-6 py-3 font-bold" data-i18n="historyTypeColumn">ประเภท</th>
                                 <th class="px-4 md:px-6 py-3 font-bold" data-i18n="borrower">ผู้ยืม</th>
                                 <th class="px-4 md:px-6 py-3 font-bold" data-i18n="date">วันยืม</th>
                                 <th class="px-4 md:px-6 py-3 font-bold" data-i18n="dueDate">กำหนดคืน</th>
@@ -1396,7 +1416,8 @@
 
                 <!-- Pagination + Export -->
                 <div id="historyPagination"
-                    class="hidden px-4 md:px-6 py-4 border-t border-gray-200/50 dark:border-gray-700/50 flex flex-col sm:flex-row justify-between items-center gap-3 bg-gray-50/30 dark:bg-gray-900/20">
+                    style="display:none"
+                    class="px-4 md:px-6 py-4 border-t border-gray-200/50 dark:border-gray-700/50 flex flex-col sm:flex-row justify-between items-center gap-3 bg-gray-50/30 dark:bg-gray-900/20">
                     <div class="flex items-center gap-2">
                         <span id="historyPageInfo" class="text-xs text-gray-500 dark:text-gray-400 font-medium"></span>
                     </div>
@@ -1453,10 +1474,33 @@
                 </div>
             </div>
 
+            <button id="dashFocusHint" type="button" onclick="handleDashboardAction('focus')"
+                onkeydown="handleDashboardActionKey(event, 'focus')"
+                class="w-full text-left bg-white dark:bg-[#1e2028] rounded-2xl border border-gray-100 dark:border-white/[0.06] p-5 hover:shadow-lg transition-all duration-200">
+                <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                    <div>
+                        <p class="text-[11px] font-semibold uppercase tracking-wider text-brand-pink" data-i18n="dashboardActionFocus">กดเพื่อไปยังรายการที่ควรทำต่อมากที่สุด</p>
+                        <h3 id="dashFocusTitle" class="mt-2 text-xl font-bold text-gray-900 dark:text-white">ภาพรวมการใช้งานวันนี้</h3>
+                        <p id="dashFocusSummary" class="mt-2 text-sm text-gray-500 dark:text-gray-400">ระบบอยู่ในสภาวะปกติและพร้อมให้ติดตามภาพรวมการยืม-คืนแบบรวดเร็ว</p>
+                    </div>
+                    <div id="dashFocusHighlights" class="flex flex-wrap gap-2"></div>
+                </div>
+            </button>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div id="dashPriorityOverdue" tabindex="0" role="button" onclick="handleDashboardAction('overdue')" onkeydown="handleDashboardActionKey(event, 'overdue')"
+                    class="rounded-xl border px-4 py-3 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"></div>
+                <div id="dashPriorityPending" tabindex="0" role="button" onclick="handleDashboardAction('pending')" onkeydown="handleDashboardActionKey(event, 'pending')"
+                    class="rounded-xl border px-4 py-3 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"></div>
+                <div id="dashPriorityUtilization" tabindex="0" role="button" onclick="handleDashboardAction('utilization')" onkeydown="handleDashboardActionKey(event, 'utilization')"
+                    class="rounded-xl border px-4 py-3 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"></div>
+            </div>
+
             <!-- KPI Cards Row -->
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 <!-- Total Equipment -->
                 <div id="kpi-total"
+                    tabindex="0" role="button" onclick="handleDashboardAction('total')" onkeydown="handleDashboardActionKey(event, 'total')"
                     class="relative overflow-hidden bg-white dark:bg-[#1e2028] rounded-xl p-4 border border-gray-100 dark:border-white/[0.06] hover:shadow-lg hover:shadow-gray-200/30 dark:hover:shadow-black/20 transition-all duration-300 cursor-pointer group">
                     <div class="flex items-center gap-2 mb-2">
                         <div class="w-8 h-8 rounded-lg bg-brand-yellow/10 flex items-center justify-center">
@@ -1470,6 +1514,7 @@
                             class="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">ทั้งหมด</span>
                     </div>
                     <p class="kpi-value text-2xl font-extrabold text-gray-900 dark:text-white">—</p>
+                    <p class="mt-2 text-[11px] font-medium text-gray-500 dark:text-gray-400" data-i18n="dashboardActionTotal">กดเพื่อดูอุปกรณ์ทั้งหมด</p>
                     <div
                         class="absolute -bottom-2 -right-2 w-16 h-16 bg-brand-yellow/5 rounded-full group-hover:scale-150 transition-transform duration-500">
                     </div>
@@ -1477,6 +1522,7 @@
 
                 <!-- Available -->
                 <div id="kpi-available"
+                    tabindex="0" role="button" onclick="handleDashboardAction('available')" onkeydown="handleDashboardActionKey(event, 'available')"
                     class="relative overflow-hidden bg-white dark:bg-[#1e2028] rounded-xl p-4 border border-gray-100 dark:border-white/[0.06] hover:shadow-lg hover:shadow-emerald-200/20 dark:hover:shadow-emerald-900/10 transition-all duration-300 cursor-pointer group">
                     <div class="flex items-center gap-2 mb-2">
                         <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
@@ -1490,6 +1536,7 @@
                             class="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">พร้อมใช้</span>
                     </div>
                     <p class="kpi-value text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">—</p>
+                    <p class="mt-2 text-[11px] font-medium text-gray-500 dark:text-gray-400" data-i18n="dashboardActionAvailable">กดเพื่อดูอุปกรณ์ที่พร้อมใช้งาน</p>
                     <div
                         class="absolute -bottom-2 -right-2 w-16 h-16 bg-emerald-500/5 rounded-full group-hover:scale-150 transition-transform duration-500">
                     </div>
@@ -1497,6 +1544,7 @@
 
                 <!-- Borrowed -->
                 <div id="kpi-borrowed"
+                    tabindex="0" role="button" onclick="handleDashboardAction('borrowed')" onkeydown="handleDashboardActionKey(event, 'borrowed')"
                     class="relative overflow-hidden bg-white dark:bg-[#1e2028] rounded-xl p-4 border border-gray-100 dark:border-white/[0.06] hover:shadow-lg hover:shadow-blue-200/20 dark:hover:shadow-blue-900/10 transition-all duration-300 cursor-pointer group">
                     <div class="flex items-center gap-2 mb-2">
                         <div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
@@ -1510,6 +1558,7 @@
                             class="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">ถูกยืม</span>
                     </div>
                     <p class="kpi-value text-2xl font-extrabold text-blue-600 dark:text-blue-400">—</p>
+                    <p class="mt-2 text-[11px] font-medium text-gray-500 dark:text-gray-400" data-i18n="dashboardActionBorrowed">กดเพื่อดูอุปกรณ์ที่กำลังถูกยืม</p>
                     <div
                         class="absolute -bottom-2 -right-2 w-16 h-16 bg-blue-500/5 rounded-full group-hover:scale-150 transition-transform duration-500">
                     </div>
@@ -1517,6 +1566,7 @@
 
                 <!-- Pending Requests -->
                 <div id="kpi-pending"
+                    tabindex="0" role="button" onclick="handleDashboardAction('pending')" onkeydown="handleDashboardActionKey(event, 'pending')"
                     class="relative overflow-hidden bg-white dark:bg-[#1e2028] rounded-xl p-4 border border-gray-100 dark:border-white/[0.06] hover:shadow-lg hover:shadow-amber-200/20 dark:hover:shadow-amber-900/10 transition-all duration-300 cursor-pointer group">
                     <div class="flex items-center gap-2 mb-2">
                         <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
@@ -1530,6 +1580,7 @@
                             class="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">รออนุมัติ</span>
                     </div>
                     <p class="kpi-value text-2xl font-extrabold text-amber-600 dark:text-amber-400">—</p>
+                    <p class="mt-2 text-[11px] font-medium text-gray-500 dark:text-gray-400" data-i18n="dashboardActionPending">กดเพื่อเปิดหน้าตรวจคำขอที่รออนุมัติ</p>
                     <div
                         class="absolute -bottom-2 -right-2 w-16 h-16 bg-amber-500/5 rounded-full group-hover:scale-150 transition-transform duration-500">
                     </div>
@@ -1537,6 +1588,7 @@
 
                 <!-- Overdue -->
                 <div id="kpi-overdue"
+                    tabindex="0" role="button" onclick="handleDashboardAction('overdue')" onkeydown="handleDashboardActionKey(event, 'overdue')"
                     class="relative overflow-hidden bg-white dark:bg-[#1e2028] rounded-xl p-4 border border-gray-100 dark:border-white/[0.06] hover:shadow-lg hover:shadow-red-200/20 dark:hover:shadow-red-900/10 transition-all duration-300 cursor-pointer group">
                     <div class="flex items-center gap-2 mb-2">
                         <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
@@ -1550,6 +1602,7 @@
                             class="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">ล่าช้า</span>
                     </div>
                     <p class="kpi-value text-2xl font-extrabold text-red-500">—</p>
+                    <p class="mt-2 text-[11px] font-medium text-gray-500 dark:text-gray-400" data-i18n="dashboardActionOverdue">กดเพื่อเปิดประวัติที่เลยกำหนด</p>
                     <div
                         class="absolute -bottom-2 -right-2 w-16 h-16 bg-red-500/5 rounded-full group-hover:scale-150 transition-transform duration-500">
                     </div>
@@ -1557,6 +1610,7 @@
 
                 <!-- On-time Rate -->
                 <div id="kpi-ontime"
+                    tabindex="0" role="button" onclick="handleDashboardAction('ontime')" onkeydown="handleDashboardActionKey(event, 'ontime')"
                     class="relative overflow-hidden bg-white dark:bg-[#1e2028] rounded-xl p-4 border border-gray-100 dark:border-white/[0.06] hover:shadow-lg hover:shadow-violet-200/20 dark:hover:shadow-violet-900/10 transition-all duration-300 cursor-pointer group">
                     <div class="flex items-center gap-2 mb-2">
                         <div class="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
@@ -1569,6 +1623,7 @@
                             class="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">ตรงเวลา</span>
                     </div>
                     <p class="kpi-value text-2xl font-extrabold text-violet-600 dark:text-violet-400">—</p>
+                    <p class="mt-2 text-[11px] font-medium text-gray-500 dark:text-gray-400" data-i18n="dashboardActionOnTime">กดเพื่อดูรายการที่คืนตรงเวลา</p>
                     <div
                         class="absolute -bottom-2 -right-2 w-16 h-16 bg-violet-500/5 rounded-full group-hover:scale-150 transition-transform duration-500">
                     </div>
@@ -1593,8 +1648,10 @@
                         </div>
                     </div>
                     <div class="h-56">
-                        <canvas id="dashTrendChart"></canvas>
+                        <canvas id="dashTrendChart" tabindex="0" role="button" onkeydown="handleDashboardChartKey(event, 'trend')"></canvas>
                     </div>
+                    <p id="dashTrendActionHint" class="mt-3 text-[11px] font-medium text-gray-500 dark:text-gray-400" data-i18n="dashboardActionTrend">กดเพื่อดูรายการยืมตามช่วงเวลา</p>
+                    <p id="dashTrendInsight" class="mt-2 text-sm text-gray-500 dark:text-gray-400">กำลังประมวลผลข้อมูล...</p>
                 </div>
 
                 <!-- Equipment by Category (Doughnut) -->
@@ -1613,8 +1670,11 @@
                         <h3 class="text-sm font-bold text-gray-900 dark:text-white">อุปกรณ์ตามประเภท</h3>
                     </div>
                     <div class="h-56">
-                        <canvas id="dashCategoryChart"></canvas>
+                        <canvas id="dashCategoryChart" tabindex="0" role="button" onkeydown="handleDashboardChartKey(event, 'category')"></canvas>
                     </div>
+                    <p id="dashCategoryActionHint" class="mt-3 text-[11px] font-medium text-gray-500 dark:text-gray-400" data-i18n="dashboardActionCategory">กดเพื่อดูอุปกรณ์ตามประเภท</p>
+                    <p id="dashCategoryInsight" class="mt-2 text-sm text-gray-500 dark:text-gray-400">กำลังประมวลผลข้อมูล...</p>
+                    <div id="dashCategoryBreakdown" class="mt-3 flex flex-wrap gap-2"></div>
                 </div>
 
                 <!-- Equipment Status (Bar) -->
@@ -1631,8 +1691,10 @@
                         <h3 class="text-sm font-bold text-gray-900 dark:text-white">สถานะอุปกรณ์</h3>
                     </div>
                     <div class="h-56">
-                        <canvas id="dashStatusChart"></canvas>
+                        <canvas id="dashStatusChart" tabindex="0" role="button" onkeydown="handleDashboardChartKey(event, 'status')"></canvas>
                     </div>
+                    <p id="dashStatusActionHint" class="mt-3 text-[11px] font-medium text-gray-500 dark:text-gray-400" data-i18n="dashboardActionStatus">กดเพื่อดูอุปกรณ์ตามสถานะ</p>
+                    <p id="dashStatusInsight" class="mt-2 text-sm text-gray-500 dark:text-gray-400">กำลังประมวลผลข้อมูล...</p>
                 </div>
 
                 <!-- Top Borrowers (Horizontal Bar) -->
@@ -1649,8 +1711,10 @@
                         <h3 class="text-sm font-bold text-gray-900 dark:text-white">ผู้ยืมมากที่สุด</h3>
                     </div>
                     <div class="h-56">
-                        <canvas id="dashBorrowersChart"></canvas>
+                        <canvas id="dashBorrowersChart" tabindex="0" role="button" onkeydown="handleDashboardChartKey(event, 'borrowers')"></canvas>
                     </div>
+                    <p id="dashBorrowersActionHint" class="mt-3 text-[11px] font-medium text-gray-500 dark:text-gray-400" data-i18n="dashboardActionBorrowers">กดเพื่อดูผู้ใช้ที่ยืมบ่อยที่สุด</p>
+                    <p id="dashBorrowersInsight" class="mt-2 text-sm text-gray-500 dark:text-gray-400">กำลังประมวลผลข้อมูล...</p>
                 </div>
 
                 <!-- Penalty Types (Doughnut) -->
@@ -1667,8 +1731,10 @@
                         <h3 class="text-sm font-bold text-gray-900 dark:text-white">สถิติความผิด</h3>
                     </div>
                     <div class="h-56">
-                        <canvas id="dashPenaltyChart"></canvas>
+                        <canvas id="dashPenaltyChart" tabindex="0" role="button" onkeydown="handleDashboardChartKey(event, 'penalty')"></canvas>
                     </div>
+                    <p id="dashPenaltyActionHint" class="mt-3 text-[11px] font-medium text-gray-500 dark:text-gray-400" data-i18n="dashboardActionPenalty">กดเพื่อดูสถิติความผิดและบทลงโทษ</p>
+                    <p id="dashPenaltyInsight" class="mt-2 text-sm text-gray-500 dark:text-gray-400">กำลังประมวลผลข้อมูล...</p>
                 </div>
             </div>
 
@@ -1947,88 +2013,219 @@
 
     <!-- Return Modal (Admin only) -->
     <div id="returnModal"
-        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-brand-black/80 backdrop-blur-sm">
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-brand-black/80 backdrop-blur-sm p-4">
         <div
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden dark:bg-gray-800 border border-gray-200">
-            <div class="p-6 text-center">
-                <div
-                    class="w-12 h-12 rounded-full bg-brand-yellow/20 text-brand-yellow flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+            <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-brand-black to-gray-900 text-white">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-[11px] uppercase tracking-widest text-brand-yellow font-semibold" data-i18n="returnDecisionTitle">สรุปก่อนรับคืน</p>
+                        <h3 class="mt-1 text-xl font-bold text-white">
+                            <span id="returnItemName">-</span>
+                        </h3>
+                        <p class="mt-2 text-sm text-white/70" data-i18n="returnDecisionHelper">ตรวจสอบสถานะการคืนและเลือกขั้นตอนถัดไปก่อนยืนยัน</p>
+                    </div>
+                    <button onclick="closeReturnModal()"
+                        class="p-2 rounded-lg hover:bg-white/10 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
                 </div>
-                <h3 class="text-xl font-bold mb-2 text-brand-black dark:text-gray-100" data-i18n="confirmReturnTitle">ยืนยันการรับคืน</h3>
-                <p class="text-gray-500 text-sm mb-6 dark:text-gray-400"><span id="returnDescPrefix" data-i18n="confirmReturnDesc">ต้องการรับคืน</span> <span id="returnItemName"
-                        class="font-bold text-brand-black dark:text-gray-200"></span> <span id="returnDescSuffix" data-i18n="confirmReturnDescSuffix">หรือไม่?</span></p>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="closeModal('returnModal')"
-                        class="px-4 py-2 rounded-lg text-gray-500 hover:bg-gray-100 font-bold transition-colors dark:text-gray-400 dark:hover:bg-gray-700" data-i18n="confirmReturnCancel">ยกเลิก</button>
-                    <button onclick="confirmReturn()"
-                        class="px-4 py-2 rounded-lg bg-brand-black text-brand-yellow font-bold hover:bg-gray-800 shadow-lg transition-all border border-brand-yellow/50" data-i18n="confirmReturnConfirm">ยืนยัน</button>
-                </div>
-                <input type="hidden" id="returnItemId">
             </div>
+
+            <div class="p-6 space-y-5">
+                <div id="returnDecisionMessage"
+                    class="rounded-xl px-4 py-3 text-sm font-medium bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-300">
+                    พร้อมรับคืนรายการนี้
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="rounded-2xl border border-gray-200 dark:border-gray-700 p-4 bg-gray-50/80 dark:bg-gray-900/30 space-y-3">
+                        <div>
+                            <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold" data-i18n="returnBorrowerLabel">ผู้ยืม</p>
+                            <p id="returnBorrowerName" class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">-</p>
+                        </div>
+                        <div>
+                            <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold" data-i18n="returnEquipmentLabel">อุปกรณ์</p>
+                            <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white"><span class="return-item-name-inline">-</span></p>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-900/20">
+                        <h4 class="text-sm font-bold text-gray-900 dark:text-white mb-3" data-i18n="returnChecklistTitle">จุดที่ควรตรวจ</h4>
+                        <div id="returnDecisionChecklist" class="space-y-2"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-3 bg-white dark:bg-gray-900/20">
+                        <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold" data-i18n="returnBorrowedOn">วันที่ยืม</p>
+                        <p id="returnBorrowedOnValue" class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">-</p>
+                    </div>
+                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-3 bg-white dark:bg-gray-900/20">
+                        <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold" data-i18n="returnDueOn">กำหนดคืน</p>
+                        <p id="returnDueOnValue" class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">-</p>
+                    </div>
+                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-3 bg-white dark:bg-gray-900/20">
+                        <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold" data-i18n="returnDurationLabel">ระยะเวลายืม</p>
+                        <p id="returnDurationValue" class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">-</p>
+                    </div>
+                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-3 bg-white dark:bg-gray-900/20">
+                        <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold" data-i18n="returnStatusLabel">สถานะ</p>
+                        <p id="returnStatusValue" class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">-</p>
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-amber-200 dark:border-amber-500/20 bg-amber-50/80 dark:bg-amber-500/10 p-4">
+                    <p class="text-[11px] uppercase tracking-wider text-amber-500 font-semibold" data-i18n="returnTimingLabel">ความตรงเวลา</p>
+                    <p id="returnTimingValue" class="mt-1 text-sm font-semibold text-amber-700 dark:text-amber-200">-</p>
+                    <p class="mt-3 text-xs text-amber-700 dark:text-amber-200" data-i18n="returnPenaltyHint">หากพบความเสียหายหรือการคืนล่าช้า สามารถเปิดหน้าบทลงโทษได้ก่อนปิดรายการ</p>
+                </div>
+            </div>
+
+            <div class="px-6 pb-6 flex flex-col sm:flex-row gap-3">
+                <button onclick="openReturnPenaltyModal()"
+                    class="flex-1 px-4 py-3 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-500/30 dark:text-red-300 dark:hover:bg-red-500/10 font-semibold transition-all"
+                    data-i18n="returnPenaltyAction">เปิดบทลงโทษ / รายงานปัญหา</button>
+                <button onclick="confirmReturn()"
+                    class="flex-1 px-4 py-3 rounded-xl bg-brand-black text-brand-yellow font-bold hover:bg-gray-800 shadow-lg transition-all"
+                    data-i18n="confirmReturnConfirm">ยืนยัน</button>
+            </div>
+
+            <input type="hidden" id="returnItemId">
+            <input type="hidden" id="returnTransactionId">
         </div>
     </div>
 
     <!-- Manage Modal (Add/Edit) -->
     <div id="manageModal"
-        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-brand-black/80 backdrop-blur-sm">
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-brand-black/80 backdrop-blur-sm p-4">
         <div
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden dark:bg-gray-800 border border-gray-200">
-            <div class="p-6">
-                <h3 class="text-xl font-bold mb-4 text-brand-black dark:text-gray-100" id="manageModalTitle">Add New
-                    Equipment</h3>
-                <div class="space-y-4">
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+            <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-brand-black to-gray-900 text-white">
+                <div class="flex items-start justify-between gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-brand-grey uppercase mb-1">Name</label>
-                        <input type="text" id="manageName"
-                            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-yellow dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <div class="flex items-center gap-2">
+                            <span id="manageModeBadge" class="inline-flex px-2.5 py-1 rounded-full text-[11px] font-semibold bg-brand-yellow text-brand-black" data-i18n="manageModeCreate">เพิ่มใหม่</span>
+                            <p class="text-[11px] uppercase tracking-widest text-white/60">Equipment Studio</p>
+                        </div>
+                        <h3 class="mt-2 text-xl font-bold text-white" id="manageModalTitle">Add New Equipment</h3>
+                        <p class="mt-2 text-sm text-white/70" data-i18n="manageHelper">ตรวจสอบข้อมูล รูปภาพ และผลกระทบต่อจำนวนอุปกรณ์ก่อนบันทึก</p>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-brand-grey uppercase mb-1">Type</label>
-                        <select id="manageType"
-                            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-yellow dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                            <option value="Camera">Camera</option>
-                            <option value="Lens">Lens</option>
-                            <option value="Audio">Audio</option>
-                            <option value="Lighting">Lighting</option>
-                            <option value="Accessory">Accessory</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-brand-grey uppercase mb-1">Image URL</label>
-                        <input type="text" id="manageImage"
-                            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-yellow dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    </div>
-                    <!-- Purchase Year Input -->
-                    <div>
-                        <label class="block text-xs font-bold text-brand-grey uppercase mb-1" data-i18n="purchaseYear">ปีที่ซื้อ (Purchase Year)</label>
-                        <input type="number" id="managePurchaseYear" min="1990" max="2030" placeholder="เช่น 2020"
-                            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-yellow dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                            oninput="updatePurchaseYearHint()">
-                        <p id="managePurchaseYearHint" class="text-xs text-gray-400 mt-1"></p>
-                    </div>
-                    <!-- Quantity Input -->
-                    <div id="manageQuantityGroup">
-                        <label id="manageQuantityLabel"
-                            class="block text-xs font-bold text-brand-grey uppercase mb-1">Quantity</label>
-                        <input type="number" id="manageQuantity" value="1" min="1"
-                            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-yellow dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        <p id="manageQuantityHint" class="text-xs text-gray-400 mt-1">Creates multiple items with the
-                            same name</p>
-                    </div>
+                    <button onclick="closeManageModal()" class="p-2 rounded-lg hover:bg-white/10 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
                 </div>
-                <div class="mt-6 flex justify-end gap-3">
-                    <button onclick="closeModal('manageModal')"
-                        class="px-4 py-2 rounded-lg text-gray-500 hover:bg-gray-100 font-bold transition-colors dark:text-gray-400 dark:hover:bg-gray-700">Cancel</button>
-                    <button onclick="saveEquipment()"
-                        class="px-6 py-2 rounded-lg bg-brand-pink text-white font-bold hover:bg-pink-600 shadow-lg shadow-pink-200 transition-all dark:shadow-none">Save</button>
-                </div>
-                <input type="hidden" id="manageId">
-                <input type="hidden" id="manageOriginalName">
             </div>
+
+            <div class="p-6 grid grid-cols-1 xl:grid-cols-[1.2fr_.8fr] gap-6">
+                <div class="space-y-4">
+                    <div id="manageValidationMessage" class="hidden rounded-xl px-4 py-3 text-sm font-medium"></div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-brand-grey uppercase mb-2" data-i18n="manageNameLabel">ชื่ออุปกรณ์</label>
+                            <input type="text" id="manageName"
+                                class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-yellow dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-brand-grey uppercase mb-2" data-i18n="manageTypeLabel">ประเภท</label>
+                            <select id="manageType"
+                                class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-yellow dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <option value="Camera">Camera</option>
+                                <option value="Lens">Lens</option>
+                                <option value="Audio">Audio</option>
+                                <option value="Lighting">Lighting</option>
+                                <option value="Accessory">Accessory</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-brand-grey uppercase mb-2" data-i18n="manageImageLabel">รูปภาพ</label>
+                        <input type="text" id="manageImage"
+                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-yellow dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-brand-grey uppercase mb-2" data-i18n="purchaseYear">ปีที่ซื้อ (Purchase Year)</label>
+                            <input type="number" id="managePurchaseYear" min="1990" max="2030" placeholder="เช่น 2020"
+                                class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-yellow dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                oninput="updatePurchaseYearHint()">
+                            <p id="managePurchaseYearHint" class="text-xs text-gray-400 mt-1"></p>
+                        </div>
+                        <div id="manageQuantityGroup">
+                            <label id="manageQuantityLabel" class="block text-xs font-bold text-brand-grey uppercase mb-2" data-i18n="manageQuantityLabel">จำนวน</label>
+                            <input type="number" id="manageQuantity" value="1" min="1"
+                                class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-yellow dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <p id="manageQuantityHint" class="text-xs text-gray-400 mt-1" data-i18n="manageQuantityCreateHint">สร้างอุปกรณ์หลายชิ้นด้วยชื่อเดียวกันได้</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50/70 dark:bg-gray-900/30">
+                        <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                            <h4 class="text-sm font-bold text-gray-900 dark:text-white" data-i18n="managePreviewTitle">ตัวอย่างรูปภาพ</h4>
+                        </div>
+                        <div class="p-4">
+                            <img id="manageImagePreview" alt="Equipment preview" class="hidden w-full h-48 object-cover rounded-xl border border-gray-200 dark:border-gray-700">
+                            <div id="manageImagePreviewEmpty" class="h-48 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-sm text-gray-400" data-i18n="manageImagePreviewEmpty">ใส่ URL รูปภาพเพื่อแสดงตัวอย่าง</div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-900/20">
+                        <h4 class="text-sm font-bold text-gray-900 dark:text-white" data-i18n="manageSummaryTitle">สรุปก่อนบันทึก</h4>
+                        <div id="manageSummaryMessage" class="mt-3 rounded-xl px-3 py-2 text-sm font-medium bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">ตรวจสอบข้อมูลให้ครบก่อนบันทึก</div>
+                        <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                            <div class="rounded-xl bg-gray-50 dark:bg-gray-700/60 p-3">
+                                <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold" data-i18n="manageCurrentQuantity">จำนวนปัจจุบัน</p>
+                                <p id="manageCurrentQuantityValue" class="mt-1 font-bold text-gray-900 dark:text-white">0</p>
+                            </div>
+                            <div class="rounded-xl bg-gray-50 dark:bg-gray-700/60 p-3">
+                                <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold" data-i18n="managePlannedQuantity">จำนวนหลังบันทึก</p>
+                                <p id="managePlannedQuantityValue" class="mt-1 font-bold text-gray-900 dark:text-white">0</p>
+                            </div>
+                            <div class="rounded-xl bg-gray-50 dark:bg-gray-700/60 p-3">
+                                <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold" data-i18n="manageAvailabilityLabel">พร้อมใช้ / ถูกยืม</p>
+                                <p id="manageAvailabilityValue" class="mt-1 font-bold text-gray-900 dark:text-white">0 / 0</p>
+                            </div>
+                            <div class="rounded-xl bg-gray-50 dark:bg-gray-700/60 p-3">
+                                <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold" data-i18n="manageImpactLabel">ผลกระทบ</p>
+                                <p id="manageImpactValue" class="mt-1 font-bold text-gray-900 dark:text-white">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="manageDeleteSection" class="hidden rounded-2xl border border-red-200 dark:border-red-500/20 p-4 bg-red-50/80 dark:bg-red-500/10">
+                        <p class="text-sm font-semibold text-red-700 dark:text-red-300" data-i18n="manageDeleteHint">ลบได้เฉพาะเมื่อไม่มีอุปกรณ์ที่ถูกยืมอยู่</p>
+                        <p id="manageDeleteState" class="mt-2 text-sm text-red-600 dark:text-red-200">-</p>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            <button id="manageDeleteBtn" onclick="handleManageDeleteAction()"
+                                class="px-4 py-2 rounded-xl border border-red-300 text-red-600 font-semibold hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
+                                data-i18n="manageDeleteAction">ลบกลุ่มอุปกรณ์</button>
+                            <button id="manageDeleteCancelBtn" onclick="resetManageDeleteState()"
+                                class="hidden px-4 py-2 rounded-xl border border-gray-300 text-gray-600 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 pb-6 flex flex-col sm:flex-row justify-end gap-3">
+                <button onclick="closeManageModal()"
+                    class="px-4 py-3 rounded-xl text-gray-500 hover:bg-gray-100 font-bold transition-colors dark:text-gray-400 dark:hover:bg-gray-700">Cancel</button>
+                <button id="manageSaveBtn" onclick="saveEquipment()"
+                    class="px-6 py-3 rounded-xl bg-brand-pink text-white font-bold hover:bg-pink-600 shadow-lg shadow-pink-200 transition-all dark:shadow-none"
+                    data-i18n="save">Save</button>
+            </div>
+            <input type="hidden" id="manageId">
+            <input type="hidden" id="manageOriginalName">
         </div>
     </div>
 
@@ -2078,8 +2275,7 @@
     <!-- Request Form Modal -->
     <div id="requestFormModal"
         class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
-            <!-- Header -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden border border-gray-200 dark:border-gray-700">
             <div
                 class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-brand-black to-gray-800">
                 <h2 class="text-xl font-bold text-brand-yellow flex items-center gap-2">
@@ -2093,51 +2289,80 @@
                 <button onclick="closeRequestForm()"
                     class="p-2 hover:bg-gray-700 rounded-lg transition-colors text-white">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </button>
             </div>
 
-            <!-- Items Preview -->
-            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-                <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2 uppercase"
-                    data-i18n="selectedEquipments">อุปกรณ์ที่เลือก</h3>
-                <div id="requestItemsPreview" class="space-y-2 max-h-40 overflow-y-auto">
-                    <!-- Items rendered by JS -->
+            <div class="grid grid-cols-1 lg:grid-cols-[1.1fr_.9fr]">
+                <div class="p-5 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-gray-700 space-y-4">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2 uppercase"
+                            data-i18n="selectedEquipments">อุปกรณ์ที่เลือก</h3>
+                        <div id="requestItemsPreview" class="space-y-2 max-h-52 overflow-y-auto"></div>
+                        <p id="requestLimitInfo" class="text-xs font-semibold mt-2 text-amber-500"></p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs text-gray-500 font-semibold uppercase block mb-1" data-i18n="borrowStartDate">วันเริ่มยืม</label>
+                            <input type="date" id="requestStartDate"
+                                class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium focus:outline-none focus:border-brand-yellow">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-500 font-semibold uppercase block mb-1" data-i18n="returnDate">วันคืน</label>
+                            <input type="date" id="requestEndDate"
+                                class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium focus:outline-none focus:border-brand-yellow">
+                        </div>
+                    </div>
+
+                    <div class="rounded-xl bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300 px-3 py-2 text-sm" data-i18n="requestSyncNotice">วันที่ในฟอร์มนี้จะซิงก์กับตัวกรองหน้า browse อัตโนมัติ</div>
+
+                    <div id="requestValidationMessage"
+                        class="rounded-xl px-3 py-2 text-sm font-medium bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                        กรุณาตรวจสอบข้อมูลก่อนส่งคำขอ
+                    </div>
+
+                    <div id="requestInlineWarnings" class="space-y-2"></div>
+
+                    <div>
+                        <label class="text-xs text-gray-500 font-semibold uppercase block mb-1" data-i18n="noteOptional">หมายเหตุ (ไม่บังคับ)</label>
+                        <textarea id="requestNote" rows="3" placeholder="ระบุเหตุผลหรือรายละเอียดเพิ่มเติม..."
+                            class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:outline-none focus:border-brand-yellow resize-none"></textarea>
+                    </div>
                 </div>
-                <p id="requestLimitInfo" class="text-xs font-semibold mt-2 text-amber-500"></p>
+
+                <div class="p-5 bg-gray-50/70 dark:bg-gray-900/20 space-y-4">
+                    <div>
+                        <h3 class="text-base font-bold text-gray-900 dark:text-white" data-i18n="requestSummaryTitle">สรุปคำขอยืม</h3>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400" data-i18n="requestSummaryHelper">ระบบจะตรวจสอบเงื่อนไขก่อนส่งคำขอเพื่อช่วยลดการแก้ไขซ้ำ</p>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="rounded-xl bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700">
+                            <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold" data-i18n="requestSummaryDuration">ระยะเวลายืม</p>
+                            <p id="requestSummaryDurationValue" class="mt-1 font-bold text-gray-900 dark:text-white">-</p>
+                        </div>
+                        <div class="rounded-xl bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700">
+                            <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold" data-i18n="requestSummaryItems">จำนวนรายการ</p>
+                            <p id="requestSummaryItemsValue" class="mt-1 font-bold text-gray-900 dark:text-white">0</p>
+                        </div>
+                        <div class="rounded-xl bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700">
+                            <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold" data-i18n="requestSummaryCategories">หมวดหมู่</p>
+                            <p id="requestSummaryCategoriesValue" class="mt-1 font-bold text-gray-900 dark:text-white">0</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-900 dark:text-white mb-3" data-i18n="requestRulesTitle">กติกาที่ระบบกำลังตรวจ</h4>
+                        <div id="requestEligibilityRules" class="space-y-2"></div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Form -->
-            <div class="p-4 space-y-4">
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase block mb-1"
-                            data-i18n="borrowStartDate">วันเริ่มยืม</label>
-                        <input type="date" id="requestStartDate"
-                            class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium focus:outline-none focus:border-brand-yellow">
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-500 font-semibold uppercase block mb-1"
-                            data-i18n="returnDate">วันคืน</label>
-                        <input type="date" id="requestEndDate"
-                            class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium focus:outline-none focus:border-brand-yellow">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="text-xs text-gray-500 font-semibold uppercase block mb-1"
-                        data-i18n="noteOptional">หมายเหตุ (ไม่บังคับ)</label>
-                    <textarea id="requestNote" rows="2" placeholder="ระบุเหตุผลหรือรายละเอียดเพิ่มเติม..."
-                        class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:outline-none focus:border-brand-yellow resize-none"></textarea>
-                </div>
-            </div>
-
-            <!-- Footer -->
             <div class="p-4 border-t border-gray-200 dark:border-gray-700">
-                <button onclick="submitBorrowRequest()"
-                    class="w-full py-3 px-4 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-xl hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2">
+                <button onclick="submitBorrowRequest()" id="requestSubmitBtn"
+                    class="w-full py-3 px-4 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-xl hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
@@ -2146,6 +2371,39 @@
             </div>
         </div>
     </div>
+
+    <!-- Reject Reason Modal -->
+    <div id="rejectReasonModal" class="hidden fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm items-center justify-center p-4">
+        <div class="w-full max-w-md rounded-2xl bg-white dark:bg-gray-800 shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="px-5 py-4 bg-gradient-to-r from-red-500 to-rose-500 text-white">
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <h3 class="text-lg font-bold" data-i18n="rejectReasonTitle">ปฏิเสธคำขอ</h3>
+                        <p class="text-sm text-white/80 mt-1" data-i18n="rejectReasonHint">ระบุเหตุผลสั้น ๆ เพื่อช่วยให้ผู้ใช้แก้ไขได้ถูกจุด</p>
+                    </div>
+                    <button onclick="closeRejectReasonModal()" class="p-2 rounded-lg hover:bg-white/10 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="p-5 space-y-4">
+                <div class="rounded-xl bg-gray-50 dark:bg-gray-700/60 p-3 text-sm text-gray-600 dark:text-gray-300">
+                    <span id="rejectReasonTarget">-</span>
+                </div>
+                <textarea id="rejectReasonInput" rows="4" placeholder="เช่น มีอุปกรณ์ไม่พอในช่วงวันดังกล่าว"
+                    class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"></textarea>
+            </div>
+            <div class="px-5 pb-5 flex gap-3">
+                <button onclick="closeRejectReasonModal()"
+                    class="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+                    data-i18n="cancel">ยกเลิก</button>
+                <button id="confirmRejectBtn" onclick="confirmRejectItem()"
+                    class="flex-1 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition-all"
+                    data-i18n="confirmReject">ยืนยันการปฏิเสธ</button>
+            </div>
+        </div>
     </div>
 
     <!-- Pending Requests Modal (Admin) -->
@@ -2305,104 +2563,114 @@
             </div>
         </div>
     </div>
-        </div>
-    </div>
 
     <!-- Penalty Modal (Admin) -->
     <div id="penaltyModal"
         class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in">
-            <!-- Header -->
-            <div class="bg-gradient-to-r from-red-500 to-orange-500 p-4 text-white">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-bold flex items-center gap-2">
-                        ⚠️ รายงานปัญหา / บทลงโทษ
-                    </h3>
-                    <button onclick="window.closePenaltyModal()" class="p-1 hover:bg-white/20 rounded-lg transition">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden animate-fade-in border border-gray-200 dark:border-gray-700">
+            <div class="bg-gradient-to-r from-red-500 to-orange-500 p-5 text-white">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <h3 class="text-lg font-bold flex items-center gap-2">⚠️ รายงานปัญหา / บทลงโทษ</h3>
+                        <p class="mt-1 text-sm text-white/80">สรุปผลกระทบของ Strike และค่าชดใช้ก่อนบันทึก</p>
+                    </div>
+                    <button onclick="window.closePenaltyModal()" class="p-2 hover:bg-white/20 rounded-lg transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
                 </div>
             </div>
 
-            <!-- Form -->
-            <form id="penaltyForm" class="p-4 space-y-4">
+            <form id="penaltyForm" class="p-5 grid grid-cols-1 xl:grid-cols-[1.1fr_.9fr] gap-5">
                 <input type="hidden" id="penaltyUserId">
                 <input type="hidden" id="penaltyTransactionId">
                 <input type="hidden" id="penaltyEquipmentId">
 
-                <!-- User Info -->
-                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                    <p class="text-sm text-gray-500 dark:text-gray-400">ผู้ใช้</p>
-                    <p id="penaltyUserName" class="font-bold text-gray-900 dark:text-white">-</p>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">ผู้ใช้</p>
+                            <p id="penaltyUserName" class="font-bold text-gray-900 dark:text-white mt-1">-</p>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">อุปกรณ์</p>
+                            <p id="penaltyEquipmentName" class="font-bold text-gray-900 dark:text-white mt-1">-</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ประเภทความผิด *</label>
+                        <select id="penaltyType" required
+                            class="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500">
+                            <option value="">-- เลือกประเภท --</option>
+                            <option value="late_return">คืนล่าช้า</option>
+                            <option value="no_show">ไม่มารับของ (No Show)</option>
+                            <option value="minor_damage">เสียหายเล็กน้อย (รอยขีดข่วน)</option>
+                            <option value="major_damage">เสียหายปานกลาง (ต้องซ่อม)</option>
+                            <option value="severe_damage">เสียหายรุนแรง (ใช้งานไม่ได้)</option>
+                            <option value="lost">สูญหาย</option>
+                        </select>
+                    </div>
+
+                    <div id="daysLateContainer" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">จำนวนวันที่ล่าช้า</label>
+                        <input type="number" id="penaltyDaysLate" min="1" value="1"
+                            class="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500">
+                    </div>
+
+                    <div id="compensationContainer" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ค่าชดใช้ (บาท)</label>
+                        <input type="number" id="penaltyCompensation" min="0" step="0.01" placeholder="0"
+                            class="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">รายละเอียด</label>
+                        <textarea id="penaltyDescription" rows="3" placeholder="อธิบายเพิ่มเติม..."
+                            class="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 resize-none"></textarea>
+                    </div>
+
+                    <div id="strikePreview"
+                        class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl p-3 hidden">
+                        <p class="text-sm text-red-600 dark:text-red-400">⚠️ ผู้ใช้จะได้รับ <span id="strikeCount" class="font-bold">0</span> Strike</p>
+                    </div>
                 </div>
 
-                <!-- Equipment Info -->
-                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                    <p class="text-sm text-gray-500 dark:text-gray-400">อุปกรณ์</p>
-                    <p id="penaltyEquipmentName" class="font-bold text-gray-900 dark:text-white">-</p>
-                </div>
-
-                <!-- Penalty Type -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ประเภทความผิด
-                        *</label>
-                    <select id="penaltyType" required
-                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500">
-                        <option value="">-- เลือกประเภท --</option>
-                        <option value="late_return">คืนล่าช้า</option>
-                        <option value="no_show">ไม่มารับของ (No Show)</option>
-                        <option value="minor_damage">เสียหายเล็กน้อย (รอยขีดข่วน)</option>
-                        <option value="major_damage">เสียหายปานกลาง (ต้องซ่อม)</option>
-                        <option value="severe_damage">เสียหายรุนแรง (ใช้งานไม่ได้)</option>
-                        <option value="lost">สูญหาย</option>
-                    </select>
-                </div>
-
-                <!-- Days Late (show only for late_return) -->
-                <div id="daysLateContainer" class="hidden">
-                    <label
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">จำนวนวันที่ล่าช้า</label>
-                    <input type="number" id="penaltyDaysLate" min="1" value="1"
-                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500">
-                </div>
-
-                <!-- Compensation (show for damage/lost) -->
-                <div id="compensationContainer" class="hidden">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ค่าชดใช้
-                        (บาท)</label>
-                    <input type="number" id="penaltyCompensation" min="0" step="0.01" placeholder="0"
-                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500">
-                </div>
-
-                <!-- Description -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">รายละเอียด</label>
-                    <textarea id="penaltyDescription" rows="2" placeholder="อธิบายเพิ่มเติม..."
-                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 resize-none"></textarea>
-                </div>
-
-                <!-- Strike Preview -->
-                <div id="strikePreview"
-                    class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3 hidden">
-                    <p class="text-sm text-red-600 dark:text-red-400">
-                        ⚠️ ผู้ใช้จะได้รับ <span id="strikeCount" class="font-bold">0</span> Strike
-                    </p>
+                <div class="space-y-4">
+                    <div class="rounded-2xl border border-gray-200 dark:border-gray-700 p-4 bg-gray-50/70 dark:bg-gray-900/30">
+                        <h4 class="text-sm font-bold text-gray-900 dark:text-white">Penalty Impact Preview</h4>
+                        <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                            <div class="rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3">
+                                <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold" data-i18n="penaltyCurrentStrikes">Strike ปัจจุบัน</p>
+                                <p id="penaltyCurrentStrikesValue" class="mt-1 font-bold text-gray-900 dark:text-white">-</p>
+                            </div>
+                            <div class="rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3">
+                                <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold" data-i18n="penaltyProjectedStrikes">Strike หลังบันทึก</p>
+                                <p id="penaltyProjectedStrikesValue" class="mt-1 font-bold text-gray-900 dark:text-white">-</p>
+                            </div>
+                            <div class="rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3">
+                                <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold" data-i18n="penaltySeverity">ระดับความรุนแรง</p>
+                                <p id="penaltySeverityValue" class="mt-1 font-bold text-gray-900 dark:text-white">-</p>
+                            </div>
+                            <div class="rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3">
+                                <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold" data-i18n="penaltyCompensationStatus">สถานะค่าชดใช้</p>
+                                <p id="penaltyCompensationStatusValue" class="mt-1 font-bold text-gray-900 dark:text-white">-</p>
+                            </div>
+                            <div class="rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 col-span-2">
+                                <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold" data-i18n="penaltyBanEffect">ผลต่อการระงับสิทธิ์</p>
+                                <p id="penaltyBanEffectValue" class="mt-1 font-bold text-gray-900 dark:text-white">-</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </form>
 
-            <!-- Actions -->
-            <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex gap-3">
+            <div class="p-5 border-t border-gray-200 dark:border-gray-700 flex gap-3">
                 <button onclick="window.closePenaltyModal()"
-                    class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition font-medium">
-                    ยกเลิก
-                </button>
+                    class="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition font-medium">ยกเลิก</button>
                 <button onclick="window.submitPenalty()"
-                    class="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-medium">
-                    บันทึกบทลงโทษ
-                </button>
+                    class="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition font-medium">บันทึกบทลงโทษ</button>
             </div>
         </div>
     </div>
@@ -2410,11 +2678,11 @@
     <!-- Penalty History Modal -->
     <div id="penaltyHistoryModal"
         class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-fade-in">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-fade-in border border-gray-200 dark:border-gray-700">
             <!-- Header -->
             <div class="bg-gradient-to-r from-red-500 to-orange-500 p-4 text-white">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-bold">📋 ประวัติบทลงโทษ</h3>
+                    <h3 class="text-lg font-bold" data-i18n="penaltyHistoryTitle">📋 ประวัติบทลงโทษ</h3>
                     <button onclick="window.closePenaltyHistoryModal()"
                         class="p-1 hover:bg-white/20 rounded-lg transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2423,6 +2691,12 @@
                         </svg>
                     </button>
                 </div>
+            </div>
+
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/20">
+                <input id="penaltyHistorySearchInput" type="text" oninput="filterPenaltyHistoryList()"
+                    placeholder="ค้นหาผู้ใช้หรืออุปกรณ์..."
+                    class="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-400">
             </div>
 
             <!-- List -->

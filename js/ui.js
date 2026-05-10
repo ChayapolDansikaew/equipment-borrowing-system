@@ -49,7 +49,7 @@ window.renderEquipments = function () {
         return matchesSearch && matchesCategory;
     });
 
-    grid.innerHTML = filteredGroups.map(group => {
+    grid.innerHTML = filteredGroups.map((group, index) => {
         const isOutOfStock = group.available === 0;
         // REDESIGN: Status Text Colors
         const statusColor = isOutOfStock ? 'bg-brand-grey text-white' : 'bg-brand-yellow text-black';
@@ -86,7 +86,7 @@ window.renderEquipments = function () {
         }
 
         return `
-        <div class="bg-white rounded-xl overflow-hidden group border border-gray-100 card-premium dark:bg-gray-800 dark:border-gray-700 cursor-pointer opacity-0 fade-in-up" style="animation-delay: ${Math.random() * 0.2}s">
+        <div class="bg-white rounded-xl overflow-hidden group border border-gray-100 card-premium dark:bg-gray-800 dark:border-gray-700 cursor-pointer opacity-0 fade-in-up" style="animation-delay: ${Math.min(index * 0.04, 0.4)}s">
             <div class="relative h-48 overflow-hidden bg-gray-50" onclick="openEquipmentDetail(${group.items[0].id})">
                 ${editBtn}
                 ${userBadge}
@@ -128,6 +128,125 @@ window.renderEquipments = function () {
         </div>
     `}).join('');
 };
+
+window.showSkeletonLoading = function (count = 8) {
+    const grid = document.getElementById('equipmentGrid');
+    if (!grid) return;
+    const skeleton = `
+        <div class="bg-white rounded-xl overflow-hidden border border-gray-100 dark:bg-gray-800 dark:border-gray-700 animate-pulse">
+            <div class="h-48 bg-gray-200 dark:bg-gray-700"></div>
+            <div class="p-5 space-y-3">
+                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+                <div class="h-9 bg-gray-200 dark:bg-gray-700 rounded-lg w-full mt-2"></div>
+            </div>
+        </div>
+    `;
+    grid.innerHTML = Array.from({ length: count }, () => skeleton).join('');
+};
+
+function getReturnModalTransaction(transactionId) {
+    const numericId = Number(transactionId);
+    return (window._returnTransactions || []).find(tr => Number(tr.id) === numericId) || null;
+}
+
+function formatReturnModalDate(dateStr, includeTime = false) {
+    if (!dateStr) return '-';
+    const locale = window.currentLang === 'th' ? 'th-TH' : 'en-US';
+    const options = includeTime
+        ? { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }
+        : { day: 'numeric', month: 'short', year: 'numeric' };
+    return new Date(dateStr).toLocaleDateString(locale, options);
+}
+
+function getReturnDurationDays(startDate) {
+    if (!startDate) return 0;
+    const start = new Date(startDate);
+    const now = new Date();
+    const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.max(1, Math.round((today - startDay) / 86400000) + 1);
+}
+
+function buildReturnSupportItem(label, tone = 'info') {
+    const toneClass = tone === 'success'
+        ? 'rounded-xl px-3 py-2 text-sm font-medium bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-300'
+        : tone === 'warning'
+            ? 'rounded-xl px-3 py-2 text-sm font-medium bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'
+            : 'rounded-xl px-3 py-2 text-sm font-medium bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300';
+    return `<div class="${toneClass}">${label}</div>`;
+}
+
+function populateReturnModal(transaction) {
+    const t = window.translations[window.currentLang];
+    const modal = document.getElementById('returnModal');
+    const borrowerEl = document.getElementById('returnBorrowerName');
+    const itemEl = document.getElementById('returnItemName');
+    const itemInlineEls = document.querySelectorAll('.return-item-name-inline');
+    const borrowedOnEl = document.getElementById('returnBorrowedOnValue');
+    const dueOnEl = document.getElementById('returnDueOnValue');
+    const durationEl = document.getElementById('returnDurationValue');
+    const statusEl = document.getElementById('returnStatusValue');
+    const timingEl = document.getElementById('returnTimingValue');
+    const messageEl = document.getElementById('returnDecisionMessage');
+    const checklistEl = document.getElementById('returnDecisionChecklist');
+
+    const dueDate = transaction?.end_date ? new Date(transaction.end_date) : null;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dueDay = dueDate ? new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate()) : null;
+    const diffDays = dueDay ? Math.round((today - dueDay) / 86400000) : 0;
+    const isOverdue = Boolean(dueDay && diffDays > 0);
+    const isDueToday = Boolean(dueDay && diffDays === 0);
+    const daysUntilDue = dueDay ? Math.max(0, Math.round((dueDay - today) / 86400000)) : 0;
+    const durationDays = getReturnDurationDays(transaction?.borrow_date);
+
+    let timingText = '-';
+    if (dueDay) {
+        if (isOverdue) {
+            timingText = `${t.overdueBy} ${diffDays} ${t.dayUnit}`;
+        } else if (isDueToday) {
+            timingText = t.dueToday;
+        } else {
+            timingText = `${t.returnDueIn} ${daysUntilDue} ${t.dayUnit}`;
+        }
+    }
+
+    if (borrowerEl) borrowerEl.textContent = transaction?.borrower_name || '-';
+    if (itemEl) itemEl.textContent = transaction?.equipments?.name || '-';
+    if (itemInlineEls?.length) {
+        itemInlineEls.forEach(el => {
+            el.textContent = transaction?.equipments?.name || '-';
+        });
+    }
+    if (borrowedOnEl) borrowedOnEl.textContent = formatReturnModalDate(transaction?.borrow_date, true);
+    if (dueOnEl) dueOnEl.textContent = formatReturnModalDate(transaction?.end_date);
+    if (durationEl) durationEl.textContent = durationDays > 0 ? `${durationDays} ${t.dayUnit}` : '-';
+    if (statusEl) statusEl.textContent = isOverdue ? t.overdue : t.active;
+    if (timingEl) timingEl.textContent = timingText;
+
+    if (messageEl) {
+        messageEl.className = isOverdue
+            ? 'rounded-xl px-3 py-2 text-sm font-medium bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'
+            : 'rounded-xl px-3 py-2 text-sm font-medium bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-300';
+        messageEl.textContent = isOverdue ? t.returnReviewMessage : t.returnReadyMessage;
+    }
+
+    if (checklistEl) {
+        checklistEl.innerHTML = [
+            buildReturnSupportItem(isOverdue ? t.returnChecklistOverdue : t.returnChecklistOnTime, isOverdue ? 'warning' : 'success'),
+            buildReturnSupportItem(t.returnChecklistInspect, 'info'),
+            buildReturnSupportItem(t.returnChecklistPenalty, 'warning')
+        ].join('');
+    }
+
+    if (modal) {
+        modal.dataset.transactionId = transaction?.id ? String(transaction.id) : '';
+        modal.dataset.equipmentId = transaction?.equipment_id ? String(transaction.equipment_id) : '';
+        modal.dataset.equipmentName = transaction?.equipments?.name || '';
+        modal.dataset.borrowerName = transaction?.borrower_name || '';
+    }
+}
 
 window.renderReturnTable = function (transactions) {
     const tbody = document.getElementById('returnTableBody');
@@ -171,7 +290,7 @@ window.renderReturnTable = function (transactions) {
                 <td class="px-6 py-4">${statusBadge}</td>
                 <td class="px-6 py-4">
                     <div class="flex gap-2">
-                        <button onclick="openReturnModal(${tr.equipment_id}, '${tr.equipments?.name || 'Unknown'}')" class="text-brand-pink hover:text-white hover:bg-brand-pink border border-brand-pink px-3 py-1.5 rounded-lg transition-all text-xs font-bold">
+                        <button onclick="openReturnModal(${tr.id})" class="text-brand-pink hover:text-white hover:bg-brand-pink border border-brand-pink px-3 py-1.5 rounded-lg transition-all text-xs font-bold">
                             ${t.returnNotify}
                         </button>
                         <button onclick="window.openPenaltyModal('${tr.borrower_name}', '${tr.borrower_name}', ${tr.equipment_id}, '${tr.equipments?.name || 'Unknown'}', ${tr.id})" class="text-red-500 hover:text-white hover:bg-red-500 border border-red-500 px-3 py-1.5 rounded-lg transition-all text-xs font-bold" title="รายงานปัญหา">
@@ -575,6 +694,136 @@ window.toggleOverview = function () {
 
 // --- Borrowing History ---
 
+function _buildHistoryStatusBadge(tr, t, now) {
+    if (tr.status === 'returned') {
+        const wasLate = tr.end_date && tr.return_date && new Date(tr.return_date) > new Date(tr.end_date);
+        return wasLate
+            ? `<span class="px-2 py-1 rounded-full text-xs font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400">${t?.historyStatusLate || 'Late'} ✓</span>`
+            : `<span class="px-2 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">${t?.historyStatusReturned || 'Returned'}</span>`;
+    }
+    const isOverdue = tr.end_date && new Date(tr.end_date) < now;
+    return isOverdue
+        ? `<span class="px-2 py-1 rounded-full text-xs font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">${t?.historyStatusOverdue || 'Overdue'}</span>`
+        : `<span class="px-2 py-1 rounded-full text-xs font-bold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400">${t?.historyStatusActive || 'Active'}</span>`;
+}
+
+window.setHistoryFilters = function (filters = {}) {
+    const normalized = {
+        equipment: '',
+        borrower: '',
+        status: 'all',
+        dateFrom: '',
+        dateTo: '',
+        ...filters
+    };
+
+    const equipmentInput = document.getElementById('historySearchEquipment');
+    const borrowerInput = document.getElementById('historySearchBorrower');
+    const statusInput = document.getElementById('historyStatusFilter');
+    const dateFromInput = document.getElementById('historyDateFrom');
+    const dateToInput = document.getElementById('historyDateTo');
+
+    if (equipmentInput) equipmentInput.value = normalized.equipment;
+    if (borrowerInput) borrowerInput.value = normalized.borrower;
+    if (statusInput) statusInput.value = normalized.status;
+    if (dateFromInput) dateFromInput.value = normalized.dateFrom;
+    if (dateToInput) dateToInput.value = normalized.dateTo;
+
+    return normalized;
+};
+
+window.openHistoryPage = function (filters = {}) {
+    const browse = document.getElementById('browseSection');
+    const overview = document.getElementById('overviewSection');
+    const controls = document.getElementById('controlsSection');
+    const returnSection = document.getElementById('returnSection');
+    const myBorrowingsSection = document.getElementById('myBorrowingsSection');
+    const historySection = document.getElementById('historySection');
+    const historyBtn = document.getElementById('historyBtn');
+    const profileSection = document.getElementById('userProfileSection');
+    const t = window.translations[window.currentLang];
+
+    // Track where we came from so historyGoBack can return correctly
+    if (overview && !overview.classList.contains('hidden')) {
+        window._historyReferrer = 'dashboard';
+    } else {
+        window._historyReferrer = 'browse';
+    }
+
+    window.stopDashboardRefresh?.();
+
+    browse.classList.add('hidden');
+    controls.classList.add('hidden');
+    returnSection.classList.add('hidden');
+    myBorrowingsSection.classList.add('hidden');
+    overview.classList.add('hidden');
+    if (profileSection) profileSection.classList.add('hidden');
+    if (historySection) historySection.classList.remove('hidden');
+    if (historyBtn) historyBtn.textContent = t?.backToBrowse || 'Back';
+
+    const normalized = window.setHistoryFilters(filters);
+    window.fetchBorrowingHistory(normalized);
+};
+
+window.historyGoBack = function () {
+    const historySection = document.getElementById('historySection');
+    const browse = document.getElementById('browseSection');
+    const overview = document.getElementById('overviewSection');
+    const controls = document.getElementById('controlsSection');
+    const returnSection = document.getElementById('returnSection');
+    const myBorrowingsSection = document.getElementById('myBorrowingsSection');
+    const historyBtn = document.getElementById('historyBtn');
+    const t = window.translations[window.currentLang];
+
+    historySection?.classList.add('hidden');
+    if (historyBtn) historyBtn.textContent = t?.history || 'History';
+
+    if (window._historyReferrer === 'dashboard') {
+        controls?.classList.add('hidden');
+        overview?.classList.remove('hidden');
+        window._historyReferrer = null;
+        window.fetchDashboardData?.();
+        window.setupDashboardRefresh?.();
+    } else if (window.currentFilter === 'returns') {
+        controls?.classList.remove('hidden');
+        returnSection?.classList.remove('hidden');
+        window.fetchReturnData?.();
+    } else if (window.currentFilter === 'my-items') {
+        controls?.classList.remove('hidden');
+        myBorrowingsSection?.classList.remove('hidden');
+        window.fetchMyBorrowings?.();
+    } else {
+        controls?.classList.remove('hidden');
+        browse?.classList.remove('hidden');
+        window.fetchEquipments?.();
+    }
+    window._historyReferrer = null;
+};
+
+window.historyGoHome = function () {
+    const historySection = document.getElementById('historySection');
+    const browse = document.getElementById('browseSection');
+    const controls = document.getElementById('controlsSection');
+    const returnSection = document.getElementById('returnSection');
+    const myBorrowingsSection = document.getElementById('myBorrowingsSection');
+    const overview = document.getElementById('overviewSection');
+    const historyBtn = document.getElementById('historyBtn');
+    const t = window.translations[window.currentLang];
+
+    historySection?.classList.add('hidden');
+    returnSection?.classList.add('hidden');
+    myBorrowingsSection?.classList.add('hidden');
+    overview?.classList.add('hidden');
+    controls?.classList.remove('hidden');
+    browse?.classList.remove('hidden');
+    if (historyBtn) historyBtn.textContent = t?.history || 'History';
+    window.currentFilter = 'all';
+    window.currentCategory = 'all';
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) searchInput.value = '';
+    window.fetchEquipments?.();
+};
+
 window.toggleHistoryPage = function () {
     const browse = document.getElementById('browseSection');
     const overview = document.getElementById('overviewSection');
@@ -586,17 +835,7 @@ window.toggleHistoryPage = function () {
     const t = window.translations[window.currentLang];
 
     if (historySection.classList.contains('hidden')) {
-        // Show history
-        browse.classList.add('hidden');
-        controls.classList.add('hidden');
-        returnSection.classList.add('hidden');
-        myBorrowingsSection.classList.add('hidden');
-        overview.classList.add('hidden');
-        const profileSection = document.getElementById('userProfileSection');
-        if (profileSection) profileSection.classList.add('hidden');
-        historySection.classList.remove('hidden');
-        if (historyBtn) historyBtn.textContent = t?.backToBrowse || 'Back';
-        window.fetchBorrowingHistory();
+        window.openHistoryPage();
     } else {
         // Hide history, go back
         historySection.classList.add('hidden');
@@ -653,29 +892,13 @@ window.renderHistoryTable = function () {
         const returnDate = tr.return_date
             ? new Date(tr.return_date).toLocaleDateString(locale, dateOpts)
             : '-';
-
-        // Determine status badge
-        let statusBadge;
-        if (tr.status === 'returned') {
-            // Check if returned late
-            const wasLate = tr.end_date && tr.return_date && new Date(tr.return_date) > new Date(tr.end_date);
-            if (wasLate) {
-                statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400">${t?.overdueStatus || 'Late'} ✓</span>`;
-            } else {
-                statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">${t?.returnedStatus || 'Returned'}</span>`;
-            }
-        } else {
-            const isOverdue = tr.end_date && new Date(tr.end_date) < now;
-            if (isOverdue) {
-                statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">${t?.overdueStatus || 'Overdue'}</span>`;
-            } else {
-                statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-bold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400">${t?.activeStatus || 'Active'}</span>`;
-            }
-        }
+        const statusBadge = _buildHistoryStatusBadge(tr, t, now);
+        const equipType = window.escapeHtml?.(tr.equipments?.type) || tr.equipments?.type || '';
 
         return `
             <tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                 <td class="px-4 md:px-6 py-3 font-medium text-brand-black dark:text-white">${window.escapeHtml?.(tr.equipments?.name) || tr.equipments?.name || 'Unknown'}</td>
+                <td class="px-4 md:px-6 py-3 text-xs text-brand-pink font-semibold">${equipType}</td>
                 <td class="px-4 md:px-6 py-3">${window.escapeHtml?.(tr.borrower_name) || tr.borrower_name}</td>
                 <td class="px-4 md:px-6 py-3 text-gray-500 dark:text-gray-400 text-xs">${borrowDate}</td>
                 <td class="px-4 md:px-6 py-3 text-gray-500 dark:text-gray-400 text-xs">${dueDate}</td>
@@ -687,9 +910,10 @@ window.renderHistoryTable = function () {
 
     // Update pagination
     if (pagination) {
+        pagination.style.display = '';
         pagination.classList.remove('hidden');
         const pageInfo = document.getElementById('historyPageInfo');
-        if (pageInfo) pageInfo.textContent = `${t?.showing || 'Showing'} ${start + 1}-${end} ${t?.of || 'of'} ${data.length} ${t?.records || 'records'}`;
+        if (pageInfo) pageInfo.textContent = `${t?.historyShowing || 'Showing'} ${start + 1}–${end} ${t?.historyOf || 'of'} ${data.length} ${t?.historyRecords || 'records'}`;
         const prevBtn = document.getElementById('historyPrevBtn');
         const nextBtn = document.getElementById('historyNextBtn');
         if (prevBtn) prevBtn.disabled = page <= 1;
@@ -706,14 +930,52 @@ window.changeHistoryPage = function (delta) {
 };
 
 window.applyHistoryFilters = function () {
-    const filters = {
-        equipment: document.getElementById('historySearchEquipment')?.value?.trim() || '',
-        borrower: document.getElementById('historySearchBorrower')?.value?.trim() || '',
-        status: document.getElementById('historyStatusFilter')?.value || 'all',
-        dateFrom: document.getElementById('historyDateFrom')?.value || '',
-        dateTo: document.getElementById('historyDateTo')?.value || ''
-    };
-    window.fetchBorrowingHistory(filters);
+    const base = window._historyAllData || window._historyData || [];
+    const equipment = document.getElementById('historySearchEquipment')?.value?.trim().toLowerCase() || '';
+    const borrower = document.getElementById('historySearchBorrower')?.value?.trim().toLowerCase() || '';
+    const status = document.getElementById('historyStatusFilter')?.value || 'all';
+    const dateFrom = document.getElementById('historyDateFrom')?.value || '';
+    const dateTo = document.getElementById('historyDateTo')?.value || '';
+    const now = new Date();
+
+    let filtered = base;
+    if (equipment) filtered = filtered.filter(tr => (tr.equipments?.name || '').toLowerCase().includes(equipment));
+    if (borrower) filtered = filtered.filter(tr => (tr.borrower_name || '').toLowerCase().includes(borrower));
+    if (status && status !== 'all') {
+        if (status === 'overdue') {
+            filtered = filtered.filter(tr => tr.status !== 'returned' && tr.end_date && new Date(tr.end_date) < now);
+        } else {
+            filtered = filtered.filter(tr => tr.status === status);
+        }
+    }
+    if (dateFrom) {
+        const from = new Date(dateFrom + 'T00:00:00');
+        filtered = filtered.filter(tr => new Date(tr.borrow_date) >= from);
+    }
+    if (dateTo) {
+        const to = new Date(dateTo + 'T23:59:59');
+        filtered = filtered.filter(tr => new Date(tr.borrow_date) <= to);
+    }
+
+    window._historyData = filtered;
+    window._historyPage = 1;
+    window.renderHistoryTable();
+};
+
+window.clearHistoryFilters = function () {
+    const equipmentInput = document.getElementById('historySearchEquipment');
+    const borrowerInput = document.getElementById('historySearchBorrower');
+    const statusInput = document.getElementById('historyStatusFilter');
+    const dateFromInput = document.getElementById('historyDateFrom');
+    const dateToInput = document.getElementById('historyDateTo');
+    if (equipmentInput) equipmentInput.value = '';
+    if (borrowerInput) borrowerInput.value = '';
+    if (statusInput) statusInput.value = 'all';
+    if (dateFromInput) dateFromInput.value = '';
+    if (dateToInput) dateToInput.value = '';
+    window._historyData = window._historyAllData || [];
+    window._historyPage = 1;
+    window.renderHistoryTable();
 };
 
 window.exportHistoryCSV = function () {
@@ -982,24 +1244,7 @@ function renderUserProfileHistory(transactions, totalStrikes) {
         const returnDate = tr.return_date
             ? new Date(tr.return_date).toLocaleDateString(locale, dateOpts)
             : '-';
-
-        // Status badge
-        let statusBadge;
-        if (tr.status === 'returned') {
-            const wasLate = tr.end_date && tr.return_date && new Date(tr.return_date) > new Date(tr.end_date);
-            if (wasLate) {
-                statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400">${t?.overdueStatus || 'Late'} ✓</span>`;
-            } else {
-                statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">${t?.returnedStatus || 'Returned'}</span>`;
-            }
-        } else {
-            const isOverdue = tr.end_date && new Date(tr.end_date) < now;
-            if (isOverdue) {
-                statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">${t?.overdueStatus || 'Overdue'}</span>`;
-            } else {
-                statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-bold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400">${t?.activeStatus || 'Active'}</span>`;
-            }
-        }
+        const statusBadge = _buildHistoryStatusBadge(tr, t, now);
 
         // Show total strikes only in the first row
         const strikesCell = index === 0
@@ -1537,10 +1782,308 @@ window.addToCartFromDetail = async function () {
     window.closeModal('equipmentDetailModal');
 };
 
-window.openReturnModal = function (id, name) {
-    document.getElementById('returnItemId').value = id;
-    document.getElementById('returnItemName').textContent = name;
-    window.openModal('returnModal');
+window.closeReturnModal = function () {
+    const modal = document.getElementById('returnModal');
+    const checklistEl = document.getElementById('returnDecisionChecklist');
+
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        modal.dataset.transactionId = '';
+        modal.dataset.equipmentId = '';
+        modal.dataset.equipmentName = '';
+        modal.dataset.borrowerName = '';
+    }
+
+    ['returnBorrowerName', 'returnItemName', 'returnBorrowedOnValue', 'returnDueOnValue', 'returnDurationValue', 'returnStatusValue', 'returnTimingValue'].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = '-';
+    });
+
+    const messageEl = document.getElementById('returnDecisionMessage');
+    if (messageEl) {
+        messageEl.className = 'rounded-xl px-3 py-2 text-sm font-medium bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-300';
+        messageEl.textContent = '-';
+    }
+
+    if (checklistEl) checklistEl.innerHTML = '';
+    const equipmentIdEl = document.getElementById('returnItemId');
+    const transactionIdEl = document.getElementById('returnTransactionId');
+    if (equipmentIdEl) equipmentIdEl.value = '';
+    if (transactionIdEl) transactionIdEl.value = '';
+};
+
+window.openReturnPenaltyModal = function () {
+    const modal = document.getElementById('returnModal');
+    const borrowerName = modal?.dataset.borrowerName || '';
+    const equipmentName = modal?.dataset.equipmentName || '';
+    const equipmentId = modal?.dataset.equipmentId || '';
+    const transactionId = modal?.dataset.transactionId || '';
+
+    if (!borrowerName || !equipmentId) {
+        return;
+    }
+
+    window.closeReturnModal();
+    window.openPenaltyModal?.(borrowerName, borrowerName, Number(equipmentId), equipmentName, transactionId ? Number(transactionId) : null);
+};
+
+window.openReturnModal = function (transactionId) {
+    const transaction = getReturnModalTransaction(transactionId);
+    const t = window.translations[window.currentLang];
+
+    if (!transaction) {
+        window.showToast?.(t.errorGeneral, 'error');
+        return;
+    }
+
+    const equipmentIdEl = document.getElementById('returnItemId');
+    const transactionIdEl = document.getElementById('returnTransactionId');
+    const modal = document.getElementById('returnModal');
+
+    if (equipmentIdEl) equipmentIdEl.value = transaction.equipment_id || '';
+    if (transactionIdEl) transactionIdEl.value = transaction.id || '';
+
+    populateReturnModal(transaction);
+
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+};
+
+function getManageGroupSnapshot(groupName) {
+    const items = groupName
+        ? (window.equipments || []).filter(equipment => equipment.name === groupName)
+        : [];
+    const availableQuantity = items.filter(item => item.status === 'available').length;
+
+    return {
+        items,
+        totalQuantity: items.length,
+        availableQuantity,
+        borrowedQuantity: Math.max(0, items.length - availableQuantity)
+    };
+}
+
+window.updateManageImagePreview = function () {
+    const imageInput = document.getElementById('manageImage');
+    const preview = document.getElementById('manageImagePreview');
+    const emptyState = document.getElementById('manageImagePreviewEmpty');
+    const imageUrl = imageInput?.value?.trim() || '';
+
+    if (!preview || !emptyState) return;
+
+    if (!imageUrl) {
+        preview.removeAttribute('src');
+        preview.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        return;
+    }
+
+    preview.src = imageUrl;
+};
+
+window.getManageModalState = function () {
+    const t = window.translations[window.currentLang];
+    const originalName = document.getElementById('manageOriginalName')?.value || '';
+    const name = document.getElementById('manageName')?.value?.trim() || '';
+    const type = document.getElementById('manageType')?.value || '';
+    const image = document.getElementById('manageImage')?.value?.trim() || '';
+    const purchaseYearRaw = document.getElementById('managePurchaseYear')?.value || '';
+    const purchaseYear = purchaseYearRaw ? parseInt(purchaseYearRaw, 10) : null;
+    const quantityValue = document.getElementById('manageQuantity')?.value || '1';
+    const plannedQuantity = parseInt(quantityValue, 10);
+    const yearMax = new Date().getFullYear() + 1;
+    const isEdit = Boolean(originalName);
+    const snapshot = getManageGroupSnapshot(originalName);
+
+    let validationMessage = '';
+    if (!name) {
+        validationMessage = t.manageValidationName;
+    } else if (!image) {
+        validationMessage = t.manageValidationImage;
+    } else if (!type) {
+        validationMessage = t.manageValidationType;
+    } else if (purchaseYearRaw && (Number.isNaN(purchaseYear) || purchaseYear < 1990 || purchaseYear > yearMax)) {
+        validationMessage = `${t.manageValidationYear} (1990-${yearMax})`;
+    } else if (Number.isNaN(plannedQuantity) || plannedQuantity < 1 || plannedQuantity > 100) {
+        validationMessage = t.manageValidationQuantity;
+    } else if (isEdit && plannedQuantity < snapshot.borrowedQuantity) {
+        validationMessage = t.manageValidationBorrowedFloor;
+    }
+
+    return {
+        originalName,
+        name,
+        type,
+        image,
+        purchaseYearRaw,
+        purchaseYear,
+        plannedQuantity: Number.isNaN(plannedQuantity) ? 0 : plannedQuantity,
+        isEdit,
+        validationMessage,
+        isValid: !validationMessage,
+        ...snapshot
+    };
+};
+
+window.resetManageDeleteState = function () {
+    const t = window.translations[window.currentLang];
+    const deleteBtn = document.getElementById('manageDeleteBtn');
+    const cancelBtn = document.getElementById('manageDeleteCancelBtn');
+
+    if (deleteBtn) {
+        deleteBtn.dataset.confirmed = 'false';
+        deleteBtn.textContent = t.manageDeleteAction;
+        deleteBtn.classList.remove('bg-red-500', 'text-white', 'border-red-500');
+        deleteBtn.classList.add('border-red-300', 'text-red-600');
+    }
+
+    if (cancelBtn) {
+        cancelBtn.classList.add('hidden');
+    }
+};
+
+window.refreshManageModalState = function () {
+    const t = window.translations[window.currentLang];
+    const state = window.getManageModalState();
+    const validationEl = document.getElementById('manageValidationMessage');
+    const summaryEl = document.getElementById('manageSummaryMessage');
+    const currentQuantityEl = document.getElementById('manageCurrentQuantityValue');
+    const plannedQuantityEl = document.getElementById('managePlannedQuantityValue');
+    const availabilityEl = document.getElementById('manageAvailabilityValue');
+    const impactEl = document.getElementById('manageImpactValue');
+    const quantityHint = document.getElementById('manageQuantityHint');
+    const modeBadge = document.getElementById('manageModeBadge');
+    const deleteSection = document.getElementById('manageDeleteSection');
+    const deleteState = document.getElementById('manageDeleteState');
+    const deleteBtn = document.getElementById('manageDeleteBtn');
+    const saveBtn = document.getElementById('manageSaveBtn');
+
+    let impactText = t.manageImpactNoChange;
+    if (state.isEdit) {
+        const diff = state.plannedQuantity - state.totalQuantity;
+        if (state.plannedQuantity < state.borrowedQuantity) {
+            impactText = t.manageImpactBlocked;
+        } else if (diff > 0) {
+            impactText = `${t.manageImpactIncrease} +${diff} ${t.pieces}`;
+        } else if (diff < 0) {
+            impactText = `${t.manageImpactDecrease} ${Math.abs(diff)} ${t.pieces}`;
+        }
+    } else {
+        impactText = `${t.manageImpactIncrease} ${state.plannedQuantity || 0} ${t.pieces}`;
+    }
+
+    if (validationEl) {
+        if (state.validationMessage) {
+            validationEl.textContent = state.validationMessage;
+            validationEl.className = 'rounded-xl px-4 py-3 text-sm font-medium bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-200';
+            validationEl.classList.remove('hidden');
+        } else {
+            validationEl.textContent = '';
+            validationEl.className = 'hidden rounded-xl px-4 py-3 text-sm font-medium';
+        }
+    }
+
+    if (summaryEl) {
+        summaryEl.textContent = state.isValid
+            ? (state.isEdit ? t.manageReadyUpdate : t.manageReadyCreate)
+            : t.manageNeedsAttention;
+        summaryEl.className = state.isValid
+            ? 'mt-2 rounded-xl px-3 py-2 text-sm font-medium bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-300'
+            : 'mt-2 rounded-xl px-3 py-2 text-sm font-medium bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300';
+    }
+
+    if (currentQuantityEl) currentQuantityEl.textContent = String(state.totalQuantity);
+    if (plannedQuantityEl) plannedQuantityEl.textContent = String(state.plannedQuantity || 0);
+    if (availabilityEl) availabilityEl.textContent = `${state.availableQuantity} / ${state.borrowedQuantity}`;
+    if (impactEl) impactEl.textContent = impactText;
+
+    if (quantityHint) {
+        quantityHint.textContent = state.isEdit
+            ? `${t.manageQuantityEditHint} (${state.availableQuantity}/${state.totalQuantity} ${t.available})`
+            : t.manageQuantityCreateHint;
+    }
+
+    if (modeBadge) {
+        modeBadge.textContent = state.isEdit ? t.manageModeEdit : t.manageModeCreate;
+    }
+
+    if (deleteSection) {
+        if (state.isEdit) {
+            deleteSection.classList.remove('hidden');
+        } else {
+            deleteSection.classList.add('hidden');
+        }
+    }
+
+    if (deleteState) {
+        deleteState.textContent = state.isEdit
+            ? (state.borrowedQuantity === 0 ? t.manageDeleteReady : t.manageDeleteBlocked)
+            : '-';
+    }
+
+    if (deleteBtn) {
+        const canDelete = state.isEdit && state.totalQuantity > 0 && state.borrowedQuantity === 0;
+        deleteBtn.disabled = !canDelete;
+        deleteBtn.classList.toggle('opacity-50', !canDelete);
+        deleteBtn.classList.toggle('cursor-not-allowed', !canDelete);
+    }
+
+    if (saveBtn) {
+        saveBtn.disabled = !state.isValid;
+        saveBtn.classList.toggle('opacity-60', !state.isValid);
+        saveBtn.classList.toggle('cursor-not-allowed', !state.isValid);
+    }
+
+    window.updateManageImagePreview();
+    return state;
+};
+
+window.bindManageModalEvents = function () {
+    if (window._manageModalBound) return;
+
+    ['manageName', 'manageType', 'manageImage', 'managePurchaseYear', 'manageQuantity'].forEach(id => {
+        const element = document.getElementById(id);
+        if (!element) return;
+        const eventName = element.tagName === 'SELECT' ? 'change' : 'input';
+        element.addEventListener(eventName, () => {
+            if (id === 'managePurchaseYear') {
+                window.updatePurchaseYearHint();
+            }
+            window.refreshManageModalState();
+        });
+    });
+
+    window._manageModalBound = true;
+};
+
+window.handleManageDeleteAction = async function () {
+    const t = window.translations[window.currentLang];
+    const state = window.refreshManageModalState();
+    const deleteBtn = document.getElementById('manageDeleteBtn');
+    const cancelBtn = document.getElementById('manageDeleteCancelBtn');
+
+    if (!state.isEdit || state.borrowedQuantity > 0 || state.totalQuantity === 0) {
+        window.showToast?.(t.manageDeleteBlocked, 'warning');
+        return;
+    }
+
+    if (deleteBtn?.dataset.confirmed !== 'true') {
+        if (deleteBtn) {
+            deleteBtn.dataset.confirmed = 'true';
+            deleteBtn.textContent = t.manageDeleteConfirm;
+            deleteBtn.classList.add('bg-red-500', 'text-white', 'border-red-500');
+            deleteBtn.classList.remove('border-red-300', 'text-red-600');
+        }
+        if (cancelBtn) {
+            cancelBtn.classList.remove('hidden');
+        }
+        return;
+    }
+
+    await window.deleteEquipmentGroup?.();
 };
 
 window.openManageModal = function (groupName = null) {
@@ -1551,35 +2094,31 @@ window.openManageModal = function (groupName = null) {
     const purchaseYearInput = document.getElementById('managePurchaseYear');
     const purchaseYearHint = document.getElementById('managePurchaseYearHint');
     const qtyGroup = document.getElementById('manageQuantityGroup');
-    const qtyLabel = document.getElementById('manageQuantityLabel');
     const qtyHint = document.getElementById('manageQuantityHint');
+    const modalTitle = document.getElementById('manageModalTitle');
 
+    window.bindManageModalEvents();
     if (groupName) {
-        // Find all items with this name to get total count
-        const itemsWithName = window.equipments.filter(e => e.name === groupName);
-        const totalCount = itemsWithName.length;
-        const firstItem = itemsWithName[0];
+        const snapshot = getManageGroupSnapshot(groupName);
+        const firstItem = snapshot.items[0];
         if (!firstItem) return;
 
-        document.getElementById('manageModalTitle').textContent = t.edit + ' ' + groupName;
+        modalTitle.textContent = `${t.edit} ${groupName}`;
         nameInput.value = firstItem.name;
         typeInput.value = firstItem.type;
         imageInput.value = firstItem.image_url;
         document.getElementById('manageOriginalName').value = groupName;
 
-        // Set purchase year
         if (purchaseYearInput) {
             purchaseYearInput.value = firstItem.purchase_year || '';
         }
         window.updatePurchaseYearHint();
 
-        // Show quantity for editing
-        document.getElementById('manageQuantity').value = totalCount;
-        if (qtyLabel) qtyLabel.textContent = 'จำนวนทั้งหมด (Total Quantity)';
-        if (qtyHint) qtyHint.textContent = `ปัจจุบันมี ${totalCount} ชิ้น - ปรับเพิ่ม/ลดได้`;
+        document.getElementById('manageQuantity').value = snapshot.totalQuantity;
+        if (qtyHint) qtyHint.textContent = t.manageQuantityEditHint;
         qtyGroup.classList.remove('hidden');
     } else {
-        document.getElementById('manageModalTitle').textContent = t.addEquipment;
+        modalTitle.textContent = t.addEquipment;
         nameInput.value = '';
         typeInput.value = 'Camera';
         imageInput.value = '';
@@ -1587,11 +2126,55 @@ window.openManageModal = function (groupName = null) {
         document.getElementById('manageOriginalName').value = '';
         if (purchaseYearInput) purchaseYearInput.value = '';
         if (purchaseYearHint) purchaseYearHint.textContent = '';
-        if (qtyLabel) qtyLabel.textContent = 'Quantity';
-        if (qtyHint) qtyHint.textContent = 'Creates multiple items with the same name';
+        if (qtyHint) qtyHint.textContent = t.manageQuantityCreateHint;
         qtyGroup.classList.remove('hidden');
     }
+
+    window.resetManageDeleteState();
+    window.refreshManageModalState();
     window.openModal('manageModal');
+};
+
+window.closeManageModal = function () {
+    const modal = document.getElementById('manageModal');
+    const nameInput = document.getElementById('manageName');
+    const typeInput = document.getElementById('manageType');
+    const imageInput = document.getElementById('manageImage');
+    const purchaseYearInput = document.getElementById('managePurchaseYear');
+    const quantityInput = document.getElementById('manageQuantity');
+    const originalName = document.getElementById('manageOriginalName');
+    const validationEl = document.getElementById('manageValidationMessage');
+    const preview = document.getElementById('manageImagePreview');
+    const emptyState = document.getElementById('manageImagePreviewEmpty');
+    const title = document.getElementById('manageModalTitle');
+    const t = window.translations[window.currentLang];
+
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+
+    if (nameInput) nameInput.value = '';
+    if (typeInput) typeInput.value = 'Camera';
+    if (imageInput) imageInput.value = '';
+    if (purchaseYearInput) purchaseYearInput.value = '';
+    if (quantityInput) quantityInput.value = 1;
+    if (originalName) originalName.value = '';
+    if (title) title.textContent = t.addEquipment;
+    if (validationEl) {
+        validationEl.textContent = '';
+        validationEl.className = 'hidden rounded-xl px-4 py-3 text-sm font-medium';
+    }
+    if (preview) {
+        preview.removeAttribute('src');
+        preview.classList.add('hidden');
+    }
+    if (emptyState) {
+        emptyState.classList.remove('hidden');
+    }
+
+    window.updatePurchaseYearHint();
+    window.resetManageDeleteState();
+    window.refreshManageModalState();
 };
 
 // Calculate equipment age from purchase year
@@ -1884,8 +2467,140 @@ window.filterUsers = function (query) {
 
 // --- Penalty System Functions ---
 
+function getPenaltySeverityLabel(severity) {
+    if (!severity) return '-';
+
+    const isThai = window.currentLang === 'th';
+    const labels = {
+        low: isThai ? 'ต่ำ' : 'Low',
+        medium: isThai ? 'ปานกลาง' : 'Medium',
+        high: isThai ? 'สูง' : 'High',
+        critical: isThai ? 'ร้ายแรงมาก' : 'Critical'
+    };
+
+    return labels[severity] || severity;
+}
+
+function getPenaltyBanEffectText(totalStrikes) {
+    const t = window.translations[window.currentLang];
+    const banInfo = window.calculateBanDuration?.(totalStrikes) || { days: 0, permanent: false };
+
+    if (banInfo.permanent) {
+        return t.penaltyPermanentBan;
+    }
+    if (banInfo.days > 0) {
+        return `${t.penaltyTemporaryBan} (${banInfo.days} ${t.dayUnit})`;
+    }
+    return t.penaltyNoBan;
+}
+
+function setPenaltyImpactPreview(values = {}) {
+    const currentStrikesEl = document.getElementById('penaltyCurrentStrikesValue');
+    const projectedStrikesEl = document.getElementById('penaltyProjectedStrikesValue');
+    const severityEl = document.getElementById('penaltySeverityValue');
+    const compensationStatusEl = document.getElementById('penaltyCompensationStatusValue');
+    const banEffectEl = document.getElementById('penaltyBanEffectValue');
+
+    if (currentStrikesEl) currentStrikesEl.textContent = values.currentStrikes ?? '-';
+    if (projectedStrikesEl) projectedStrikesEl.textContent = values.projectedStrikes ?? '-';
+    if (severityEl) severityEl.textContent = values.severity ?? '-';
+    if (compensationStatusEl) compensationStatusEl.textContent = values.compensationStatus ?? '-';
+    if (banEffectEl) banEffectEl.textContent = values.banEffect ?? '-';
+}
+
+async function loadPenaltyUserProfile(userId) {
+    const t = window.translations[window.currentLang];
+    const modal = document.getElementById('penaltyModal');
+
+    setPenaltyImpactPreview({
+        currentStrikes: t.penaltyProfileLoading,
+        projectedStrikes: '-',
+        severity: '-',
+        compensationStatus: t.penaltyCompensationNone,
+        banEffect: '-'
+    });
+
+    if (!window.supabaseClient || !userId || !modal) {
+        modal?.setAttribute('data-current-strikes', '0');
+        updatePenaltyImpactPreview();
+        return;
+    }
+
+    try {
+        const { data: user, error } = await window.supabaseClient
+            .from('users')
+            .select('total_strikes')
+            .eq('username', userId)
+            .single();
+
+        if (error) {
+            console.error('Error loading penalty profile:', error);
+        }
+
+        modal.setAttribute('data-current-strikes', String(user?.total_strikes || 0));
+    } catch (err) {
+        console.error('loadPenaltyUserProfile exception:', err);
+        modal.setAttribute('data-current-strikes', '0');
+    }
+
+    updatePenaltyImpactPreview();
+}
+
+function updatePenaltyImpactPreview() {
+    const t = window.translations[window.currentLang];
+    const modal = document.getElementById('penaltyModal');
+    const penaltyType = document.getElementById('penaltyType')?.value || '';
+    const daysLate = parseInt(document.getElementById('penaltyDaysLate')?.value, 10) || 1;
+    const compensationAmount = parseFloat(document.getElementById('penaltyCompensation')?.value) || 0;
+    const strikePreview = document.getElementById('strikePreview');
+    const strikeCount = document.getElementById('strikeCount');
+    const currentStrikes = parseInt(modal?.getAttribute('data-current-strikes') || '0', 10) || 0;
+
+    if (!penaltyType) {
+        if (strikePreview) strikePreview.classList.add('hidden');
+        setPenaltyImpactPreview({
+            currentStrikes,
+            projectedStrikes: currentStrikes,
+            severity: '-',
+            compensationStatus: t.penaltyCompensationNone,
+            banEffect: getPenaltyBanEffectText(currentStrikes)
+        });
+        return;
+    }
+
+    const { strikes, severity } = window.calculateStrikes?.(penaltyType, daysLate) || { strikes: 0, severity: '' };
+    const projectedStrikes = currentStrikes + strikes;
+    const needsCompensation = ['major_damage', 'severe_damage', 'lost'].includes(penaltyType) && compensationAmount > 0;
+
+    if (strikeCount) strikeCount.textContent = strikes;
+    if (strikePreview) strikePreview.classList.remove('hidden');
+
+    setPenaltyImpactPreview({
+        currentStrikes,
+        projectedStrikes,
+        severity: getPenaltySeverityLabel(severity),
+        compensationStatus: needsCompensation ? t.penaltyCompensationPending : t.penaltyCompensationNone,
+        banEffect: getPenaltyBanEffectText(projectedStrikes)
+    });
+}
+
+function bindPenaltyModalEvents() {
+    const penaltyType = document.getElementById('penaltyType');
+    const penaltyDaysLate = document.getElementById('penaltyDaysLate');
+    const penaltyCompensation = document.getElementById('penaltyCompensation');
+
+    if (!penaltyType || penaltyType.dataset.bound === 'true') {
+        return;
+    }
+
+    penaltyType.addEventListener('change', window.onPenaltyTypeChange);
+    penaltyDaysLate?.addEventListener('input', window.onDaysLateChange);
+    penaltyCompensation?.addEventListener('input', updatePenaltyImpactPreview);
+    penaltyType.dataset.bound = 'true';
+}
+
 // Open penalty modal
-window.openPenaltyModal = function (userId, userName, equipmentId, equipmentName, transactionId) {
+window.openPenaltyModal = async function (userId, userName, equipmentId, equipmentName, transactionId) {
     document.getElementById('penaltyUserId').value = userId;
     document.getElementById('penaltyTransactionId').value = transactionId || '';
     document.getElementById('penaltyEquipmentId').value = equipmentId || '';
@@ -1901,7 +2616,13 @@ window.openPenaltyModal = function (userId, userName, equipmentId, equipmentName
     document.getElementById('compensationContainer').classList.add('hidden');
     document.getElementById('strikePreview').classList.add('hidden');
 
+    const modal = document.getElementById('penaltyModal');
+    modal?.setAttribute('data-current-strikes', '0');
+    bindPenaltyModalEvents();
+    updatePenaltyImpactPreview();
+
     document.getElementById('penaltyModal').classList.remove('hidden');
+    await loadPenaltyUserProfile(userId);
 };
 
 // Close penalty modal
@@ -1985,6 +2706,8 @@ window.onPenaltyTypeChange = function () {
     } else {
         strikePreview.classList.add('hidden');
     }
+
+    updatePenaltyImpactPreview();
 };
 
 // Days late change handler - update strike preview
@@ -1992,72 +2715,111 @@ window.onDaysLateChange = function () {
     const penaltyType = document.getElementById('penaltyType').value;
     if (penaltyType === 'late_return') {
         window.onPenaltyTypeChange();
+        return;
     }
+
+    updatePenaltyImpactPreview();
 };
 
-// Open penalty history modal
-window.openPenaltyHistoryModal = async function (userId = null) {
-    document.getElementById('penaltyHistoryModal').classList.remove('hidden');
-    document.getElementById('penaltyHistoryList').innerHTML = '<div class="text-center py-8 text-gray-400">กำลังโหลด...</div>';
-
-    let penalties;
-    if (userId) {
-        penalties = await window.getUserPenalties(userId);
-    } else {
-        penalties = await window.fetchAllPenalties();
-    }
+function _renderPenaltyHistoryItems(penalties) {
+    const t = window.translations?.[window.currentLang] || {};
+    const locale = window.currentLang === 'th' ? 'th-TH' : 'en-US';
+    const list = document.getElementById('penaltyHistoryList');
+    if (!list) return;
 
     if (!penalties || penalties.length === 0) {
-        document.getElementById('penaltyHistoryList').innerHTML = `
-            <div class="text-center py-8 text-gray-400">
-                <p class="text-4xl mb-2">✓</p>
-                <p>ไม่มีประวัติบทลงโทษ</p>
+        list.innerHTML = `
+            <div class="text-center py-12 text-gray-400">
+                <svg class="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-sm font-medium">${t.penaltyHistoryEmpty || 'No penalty records'}</p>
             </div>
         `;
         return;
     }
 
-    const penaltyTypeLabels = {
-        'late_return': 'คืนล่าช้า',
-        'no_show': 'ไม่มารับของ',
-        'minor_damage': 'เสียหายเล็กน้อย',
-        'major_damage': 'เสียหายปานกลาง',
-        'severe_damage': 'เสียหายรุนแรง',
-        'lost': 'สูญหาย'
+    const typeLabels = {
+        late_return: t.penaltyHistoryLateReturn || 'Late return',
+        no_show: t.penaltyHistoryNoShow || 'No-show',
+        minor_damage: t.penaltyHistoryMinorDamage || 'Minor damage',
+        major_damage: t.penaltyHistoryMajorDamage || 'Major damage',
+        severe_damage: t.penaltyHistorySevereDamage || 'Severe damage',
+        lost: t.penaltyHistoryLost || 'Lost'
     };
 
-    const severityColors = {
-        'low': 'bg-yellow-100 text-yellow-700',
-        'medium': 'bg-orange-100 text-orange-700',
-        'high': 'bg-red-100 text-red-700',
-        'critical': 'bg-red-600 text-white'
+    const severityIcon = { low: '⚠️', medium: '🔶', high: '🔴', critical: '🚨' };
+    const severityBorder = { low: 'border-yellow-400', medium: 'border-orange-500', high: 'border-red-500', critical: 'border-red-700' };
+    const severityBadge = {
+        low: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400',
+        medium: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
+        high: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+        critical: 'bg-red-600 text-white'
     };
 
-    document.getElementById('penaltyHistoryList').innerHTML = penalties.map(penalty => `
-        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-3 border-l-4 ${penalty.severity === 'critical' ? 'border-red-600' : penalty.severity === 'high' ? 'border-red-500' : penalty.severity === 'medium' ? 'border-orange-500' : 'border-yellow-500'}">
-            <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center gap-2">
-                    <span class="font-bold text-gray-900 dark:text-white">${penalty.user_id}</span>
-                    <span class="px-2 py-0.5 text-xs rounded-full ${severityColors[penalty.severity] || 'bg-gray-100 text-gray-700'}">
-                        ${penaltyTypeLabels[penalty.penalty_type] || penalty.penalty_type}
-                    </span>
+    list.innerHTML = penalties.map(penalty => {
+        const dateStr = penalty.created_at
+            ? new Date(penalty.created_at).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })
+            : '-';
+        const icon = severityIcon[penalty.severity] || '⚠️';
+        const borderCls = severityBorder[penalty.severity] || 'border-gray-300';
+        const badgeCls = severityBadge[penalty.severity] || 'bg-gray-100 text-gray-700';
+        const typeLabel = typeLabels[penalty.penalty_type] || penalty.penalty_type;
+        const compText = penalty.compensation_status === 'paid'
+            ? `<span class="text-emerald-600 dark:text-emerald-400 font-semibold">${t.penaltyHistoryCompPaid || 'Paid'}</span>`
+            : `<span class="text-orange-500 font-semibold">${t.penaltyHistoryCompPending || 'Pending'}</span>`;
+
+        return `
+        <div class="bg-gray-50 dark:bg-gray-700/60 rounded-xl p-4 mb-3 border-l-4 ${borderCls} transition-all hover:shadow-sm">
+            <div class="flex items-start justify-between gap-2 mb-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-base leading-none">${icon}</span>
+                    <span class="font-bold text-gray-900 dark:text-white text-sm">${window.escapeHtml?.(penalty.user_id) || penalty.user_id}</span>
+                    <span class="px-2 py-0.5 text-xs font-semibold rounded-full ${badgeCls}">${typeLabel}</span>
                 </div>
-                <span class="text-xs text-gray-500">${new Date(penalty.created_at).toLocaleDateString('th-TH')}</span>
+                <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">${dateStr}</span>
             </div>
-            <div class="text-sm text-gray-600 dark:text-gray-300">
-                <p>อุปกรณ์: ${penalty.equipments?.name || '-'}</p>
-                ${penalty.days_late > 0 ? `<p>ล่าช้า: ${penalty.days_late} วัน</p>` : ''}
-                ${penalty.description ? `<p>หมายเหตุ: ${penalty.description}</p>` : ''}
-                <p class="text-red-500 font-bold mt-1">+${penalty.strikes_given} Strike</p>
-                ${penalty.compensation_amount > 0 ? `<p class="text-orange-500">ค่าชดใช้: ${penalty.compensation_amount.toLocaleString()} บาท (${penalty.compensation_status === 'paid' ? '✓ ชำระแล้ว' : '⏳ รอชำระ'})</p>` : ''}
+            <div class="text-xs text-gray-600 dark:text-gray-300 space-y-0.5 pl-6">
+                <p>${penalty.equipments?.name ? `📦 ${window.escapeHtml?.(penalty.equipments.name) || penalty.equipments.name}` : ''}</p>
+                ${penalty.days_late > 0 ? `<p>🕐 ${t.dayUnit ? `${penalty.days_late} ${t.dayUnit}` : `${penalty.days_late} days`}</p>` : ''}
+                ${penalty.description ? `<p class="text-gray-500 italic">${window.escapeHtml?.(penalty.description) || penalty.description}</p>` : ''}
+                <p class="text-red-500 dark:text-red-400 font-bold pt-1">+${penalty.strikes_given} Strike</p>
+                ${penalty.compensation_amount > 0 ? `<p>💰 ${penalty.compensation_amount.toLocaleString()} ${window.currentLang === 'th' ? 'บาท' : 'THB'} · ${compText}</p>` : ''}
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
+}
+
+// Open penalty history modal
+window.openPenaltyHistoryModal = async function (userId = null) {
+    const t = window.translations?.[window.currentLang] || {};
+    const modal = document.getElementById('penaltyHistoryModal');
+    const searchInput = document.getElementById('penaltyHistorySearchInput');
+    modal.classList.remove('hidden');
+    if (searchInput) searchInput.value = '';
+    document.getElementById('penaltyHistoryList').innerHTML = `<div class="text-center py-8 text-gray-400">${t.loading || 'Loading...'}</div>`;
+
+    const penalties = userId
+        ? await window.getUserPenalties(userId)
+        : await window.fetchAllPenalties();
+
+    window._penaltyHistoryData = penalties || [];
+    _renderPenaltyHistoryItems(window._penaltyHistoryData);
+};
+
+// Client-side search filter for penalty history
+window.filterPenaltyHistoryList = function () {
+    const q = (document.getElementById('penaltyHistorySearchInput')?.value || '').trim().toLowerCase();
+    const data = window._penaltyHistoryData || [];
+    const filtered = q ? data.filter(p => (p.user_id || '').toLowerCase().includes(q) || (p.equipments?.name || '').toLowerCase().includes(q)) : data;
+    _renderPenaltyHistoryItems(filtered);
 };
 
 // Close penalty history modal
 window.closePenaltyHistoryModal = function () {
     document.getElementById('penaltyHistoryModal').classList.add('hidden');
+    window._penaltyHistoryData = [];
 };
 
 // Add event listeners when DOM ready
