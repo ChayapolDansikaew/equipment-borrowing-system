@@ -272,6 +272,217 @@ function isWeekend(dateStr) {
     return day === 0 || day === 6; // Sun or Sat
 }
 
+let requestSummaryRefreshToken = 0;
+const rejectModalState = {
+    requestId: null,
+    itemName: '',
+    request: null
+};
+
+function getRequestDurationDays(startDate, endDate) {
+    if (!startDate || !endDate) return 0;
+    const start = new Date(startDate + 'T00:00:00');
+    const end = new Date(endDate + 'T00:00:00');
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return 0;
+    return Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+}
+
+async function getCurrentRequestObligations() {
+    let activeBorrowCount = 0;
+    let pendingItemCount = 0;
+
+    try {
+        if (window.supabaseClient && window.currentUser) {
+            const { data: activeTrans } = await window.supabaseClient
+                .from('transactions')
+                .select('id')
+                .eq('borrower_name', window.currentUser.username)
+                .eq('status', 'active');
+
+            activeBorrowCount = activeTrans?.length || 0;
+
+            const userId = window.currentUser?.dbId || window.currentUser?.id;
+            if (userId) {
+                const { data: pendingReqs } = await window.supabaseClient
+                    .from('borrow_requests')
+                    .select('id, borrow_request_items!inner(id, status)')
+                    .eq('user_id', userId);
+
+                if (pendingReqs) {
+                    pendingReqs.forEach(req => {
+                        (req.borrow_request_items || []).forEach(item => {
+                            if (item.status === 'pending') {
+                                pendingItemCount++;
+                            }
+                        });
+                    });
+                }
+            }
+        }
+    } catch (err) {
+        console.error('Error checking borrow limits:', err);
+    }
+
+    return {
+        activeBorrowCount,
+        pendingItemCount,
+        totalCurrentItems: activeBorrowCount + pendingItemCount
+    };
+}
+
+async function getCartCategoryConflicts(startDate, endDate) {
+    const conflicts = [];
+    const checkedCategories = new Set();
+
+    try {
+        for (const cartItem of window.cart.items) {
+            if (!cartItem?.category || checkedCategories.has(cartItem.category)) continue;
+            checkedCategories.add(cartItem.category);
+
+            const conflict = await window.checkCrossCategoryConflict(cartItem.category, startDate, endDate);
+            if (conflict.hasConflict) {
+                conflicts.push(conflict);
+            }
+        }
+    } catch (err) {
+        console.error('Error checking cross-category conflicts:', err);
+    }
+
+    return conflicts;
+}
+
+function buildRequestRuleItem(label, passed) {
+    const toneClass = passed
+        ? 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-300'
+        : 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300';
+    const icon = passed ? '✓' : '!';
+
+    return `
+        <div class="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium ${toneClass}">
+            <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/70 dark:bg-black/10 text-xs font-bold shrink-0">${icon}</span>
+            <span>${label}</span>
+        </div>
+    `;
+}
+
+function buildInlineWarning(message) {
+    return `
+        <div class="rounded-xl px-3 py-2 text-sm bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+            ${message}
+        </div>
+    `;
+}
+
+function syncRequestDatesToFilters(startDate, endDate) {
+    const filterStart = document.getElementById('startDate');
+    const filterEnd = document.getElementById('endDate');
+
+    if (filterStart && startDate) filterStart.value = startDate;
+    if (filterEnd && endDate) filterEnd.value = endDate;
+}
+
+async function refreshRequestFormSummary() {
+    const t = window.translations[window.currentLang];
+    const startDate = document.getElementById('requestStartDate')?.value || '';
+    const endDate = document.getElementById('requestEndDate')?.value || '';
+    const validationEl = document.getElementById('requestValidationMessage');
+    const rulesEl = document.getElementById('requestEligibilityRules');
+    const warningsEl = document.getElementById('requestInlineWarnings');
+    const submitBtn = document.getElementById('requestSubmitBtn');
+    const durationEl = document.getElementById('requestSummaryDurationValue');
+    const itemsEl = document.getElementById('requestSummaryItemsValue');
+    const categoriesEl = document.getElementById('requestSummaryCategoriesValue');
+
+    if (!validationEl || !rulesEl || !warningsEl || !submitBtn || !durationEl || !itemsEl || !categoriesEl) {
+        return;
+    }
+
+    const token = ++requestSummaryRefreshToken;
+    const uniqueCategories = new Set(window.cart.items.map(item => item.category).filter(Boolean));
+    const durationDays = getRequestDurationDays(startDate, endDate);
+    const hasDates = Boolean(startDate && endDate);
+    const endBeforeStart = hasDates && new Date(startDate + 'T00:00:00') > new Date(endDate + 'T00:00:00');
+    const hasWeekend = hasDates && (isWeekend(startDate) || isWeekend(endDate));
+    const withinItemLimit = window.cart.items.length > 0 && window.cart.items.length <= 3;
+    const categoryUnique = uniqueCategories.size === window.cart.items.length;
+
+    durationEl.textContent = durationDays > 0 ? `${durationDays} ${t.dayUnit}` : '-';
+    itemsEl.textContent = String(window.cart.items.length);
+    categoriesEl.textContent = String(uniqueCategories.size);
+
+    const warnings = [];
+    if (!hasDates) warnings.push(t.selectBorrowDates);
+    if (endBeforeStart) warnings.push(t.endDateAfterStart);
+    if (hasWeekend) warnings.push(t.weekendNotAllowed);
+    if (!withinItemLimit) warnings.push(t.selectMaxItems);
+    if (!categoryUnique) warnings.push(t.onlyOnePerCategory || t.requestRuleCategoryUnique);
+
+    let obligationState = { activeBorrowCount: 0, pendingItemCount: 0, totalCurrentItems: 0 };
+    let conflicts = [];
+
+    if (hasDates && !endBeforeStart) {
+        obligationState = await getCurrentRequestObligations();
+        conflicts = await getCartCategoryConflicts(startDate, endDate);
+    }
+
+    if (token !== requestSummaryRefreshToken) return;
+
+    if (obligationState.activeBorrowCount > 0 || obligationState.pendingItemCount > 0) {
+        let message = t.mustReturnFirst;
+        if (obligationState.activeBorrowCount > 0) {
+            message += ` (${t.currentlyBorrowing}: ${obligationState.activeBorrowCount} ${t.itemsLabel})`;
+        }
+        if (obligationState.pendingItemCount > 0) {
+            message += ` (${t.pendingRequests}: ${obligationState.pendingItemCount} ${t.itemsLabel})`;
+        }
+        warnings.push(message);
+    }
+
+    if (conflicts.length > 0) {
+        warnings.push(`${t.categoryAlreadyBorrowedForDate} (${conflicts[0].conflictCategory}: ${conflicts[0].conflictItem})`);
+    }
+
+    const rules = [
+        { label: t.requestRuleMaxItems, passed: withinItemLimit },
+        { label: t.requestRuleNoWeekend, passed: hasDates && !hasWeekend && !endBeforeStart },
+        { label: t.requestRuleNoCurrentBorrow, passed: obligationState.totalCurrentItems === 0 },
+        { label: t.requestRuleNoCategoryConflict, passed: conflicts.length === 0 && hasDates && !endBeforeStart },
+        { label: t.requestRuleCategoryUnique, passed: categoryUnique }
+    ];
+
+    const isReady = hasDates && !endBeforeStart && rules.every(rule => rule.passed);
+
+    validationEl.className = isReady
+        ? 'rounded-xl px-3 py-2 text-sm font-medium bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-300'
+        : 'rounded-xl px-3 py-2 text-sm font-medium bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300';
+    validationEl.textContent = isReady ? t.requestReady : t.requestNeedsAttention;
+    rulesEl.innerHTML = rules.map(rule => buildRequestRuleItem(rule.label, rule.passed)).join('');
+    warningsEl.innerHTML = warnings.map(buildInlineWarning).join('');
+    submitBtn.disabled = !isReady;
+    submitBtn.classList.toggle('opacity-50', !isReady);
+    submitBtn.classList.toggle('cursor-not-allowed', !isReady);
+}
+
+function bindRequestFormEnhancements() {
+    const startInput = document.getElementById('requestStartDate');
+    const endInput = document.getElementById('requestEndDate');
+
+    if (!startInput || !endInput || startInput.dataset.summaryBound === 'true') {
+        return;
+    }
+
+    const syncAndRefresh = () => {
+        syncRequestDatesToFilters(startInput.value, endInput.value);
+        refreshRequestFormSummary();
+    };
+
+    startInput.addEventListener('change', syncAndRefresh);
+    endInput.addEventListener('change', syncAndRefresh);
+    startInput.dataset.summaryBound = 'true';
+}
+
+window.refreshRequestFormSummary = refreshRequestFormSummary;
+
 // เปิด Request Form Modal
 window.openRequestForm = function () {
     if (window.cart.items.length === 0) {
@@ -348,6 +559,8 @@ window.openRequestForm = function () {
 
         // Render cart items preview
         renderRequestPreview();
+        bindRequestFormEnhancements();
+        syncRequestDatesToFilters(startVal, endVal);
 
         // Show item limit info
         const limitInfo = document.getElementById('requestLimitInfo');
@@ -366,6 +579,7 @@ window.openRequestForm = function () {
 
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+        refreshRequestFormSummary();
     }
 };
 
@@ -392,6 +606,8 @@ function renderRequestPreview() {
             </div>
         </div>
     `).join('');
+
+    window.refreshRequestFormSummary?.();
 }
 
 // === Cross-Transaction Category Conflict Check ===
@@ -499,42 +715,8 @@ window.submitBorrowRequest = async function () {
 
     // === RULE 3: Check active borrowings + pending requests ===
     // User must return all borrowed items before making a new request
-    let activeBorrowCount = 0;
-    let pendingItemCount = 0;
-
     try {
-        // Check active transactions for current user
-        if (window.supabaseClient && window.currentUser) {
-            const { data: activeTrans } = await window.supabaseClient
-                .from('transactions')
-                .select('id')
-                .eq('borrower_name', window.currentUser.username)
-                .eq('status', 'active');
-
-            activeBorrowCount = activeTrans?.length || 0;
-
-            // Check pending request items for current user
-            const userId = window.currentUser?.dbId || window.currentUser?.id;
-            if (userId) {
-                const { data: pendingReqs } = await window.supabaseClient
-                    .from('borrow_requests')
-                    .select('id, borrow_request_items!inner(id, status)')
-                    .eq('user_id', userId);
-
-                if (pendingReqs) {
-                    pendingReqs.forEach(req => {
-                        (req.borrow_request_items || []).forEach(item => {
-                            if (item.status === 'pending') {
-                                pendingItemCount++;
-                            }
-                        });
-                    });
-                }
-            }
-        }
-
-        // Total current obligations
-        const totalCurrentItems = activeBorrowCount + pendingItemCount;
+        const { activeBorrowCount, pendingItemCount, totalCurrentItems } = await getCurrentRequestObligations();
         const newRequestItems = window.cart.items.length;
 
         // Block if user already has active borrowings or pending requests
@@ -564,22 +746,13 @@ window.submitBorrowRequest = async function () {
     // === RULE 4: Cross-transaction category duplicate check ===
     // ตรวจสอบว่าแต่ละ item ในตะกร้า ไม่ซ้ำหมวดหมู่กับรายการที่เคยส่งไปแล้ว
     // ในช่วงวันที่เดียวกัน
-    try {
-        for (const cartItem of window.cart.items) {
-            const conflict = await window.checkCrossCategoryConflict(
-                cartItem.category, startDate, endDate
-            );
-            if (conflict.hasConflict) {
-                window.showToast?.(
-                    `${t.categoryAlreadyBorrowedForDate} (${conflict.conflictCategory}: ${conflict.conflictItem})`,
-                    'warning'
-                );
-                return;
-            }
-        }
-    } catch (err) {
-        console.error('Error checking cross-category conflicts:', err);
-        // Continue anyway - don't block on check failure
+    const conflicts = await getCartCategoryConflicts(startDate, endDate);
+    if (conflicts.length > 0) {
+        window.showToast?.(
+            `${t.categoryAlreadyBorrowedForDate} (${conflicts[0].conflictCategory}: ${conflicts[0].conflictItem})`,
+            'warning'
+        );
+        return;
     }
 
     // === Auto-remove out-of-stock items from cart before submitting ===
@@ -612,7 +785,7 @@ window.submitBorrowRequest = async function () {
     }
 
     // Prevent double-click: disable submit button
-    const submitBtn = document.querySelector('#requestFormModal button[onclick="submitBorrowRequest()"]');
+    const submitBtn = document.getElementById('requestSubmitBtn');
     if (submitBtn) {
         submitBtn.disabled = true;
         submitBtn.classList.add('opacity-50', 'cursor-wait');
@@ -679,20 +852,20 @@ window.openRequestSuccessModal = function (items, startDate, endDate) {
         const itemNames = items.map(i => `${i.name} (${i.quantity} ${t.pieces})`).join(', ');
         details.innerHTML = `
             <div class="flex items-start gap-2">
-                <svg class="w-4 h-4 text-green-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                <svg class="w-4 h-4 text-green-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                 </svg>
                 <div>
-                    <p class="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">${t.requestSuccessItems}</p>
+                    <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">${t.requestSuccessItems}</p>
                     <p class="text-sm font-medium text-gray-900 dark:text-white">${itemNames}</p>
                 </div>
             </div>
             <div class="flex items-start gap-2">
-                <svg class="w-4 h-4 text-green-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                <svg class="w-4 h-4 text-green-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                 </svg>
                 <div>
-                    <p class="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">${t.requestSuccessDate}</p>
+                    <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">${t.requestSuccessDate}</p>
                     <p class="text-sm font-medium text-gray-900 dark:text-white">${startFormatted} — ${endFormatted}</p>
                 </div>
             </div>
@@ -764,11 +937,40 @@ async function renderPendingRequests() {
 
     let totalPending = 0;
     const t = window.translations[window.currentLang];
-    container.innerHTML = pendingRequests.map(request => {
+    const requestCards = await Promise.all(pendingRequests.map(async request => {
         const pendingItems = request.items.filter(item => item.status === 'pending');
         totalPending += pendingItems.length;
 
         const dateRange = `${formatDate(request.startDate)} - ${formatDate(request.endDate)}`;
+        const locale = window.currentLang === 'th' ? 'th-TH' : 'en-US';
+        const createdDate = request.createdAt
+            ? new Date(request.createdAt).toLocaleDateString(locale, {
+                day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            })
+            : '-';
+        const durationDays = getRequestDurationDays(request.startDate, request.endDate);
+        const availabilityEntries = await Promise.all(pendingItems.map(async item => {
+            const quantity = item.quantity || 1;
+
+            try {
+                const availability = await checkAvailableUnits(item.name, request.startDate, request.endDate, quantity);
+                return [item.name, {
+                    shortage: availability.shortage || 0,
+                    availableCount: availability.available?.length || 0,
+                    quantity
+                }];
+            } catch (err) {
+                console.error('Error checking pending availability:', err);
+                return [item.name, {
+                    shortage: 0,
+                    availableCount: quantity,
+                    quantity
+                }];
+            }
+        }));
+        const availabilityMap = Object.fromEntries(availabilityEntries);
+        const limitedCount = pendingItems.filter(item => (availabilityMap[item.name]?.shortage || 0) > 0).length;
+        const readyCount = pendingItems.length - limitedCount;
 
         return `
             <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 mb-4">
@@ -789,6 +991,37 @@ async function renderPendingRequests() {
                         <span class="px-2 py-1 bg-orange-100 text-orange-600 text-xs font-bold rounded-full">${pendingItems.length} ${t.pendingCount}</span>
                     </div>
                 </div>
+
+                <div class="rounded-2xl border border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/60 p-4 mb-3 space-y-3">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">${t.requestAdminSummary}</p>
+                    </div>
+                    <div class="grid sm:grid-cols-3 gap-2 text-center">
+                        <div class="rounded-xl bg-gray-50 dark:bg-gray-900/40 px-3 py-3 border border-gray-200 dark:border-gray-700">
+                            <p class="text-[11px] uppercase tracking-wide text-gray-400">${t.requestSubmittedOn}</p>
+                            <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">${createdDate}</p>
+                        </div>
+                        <div class="rounded-xl bg-gray-50 dark:bg-gray-900/40 px-3 py-3 border border-gray-200 dark:border-gray-700">
+                            <p class="text-[11px] uppercase tracking-wide text-gray-400">${t.requestDuration}</p>
+                            <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">${durationDays} ${t.dayUnit}</p>
+                        </div>
+                        <div class="rounded-xl bg-gray-50 dark:bg-gray-900/40 px-3 py-3 border border-gray-200 dark:border-gray-700">
+                            <p class="text-[11px] uppercase tracking-wide text-gray-400">${t.requestItemsCount}</p>
+                            <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">${pendingItems.length}</p>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-2">${t.decisionHint}</p>
+                        <div class="grid sm:grid-cols-2 gap-2">
+                            <div class="rounded-xl px-3 py-2 text-sm font-medium ${limitedCount === 0 ? 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-300' : 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'}">
+                                ${limitedCount === 0 ? t.availabilityReady : `${t.availabilityLimited} (${limitedCount})`}
+                            </div>
+                            <div class="rounded-xl px-3 py-2 text-sm font-medium bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">
+                                ${t.approve}: ${readyCount} / ${pendingItems.length}
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
                 <!-- Items -->
                 <div class="space-y-2">
@@ -805,10 +1038,15 @@ async function renderPendingRequests() {
                                 </div>
                             `;
             }
+            const availability = availabilityMap[item.name] || { shortage: 0, availableCount: item.quantity || 1, quantity: item.quantity || 1 };
+            const isLimited = availability.shortage > 0;
             return `
                             <div class="flex items-center gap-3 p-2 bg-white dark:bg-gray-800 rounded-lg">
                                 <img src="${item.image}" alt="${item.name}" class="w-10 h-10 object-cover rounded">
-                                <span class="flex-1 text-sm font-medium">${item.name}</span>
+                                <div class="flex-1 min-w-0">
+                                    <span class="text-sm font-medium block truncate">${item.name}</span>
+                                    <p class="text-xs ${isLimited ? 'text-red-500' : 'text-gray-500'}">${isLimited ? `${t.availabilityLimited} (${t.available} ${availability.availableCount}/${availability.quantity})` : t.availabilityReady}</p>
+                                </div>
                                 <div class="flex gap-1">
                                     <button onclick="approveItem('${request.id}', '${item.name}')" 
                                         class="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 transition-colors cursor-pointer">
@@ -825,7 +1063,9 @@ async function renderPendingRequests() {
                 </div>
             </div>
         `;
-    }).join('');
+    }));
+
+    container.innerHTML = requestCards.join('');
 
     updatePendingBadge(totalPending);
 }
@@ -1005,16 +1245,77 @@ window.approveItem = async function (requestId, itemName) {
 // Reject an item
 window.rejectItem = async function (requestId, itemName) {
     const t = window.translations[window.currentLang];
-    const reason = prompt(t.rejectionReasonPrompt);
-    if (reason === null) return; // User cancelled
-    const success = await window.requests.updateItemStatus(requestId, itemName, 'rejected', reason || '');
+    const modal = document.getElementById('rejectReasonModal');
+    const input = document.getElementById('rejectReasonInput');
+    const target = document.getElementById('rejectReasonTarget');
+
+    if (!modal || !input || !target) {
+        const reason = prompt(t.rejectionReasonPrompt);
+        if (reason === null) return; // User cancelled
+        const success = await window.requests.updateItemStatus(requestId, itemName, 'rejected', reason || '');
+        if (success) {
+            window.showToast?.(t.rejectedSuccess, 'info');
+            await renderPendingRequests();
+
+            const requests = await window.requests.getAll();
+            const request = requests.find(r => r.id === requestId);
+            if (request) {
+                window.sendRejectionEmail?.(request, [{ name: itemName }], reason || t.rejectedSuccess);
+            }
+        }
+        return;
+    }
+
+    const requests = await window.requests.getAll();
+    const request = requests.find(r => r.id === requestId) || null;
+
+    rejectModalState.requestId = requestId;
+    rejectModalState.itemName = itemName;
+    rejectModalState.request = request;
+
+    target.textContent = request ? `${request.userName} • ${itemName}` : itemName;
+    input.value = '';
+    input.placeholder = t.rejectReasonPlaceholder || input.placeholder;
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    input.focus();
+};
+
+window.closeRejectReasonModal = function () {
+    const modal = document.getElementById('rejectReasonModal');
+    const input = document.getElementById('rejectReasonInput');
+    const target = document.getElementById('rejectReasonTarget');
+
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+    if (input) input.value = '';
+    if (target) target.textContent = '';
+
+    rejectModalState.requestId = null;
+    rejectModalState.itemName = '';
+    rejectModalState.request = null;
+};
+
+window.confirmRejectItem = async function () {
+    const t = window.translations[window.currentLang];
+    const reason = document.getElementById('rejectReasonInput')?.value.trim() || '';
+    const requestId = rejectModalState.requestId;
+    const itemName = rejectModalState.itemName;
+    const request = rejectModalState.request;
+
+    if (!requestId || !itemName) {
+        return;
+    }
+
+    const success = await window.requests.updateItemStatus(requestId, itemName, 'rejected', reason);
     if (success) {
         window.showToast?.(t.rejectedSuccess, 'info');
+        window.closeRejectReasonModal();
         await renderPendingRequests();
 
-        // Send rejection email notification
-        const requests = await window.requests.getAll();
-        const request = requests.find(r => r.id === requestId);
         if (request) {
             window.sendRejectionEmail?.(request, [{ name: itemName }], reason || t.rejectedSuccess);
         }

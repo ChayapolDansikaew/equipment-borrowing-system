@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vercel dev",
     "build": "echo 'No build step needed for static site'",
-    "start": "vercel dev"
+    "start": "vercel dev",
+    "lint": "for f in js/*.js api/*.js; do node --check \"$f\" || exit 1; done",
+    "test:smoke": "node scripts/smoke-test.mjs",
+    "test": "npm run lint && npm run test:smoke"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.0.0"

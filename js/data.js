@@ -140,7 +140,7 @@ window.fetchBorrowingHistory = async function (filters = {}) {
     const tbody = document.getElementById('historyTableBody');
     const emptyState = document.getElementById('historyEmpty');
     const pagination = document.getElementById('historyPagination');
-    if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="py-12 text-center text-gray-400">Loading...</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-gray-400">Loading...</td></tr>`;    
     if (emptyState) emptyState.classList.add('hidden');
     if (pagination) pagination.classList.add('hidden');
 
@@ -198,6 +198,7 @@ window.fetchBorrowingHistory = async function (filters = {}) {
         if (returnedEl) returnedEl.textContent = `${returnedCount} ${t?.returned || 'returned'}`;
         if (activeEl) activeEl.textContent = `${activeCount} ${t?.activeStatus || 'active'}`;
 
+        window._historyAllData = data || [];
         window._historyData = transactions;
         window._historyPage = 1;
         window.renderHistoryTable();
@@ -701,6 +702,7 @@ window.confirmBorrow = async function () {
 
 window.confirmReturn = async function () {
     const id = document.getElementById('returnItemId').value;
+    const transactionId = document.getElementById('returnTransactionId')?.value || '';
 
     // 1. Update equipment status
     const { error: updateError } = await window.supabaseClient
@@ -715,11 +717,19 @@ window.confirmReturn = async function () {
     }
 
     // 2. Update transaction
-    const { error: transError } = await window.supabaseClient
+    let transactionQuery = window.supabaseClient
         .from('transactions')
-        .update({ status: 'returned', return_date: new Date().toISOString() })
-        .eq('equipment_id', id)
-        .eq('status', 'active');
+        .update({ status: 'returned', return_date: new Date().toISOString() });
+
+    if (transactionId) {
+        transactionQuery = transactionQuery.eq('id', transactionId);
+    } else {
+        transactionQuery = transactionQuery
+            .eq('equipment_id', id)
+            .eq('status', 'active');
+    }
+
+    const { error: transError } = await transactionQuery;
 
     if (transError) {
         console.error('Transaction update error:', transError);
@@ -727,7 +737,7 @@ window.confirmReturn = async function () {
         return;
     }
 
-    window.closeModal('returnModal');
+    window.closeReturnModal?.();
     window.showToast(window.translations[window.currentLang].successReturn, 'success');
 
     if (window.currentFilter === 'returns') {
@@ -739,49 +749,34 @@ window.confirmReturn = async function () {
 
 window.saveEquipment = async function () {
     const t = window.translations[window.currentLang];
+    const saveBtn = document.getElementById('manageSaveBtn');
 
     try {
-        const originalName = document.getElementById('manageOriginalName')?.value || '';
-        const name = document.getElementById('manageName')?.value?.trim() || '';
-        const type = document.getElementById('manageType')?.value || '';
-        const image = document.getElementById('manageImage')?.value?.trim() || '';
-        const purchaseYearRaw = document.getElementById('managePurchaseYear')?.value;
-        const purchaseYear = purchaseYearRaw ? parseInt(purchaseYearRaw) : null;
-        const quantityEl = document.getElementById('manageQuantity');
-        const newQuantity = quantityEl ? parseInt(quantityEl.value) || 1 : 1;
+        const state = window.getManageModalState?.();
 
-        // Validation
-        if (!name) {
-            window.showToast('กรุณาระบุชื่ออุปกรณ์', 'error');
+        if (!state || !state.isValid) {
+            if (state?.validationMessage) {
+                window.refreshManageModalState?.();
+                window.showToast(state.validationMessage, 'error');
+            }
             return;
         }
-        if (!image) {
-            window.showToast('กรุณาระบุ URL รูปภาพ', 'error');
-            return;
+
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.classList.add('opacity-60', 'cursor-not-allowed');
         }
-        if (!type) {
-            window.showToast('กรุณาเลือกประเภทอุปกรณ์', 'error');
-            return;
-        }
-        if (purchaseYear !== null && (purchaseYear < 1990 || purchaseYear > new Date().getFullYear() + 1)) {
-            window.showToast('ปีที่ซื้อไม่ถูกต้อง (ระบุ 1990-' + (new Date().getFullYear() + 1) + ')', 'error');
-            return;
-        }
-        if (newQuantity < 0 || newQuantity > 100) {
-            window.showToast('จำนวนต้องอยู่ระหว่าง 0-100', 'error');
-            return;
-        }
+
+        const { originalName, name, type, image, purchaseYear, plannedQuantity: newQuantity } = state;
 
         const payload = { name, type, image_url: image, purchase_year: purchaseYear };
         let error = null;
 
         if (originalName) {
-            // EDITING: Handle quantity changes
             const currentItems = window.equipments.filter(e => e.name === originalName);
             const currentQuantity = currentItems.length;
             const quantityDiff = newQuantity - currentQuantity;
 
-            // Update existing items first
             const { error: updateError } = await window.supabaseClient
                 .from('equipments')
                 .update(payload)
@@ -790,7 +785,6 @@ window.saveEquipment = async function () {
             if (updateError) {
                 error = updateError;
             } else if (quantityDiff > 0) {
-                // Need to ADD more units
                 const itemsToInsert = [];
                 for (let i = 0; i < quantityDiff; i++) {
                     itemsToInsert.push({ ...payload, status: 'available' });
@@ -800,13 +794,8 @@ window.saveEquipment = async function () {
                     .insert(itemsToInsert);
                 error = insertError;
             } else if (quantityDiff < 0) {
-                // Need to REMOVE units (only available ones)
                 const availableItems = currentItems.filter(item => item.status === 'available');
                 const toRemove = Math.min(Math.abs(quantityDiff), availableItems.length);
-
-                if (toRemove < Math.abs(quantityDiff)) {
-                    window.showToast(`สามารถลบได้เฉพาะอุปกรณ์ที่ว่าง (ลบได้ ${toRemove} จาก ${Math.abs(quantityDiff)} ชิ้น)`, 'warning');
-                }
 
                 if (toRemove > 0) {
                     const idsToDelete = availableItems.slice(0, toRemove).map(item => item.id);
@@ -818,11 +807,6 @@ window.saveEquipment = async function () {
                 }
             }
         } else {
-            // ADDING NEW
-            if (newQuantity < 1) {
-                window.showToast('จำนวนต้องอย่างน้อย 1 ชิ้น', 'error');
-                return;
-            }
             const itemsToInsert = [];
             for (let i = 0; i < newQuantity; i++) {
                 itemsToInsert.push({ ...payload, status: 'available' });
@@ -839,12 +823,74 @@ window.saveEquipment = async function () {
             return;
         }
 
-        window.closeModal('manageModal');
+        window.closeManageModal?.();
         window.showToast(originalName ? (t?.successUpdate || 'อัปเดตสำเร็จ') : (t?.successAdd || 'เพิ่มสำเร็จ'), 'success');
         window.fetchEquipments();
     } catch (err) {
         console.error('saveEquipment exception:', err);
         window.showToast('เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'error');
+    } finally {
+        if (saveBtn) {
+            const state = window.getManageModalState?.();
+            saveBtn.disabled = !state?.isValid;
+            saveBtn.classList.toggle('opacity-60', !state?.isValid);
+            saveBtn.classList.toggle('cursor-not-allowed', !state?.isValid);
+        }
+    }
+};
+
+window.deleteEquipmentGroup = async function () {
+    const t = window.translations[window.currentLang];
+    const deleteBtn = document.getElementById('manageDeleteBtn');
+
+    try {
+        const state = window.getManageModalState?.();
+
+        if (!state?.isEdit || !state.originalName) {
+            return;
+        }
+
+        if (state.borrowedQuantity > 0) {
+            window.refreshManageModalState?.();
+            window.showToast(t.manageDeleteBlocked, 'warning');
+            return;
+        }
+
+        if (deleteBtn) {
+            deleteBtn.disabled = true;
+            deleteBtn.classList.add('opacity-60', 'cursor-not-allowed');
+        }
+
+        const idsToDelete = state.items.map(item => item.id);
+        if (idsToDelete.length === 0) {
+            return;
+        }
+
+        const { error } = await window.supabaseClient
+            .from('equipments')
+            .delete()
+            .in('id', idsToDelete);
+
+        if (error) {
+            console.error('Delete error:', error);
+            window.showToast(t.errorSave, 'error');
+            return;
+        }
+
+        window.closeManageModal?.();
+        window.showToast(t.manageDeleteSuccess, 'success');
+        window.fetchEquipments();
+    } catch (err) {
+        console.error('deleteEquipmentGroup exception:', err);
+        window.showToast(t.errorGeneral, 'error');
+    } finally {
+        if (deleteBtn) {
+            const state = window.getManageModalState?.();
+            const canDelete = Boolean(state?.isEdit && state.borrowedQuantity === 0 && state.totalQuantity > 0);
+            deleteBtn.disabled = !canDelete;
+            deleteBtn.classList.toggle('opacity-60', !canDelete);
+            deleteBtn.classList.toggle('cursor-not-allowed', !canDelete);
+        }
     }
 };
 

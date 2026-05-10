@@ -12,6 +12,288 @@ window._dashboardItemsPerPage = 10;
 window._feedEvents = [];
 window._dashboardTxHasMore = false;
 window._dashboardFeedHasMore = false;
+window._dashboardStats = null;
+
+function _dashboardEscapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function _dashboardFormatTime(date) {
+    return date.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+}
+
+function _dashboardFormatInputDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function _dashboardGetHint(key) {
+    const t = window.translations?.[window.currentLang] || {};
+    return t[key] || '';
+}
+
+window.openDashboardBrowseView = function ({ status = 'all', category = 'all', search = '' } = {}) {
+    const categoryFilter = document.getElementById('categoryFilter');
+    const searchInput = document.getElementById('searchInput');
+
+    window.stopDashboardRefresh?.();
+    window.currentCategory = category;
+    if (categoryFilter) categoryFilter.value = category;
+    if (searchInput) searchInput.value = search;
+
+    window.filterStatus?.(status);
+};
+
+window.handleDashboardAction = async function (action) {
+    const stats = window._dashboardStats || {};
+
+    switch (action) {
+    case 'focus':
+        if (stats.overdueCount > 0) {
+            window.openHistoryPage?.({ status: 'overdue' });
+            return;
+        }
+        if (stats.pendingRequests > 0) {
+            await window.openPendingRequestsModal?.();
+            return;
+        }
+        if ((stats.totalEquipment || 0) === 0) {
+            window.openManageModal?.();
+            return;
+        }
+        window.openDashboardBrowseView({ status: stats.utilizationRate >= 60 ? 'borrowed' : 'available' });
+        return;
+    case 'total':
+        window.openDashboardBrowseView({ status: 'all', category: 'all', search: '' });
+        return;
+    case 'available':
+        window.openDashboardBrowseView({ status: 'available' });
+        return;
+    case 'borrowed':
+    case 'utilization':
+        window.openDashboardBrowseView({ status: 'borrowed' });
+        return;
+    case 'pending':
+        await window.openPendingRequestsModal?.();
+        return;
+    case 'overdue':
+        window.openHistoryPage?.({ status: 'overdue' });
+        return;
+    case 'ontime':
+        window.openHistoryPage?.({ status: 'returned' });
+        return;
+    default:
+        return;
+    }
+};
+
+window.handleDashboardActionKey = function (event, action) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    window.handleDashboardAction(action);
+};
+
+window.handleDashboardChartAction = async function (action, payload = {}) {
+    const stats = window._dashboardStats || {};
+
+    switch (action) {
+    case 'trend': {
+        const today = new Date();
+        const monthStart = new Date(today);
+        monthStart.setDate(today.getDate() - 30);
+        window.openHistoryPage?.({
+            dateFrom: payload.dateFrom || _dashboardFormatInputDate(monthStart),
+            dateTo: payload.dateTo || _dashboardFormatInputDate(today)
+        });
+        return;
+    }
+    case 'category':
+        window.openDashboardBrowseView({ status: 'all', category: payload.category || 'all' });
+        return;
+    case 'status':
+        if (payload.status) {
+            window.handleDashboardAction(payload.status === 'returned' ? 'ontime' : payload.status);
+            return;
+        }
+        window.handleDashboardAction(stats.borrowed > 0 ? 'borrowed' : 'available');
+        return;
+    case 'borrowers':
+        window.openHistoryPage?.(payload.borrower ? { borrower: payload.borrower } : {});
+        return;
+    case 'penalty':
+        await window.openPenaltyHistoryModal?.();
+        return;
+    default:
+        return;
+    }
+};
+
+window.handleDashboardChartKey = function (event, action) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    window.handleDashboardChartAction(action);
+};
+
+window.renderDashboardPriorityItem = function (id, title, message, tone = 'info') {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    const tones = {
+        danger: {
+            wrapper: 'border-red-100 dark:border-red-500/20 bg-red-50/70 dark:bg-red-500/10',
+            title: 'text-red-500',
+            body: 'text-red-700 dark:text-red-200'
+        },
+        warning: {
+            wrapper: 'border-amber-100 dark:border-amber-500/20 bg-amber-50/70 dark:bg-amber-500/10',
+            title: 'text-amber-500',
+            body: 'text-amber-700 dark:text-amber-200'
+        },
+        success: {
+            wrapper: 'border-emerald-100 dark:border-emerald-500/20 bg-emerald-50/70 dark:bg-emerald-500/10',
+            title: 'text-emerald-500',
+            body: 'text-emerald-700 dark:text-emerald-200'
+        },
+        info: {
+            wrapper: 'border-blue-100 dark:border-blue-500/20 bg-blue-50/70 dark:bg-blue-500/10',
+            title: 'text-blue-500',
+            body: 'text-blue-700 dark:text-blue-200'
+        }
+    };
+
+    const selectedTone = tones[tone] || tones.info;
+    const hintKeyById = {
+        dashPriorityOverdue: 'dashboardActionOverdue',
+        dashPriorityPending: 'dashboardActionPending',
+        dashPriorityUtilization: 'dashboardActionUtilization'
+    };
+    const hintText = _dashboardGetHint(hintKeyById[id]);
+    el.className = `rounded-xl border px-4 py-3 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${selectedTone.wrapper}`;
+    el.innerHTML = `
+        <p class="text-[11px] font-semibold uppercase tracking-wider ${selectedTone.title}">${_dashboardEscapeHtml(title)}</p>
+        <p class="mt-1 text-sm ${selectedTone.body}">${_dashboardEscapeHtml(message)}</p>
+        ${hintText ? `<p class="mt-2 text-[11px] font-medium ${selectedTone.title} opacity-80">${_dashboardEscapeHtml(hintText)}</p>` : ''}
+    `;
+};
+
+window.renderDashboardOverview = function (stats) {
+    const focusTitle = document.getElementById('dashFocusTitle');
+    const focusSummary = document.getElementById('dashFocusSummary');
+    const focusHighlights = document.getElementById('dashFocusHighlights');
+
+    let title = 'ภาพรวมการใช้งานวันนี้';
+    let summary = 'ระบบอยู่ในสภาวะปกติและพร้อมให้ติดตามภาพรวมการยืม-คืนแบบรวดเร็ว';
+
+    if (stats.overdueCount > 0) {
+        title = 'มีรายการที่ควรเร่งติดตาม';
+        summary = `พบ ${stats.overdueCount} รายการเลยกำหนด และยังมี ${stats.pendingRequests} รายการรออนุมัติ ควรติดตามสองส่วนนี้ก่อนงานทั่วไป`;
+    } else if (stats.pendingRequests > 0) {
+        title = 'โฟกัสที่คิวอนุมัติ';
+        summary = `ตอนนี้ยังไม่มีรายการเลยกำหนด แต่มี ${stats.pendingRequests} รายการรออนุมัติ และวันนี้มีคำขอยืมใหม่ ${stats.todayBorrows} รายการ`;
+    } else if (stats.utilizationRate >= 75) {
+        title = 'อุปกรณ์ถูกใช้งานค่อนข้างสูง';
+        summary = `อัตราใช้งานอยู่ที่ ${stats.utilizationRate}% ของคลังทั้งหมด จึงควรเฝ้าดูของว่างและรายการที่จะคืนในช่วงถัดไป`;
+    } else if (stats.totalEquipment === 0) {
+        title = 'ยังไม่มีข้อมูลคลังอุปกรณ์';
+        summary = 'เมื่อเพิ่มอุปกรณ์และเริ่มมีรายการยืม dashboard จะสรุปภาพรวมให้อัตโนมัติ';
+    }
+
+    const highlightItems = [
+        `${stats.todayBorrows} รายการยืมวันนี้`,
+        `สัปดาห์นี้ ${stats.weekBorrows} รายการ`,
+        stats.topCategory ? `ประเภทนำ: ${stats.topCategory.name} ${stats.topCategory.share}%` : 'ยังไม่มีประเภทเด่น',
+        stats.topBorrower ? `ผู้ใช้ยืมบ่อยสุด: ${stats.topBorrower.name} ${stats.topBorrower.count} ครั้ง` : 'ยังไม่มีผู้ยืมเด่น'
+    ];
+
+    if (focusTitle) focusTitle.textContent = title;
+    if (focusSummary) focusSummary.textContent = summary;
+    if (focusHighlights) {
+        focusHighlights.innerHTML = highlightItems.map(item => `
+            <span class="px-3 py-1.5 rounded-full text-xs font-medium bg-white/80 dark:bg-white/[0.06] text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-white/[0.08]">${_dashboardEscapeHtml(item)}</span>
+        `).join('');
+    }
+
+    const overdueMessage = stats.overdueCount > 0
+        ? `${stats.overdueCount} รายการต้องติดตามทันที คิดเป็น ${stats.overdueRate}% ของอุปกรณ์ที่ยังถูกยืมอยู่`
+        : 'ยังไม่มีรายการ active ที่เกินวันคืน';
+    const pendingMessage = stats.pendingRequests > 0
+        ? `ยังมี ${stats.pendingRequests} รายการรออนุมัติ และวันนี้เข้ามาใหม่ ${stats.todayBorrows} รายการ`
+        : 'ไม่มีคำขอค้างตรวจในตอนนี้';
+
+    let utilizationTone = 'info';
+    let utilizationMessage = `อัตราใช้งานอยู่ที่ ${stats.utilizationRate}% และของพร้อมใช้งาน ${stats.availabilityRate}%`;
+    if (stats.utilizationRate >= 75) {
+        utilizationTone = 'warning';
+        utilizationMessage = `อัตราใช้งาน ${stats.utilizationRate}% ถือว่าสูง ควรเฝ้าดูของว่างและกำหนดคืนใกล้ถึง`; 
+    } else if (stats.utilizationRate <= 35) {
+        utilizationTone = 'success';
+        utilizationMessage = `อัตราใช้งาน ${stats.utilizationRate}% ยังมีของพร้อมใช้งาน ${stats.available} ชิ้น รองรับการยืมเพิ่มได้`; 
+    }
+
+    window.renderDashboardPriorityItem('dashPriorityOverdue', 'รายการเลยกำหนด', overdueMessage, stats.overdueCount > 0 ? 'danger' : 'success');
+    window.renderDashboardPriorityItem('dashPriorityPending', 'คำขอรออนุมัติ', pendingMessage, stats.pendingRequests > 0 ? 'warning' : 'success');
+    window.renderDashboardPriorityItem('dashPriorityUtilization', 'อัตราใช้งาน', utilizationMessage, utilizationTone);
+};
+
+window.renderDashboardChartInsights = function (stats) {
+    const trendInsight = document.getElementById('dashTrendInsight');
+    const categoryInsight = document.getElementById('dashCategoryInsight');
+    const categoryBreakdown = document.getElementById('dashCategoryBreakdown');
+    const statusInsight = document.getElementById('dashStatusInsight');
+    const borrowersInsight = document.getElementById('dashBorrowersInsight');
+    const penaltyInsight = document.getElementById('dashPenaltyInsight');
+
+    if (trendInsight) {
+        trendInsight.textContent = stats.peakBorrowDay
+            ? `วันที่มียอดยืมสูงสุดคือ ${stats.peakBorrowDay.label} (${stats.peakBorrowDay.count} รายการ)`
+            : 'ยังไม่มีข้อมูลการยืมในช่วง 30 วันที่ผ่านมา';
+    }
+
+    if (categoryInsight) {
+        categoryInsight.textContent = stats.topCategory
+            ? `${stats.topCategory.name} มีมากที่สุด ${stats.topCategory.count} ชิ้น (${stats.topCategory.share}% ของคลัง)`
+            : 'ยังไม่มีข้อมูลประเภทอุปกรณ์';
+    }
+
+    if (categoryBreakdown) {
+        if (!stats.categoryBreakdown.length) {
+            categoryBreakdown.innerHTML = '<span class="px-3 py-1.5 rounded-full text-xs font-medium bg-gray-50 dark:bg-white/[0.04] text-gray-400 dark:text-gray-500 border border-gray-100 dark:border-white/[0.06]">ยังไม่มีข้อมูลประเภท</span>';
+        } else {
+            categoryBreakdown.innerHTML = stats.categoryBreakdown.map(item => `
+                <button type="button" data-category="${_dashboardEscapeHtml(item.name)}" onclick="window.handleDashboardChartAction('category', { category: this.dataset.category })" class="px-3 py-1.5 rounded-full text-xs font-medium bg-gray-50 dark:bg-white/[0.04] text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-white/[0.06] hover:border-brand-pink/40 hover:text-brand-pink transition-colors cursor-pointer">${_dashboardEscapeHtml(item.name)} · ${item.count} ชิ้น (${item.share}%)</button>
+            `).join('');
+        }
+    }
+
+    if (statusInsight) {
+        statusInsight.textContent = stats.borrowed > 0
+            ? `ตอนนี้ถูกยืม ${stats.borrowed} ชิ้น จากทั้งหมด ${stats.totalEquipment} ชิ้น และมีเลยกำหนด ${stats.overdueCount} รายการ`
+            : 'อุปกรณ์ทั้งหมดอยู่ในสถานะพร้อมใช้งาน';
+    }
+
+    if (borrowersInsight) {
+        borrowersInsight.textContent = stats.topBorrower
+            ? `${stats.topBorrower.name} เป็นผู้ใช้ที่ยืมบ่อยที่สุด (${stats.topBorrower.count} ครั้ง)`
+            : 'ยังไม่มีข้อมูลผู้ยืมมากพอสำหรับจัดอันดับ';
+    }
+
+    if (penaltyInsight) {
+        if (stats.penaltyTotal === 0) {
+            penaltyInsight.textContent = 'ยังไม่พบเหตุผิดนัดหรือกรณีไม่มารับของ';
+        } else if (stats.penaltyLateReturn >= stats.penaltyNoShow) {
+            penaltyInsight.textContent = `ความเสี่ยงหลักมาจากการคืนล่าช้า ${stats.penaltyLateReturn} เคส จากทั้งหมด ${stats.penaltyTotal} เคส`;
+        } else {
+            penaltyInsight.textContent = `ความเสี่ยงหลักมาจากกรณีไม่มารับของ ${stats.penaltyNoShow} เคส จากทั้งหมด ${stats.penaltyTotal} เคส`;
+        }
+    }
+};
 
 // ============================================
 // Main Data Fetcher
@@ -52,6 +334,40 @@ window.fetchDashboardData = async function () {
         const equipments = eqResult.data || [];
         const users = usersResult.data || [];
         const requests = await window.requests?.getAll() || [];
+        const categoryCounts = equipments.reduce((acc, equipment) => {
+            const key = equipment.type || 'ไม่ระบุประเภท';
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+        }, {});
+        const categoryBreakdown = Object.entries(categoryCounts)
+            .sort((a, b) => b[1] - a[1])
+            .map(([name, count]) => ({
+                name,
+                count,
+                share: equipments.length > 0 ? Math.round((count / equipments.length) * 100) : 0
+            }));
+
+        const borrowerCounts = transactions.reduce((acc, transaction) => {
+            if (!transaction.borrower_name) return acc;
+            acc[transaction.borrower_name] = (acc[transaction.borrower_name] || 0) + 1;
+            return acc;
+        }, {});
+        const borrowerBreakdown = Object.entries(borrowerCounts)
+            .sort((a, b) => b[1] - a[1])
+            .map(([name, count]) => ({ name, count }));
+
+        const trendMap = {};
+        for (let cursor = new Date(monthStart); cursor <= today; cursor.setDate(cursor.getDate() + 1)) {
+            trendMap[cursor.toISOString().split('T')[0]] = 0;
+        }
+        transactions.forEach(transaction => {
+            const dayKey = transaction.borrow_date?.split('T')[0];
+            if (dayKey && trendMap[dayKey] !== undefined) {
+                trendMap[dayKey] += 1;
+            }
+        });
+        const peakBorrowEntry = Object.entries(trendMap)
+            .sort((a, b) => b[1] - a[1])[0] || null;
 
         // === Compute KPI Stats ===
         const totalEquipment = equipments.length;
@@ -90,12 +406,37 @@ window.fetchDashboardData = async function () {
         // Utilization rate
         const utilizationRate = totalEquipment > 0
             ? Math.round((borrowed / totalEquipment) * 100) : 0;
+        const availabilityRate = totalEquipment > 0
+            ? Math.round((available / totalEquipment) * 100) : 0;
+        const overdueRate = borrowed > 0
+            ? Math.round((overdueCount / borrowed) * 100) : 0;
+        const pendingLoad = Math.min(100, Math.round((pendingRequests / Math.max(pendingRequests + todayBorrows, 1)) * 100));
+        const topCategory = categoryBreakdown[0] || null;
+        const topBorrower = borrowerBreakdown[0] || null;
+        const peakBorrowDay = peakBorrowEntry && peakBorrowEntry[1] > 0
+            ? {
+                raw: peakBorrowEntry[0],
+                count: peakBorrowEntry[1],
+                label: new Date(peakBorrowEntry[0]).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
+            }
+            : null;
+        const penaltyLateReturn = penaltyStats.late_return || 0;
+        const penaltyNoShow = penaltyStats.no_show || 0;
+        const penaltyTotal = penaltyLateReturn + penaltyNoShow;
+        const lastUpdatedAt = new Date();
 
         const stats = {
             totalEquipment, available, borrowed, pendingRequests,
             overdueCount, onTimeRate, todayBorrows, weekBorrows,
-            utilizationRate, totalUsers: users.length
+            utilizationRate, totalUsers: users.length,
+            availabilityRate, overdueRate, pendingLoad,
+            returnedCount: returned.length,
+            categoryBreakdown: categoryBreakdown.slice(0, 3),
+            topCategory, topBorrower, peakBorrowDay,
+            penaltyLateReturn, penaltyNoShow, penaltyTotal,
+            lastUpdatedAt
         };
+        window._dashboardStats = stats;
 
         // === Update Greeting ===
         const greeting = document.getElementById('dashGreeting');
@@ -105,9 +446,15 @@ window.fetchDashboardData = async function () {
             const greetText = hour < 12 ? 'สวัสดีตอนเช้า' : hour < 17 ? 'สวัสดีตอนบ่าย' : 'สวัสดีตอนเย็น';
             greeting.textContent = `${greetText}, ${username} 👋`;
         }
+        const lastUpdate = document.getElementById('dashLastUpdate');
+        if (lastUpdate) {
+            lastUpdate.textContent = `อัปเดตล่าสุด ${_dashboardFormatTime(lastUpdatedAt)} · รีเฟรชอัตโนมัติทุก 30 วินาที`;
+        }
 
         // === Render Everything ===
+        window.renderDashboardOverview(stats);
         window.renderKPICards(stats);
+        window.renderDashboardChartInsights(stats);
         window.renderTrendChart(transactions, monthStart);
         window.renderCategoryChart(equipments);
         window.renderStatusChart(stats);
@@ -130,18 +477,60 @@ window.fetchDashboardData = async function () {
 // ============================================
 window.renderKPICards = function (stats) {
     const cards = [
-        { id: 'kpi-total', value: stats.totalEquipment, label: 'อุปกรณ์ทั้งหมด' },
-        { id: 'kpi-available', value: stats.available, label: 'พร้อมใช้งาน' },
-        { id: 'kpi-borrowed', value: stats.borrowed, label: 'ถูกยืม' },
-        { id: 'kpi-pending', value: stats.pendingRequests, label: 'รออนุมัติ' },
-        { id: 'kpi-overdue', value: stats.overdueCount, label: 'คืนล่าช้า' },
-        { id: 'kpi-ontime', value: stats.onTimeRate + '%', label: 'ตรงเวลา' }
+        {
+            id: 'kpi-total',
+            value: stats.totalEquipment,
+            meta: stats.totalEquipment > 0
+                ? `${stats.available} พร้อมใช้ · ${stats.borrowed} ถูกยืม`
+                : 'ยังไม่มีอุปกรณ์ในระบบ',
+            progress: stats.totalEquipment > 0 ? 100 : 0
+        },
+        {
+            id: 'kpi-available',
+            value: stats.available,
+            meta: `คิดเป็น ${stats.availabilityRate}% ของอุปกรณ์ทั้งหมด`,
+            progress: stats.availabilityRate
+        },
+        {
+            id: 'kpi-borrowed',
+            value: stats.borrowed,
+            meta: `อัตราใช้งาน ${stats.utilizationRate}% ของคลัง`,
+            progress: stats.utilizationRate
+        },
+        {
+            id: 'kpi-pending',
+            value: stats.pendingRequests,
+            meta: stats.pendingRequests > 0
+                ? `วันนี้มี ${stats.todayBorrows} รายการใหม่ และยังรออนุมัติ ${stats.pendingRequests}`
+                : 'ไม่มีคำขอค้างตรวจตอนนี้',
+            progress: stats.pendingLoad
+        },
+        {
+            id: 'kpi-overdue',
+            value: stats.overdueCount,
+            meta: stats.overdueCount > 0
+                ? `คิดเป็น ${stats.overdueRate}% ของอุปกรณ์ที่ยังถูกยืม`
+                : 'ยังไม่มีรายการ active ที่เกินกำหนด',
+            progress: stats.overdueRate
+        },
+        {
+            id: 'kpi-ontime',
+            value: stats.onTimeRate + '%',
+            meta: stats.returnedCount > 0
+                ? `อิงจากรายการคืนแล้ว ${stats.returnedCount} รายการ`
+                : 'ยังไม่มีข้อมูลการคืน จึงแสดงเป็น 100%',
+            progress: stats.onTimeRate
+        }
     ];
 
     cards.forEach(card => {
         const el = document.getElementById(card.id);
         if (el) {
             el.querySelector('.kpi-value').textContent = card.value;
+            const metaEl = el.querySelector('.kpi-meta');
+            const barEl = el.querySelector('.kpi-bar');
+            if (metaEl) metaEl.textContent = card.meta;
+            if (barEl) barEl.style.width = `${Math.max(0, Math.min(card.progress, 100))}%`;
             // Animate
             el.classList.add('scale-[1.02]');
             setTimeout(() => el.classList.remove('scale-[1.02]'), 200);
@@ -158,6 +547,7 @@ window.renderTrendChart = function (transactions, monthStart) {
     const canvas = document.getElementById('dashTrendChart');
     if (!canvas) return;
     if (window.chartInstances.dashTrend) window.chartInstances.dashTrend.destroy();
+    canvas.classList.add('cursor-pointer');
 
     const isDark = document.documentElement.classList.contains('dark');
     const days = {};
@@ -170,7 +560,8 @@ window.renderTrendChart = function (transactions, monthStart) {
         if (d && days[d] !== undefined) days[d]++;
     });
 
-    const labels = Object.keys(days).map(d => {
+    const rawDates = Object.keys(days);
+    const labels = rawDates.map(d => {
         const date = new Date(d);
         return `${date.getDate()}/${date.getMonth() + 1}`;
     });
@@ -208,6 +599,13 @@ window.renderTrendChart = function (transactions, monthStart) {
                     cornerRadius: 8
                 }
             },
+            onClick(event, _elements, chart) {
+                const points = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
+                if (!points.length) return;
+                const selectedDate = rawDates[points[0].index];
+                if (!selectedDate) return;
+                window.handleDashboardChartAction('trend', { dateFrom: selectedDate, dateTo: selectedDate });
+            },
             scales: {
                 y: {
                     beginAtZero: true,
@@ -228,6 +626,7 @@ window.renderCategoryChart = function (equipments) {
     const canvas = document.getElementById('dashCategoryChart');
     if (!canvas) return;
     if (window.chartInstances.dashCategory) window.chartInstances.dashCategory.destroy();
+    canvas.classList.add('cursor-pointer');
 
     const isDark = document.documentElement.classList.contains('dark');
     const categories = {};
@@ -263,6 +662,13 @@ window.renderCategoryChart = function (equipments) {
                         font: { size: 11 }
                     }
                 }
+            },
+            onClick(event, _elements, chart) {
+                const points = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
+                if (!points.length) return;
+                const category = chart.data.labels?.[points[0].index];
+                if (!category) return;
+                window.handleDashboardChartAction('category', { category });
             }
         }
     });
@@ -273,16 +679,22 @@ window.renderStatusChart = function (stats) {
     const canvas = document.getElementById('dashStatusChart');
     if (!canvas) return;
     if (window.chartInstances.dashStatus) window.chartInstances.dashStatus.destroy();
+    canvas.classList.add('cursor-pointer');
 
     const isDark = document.documentElement.classList.contains('dark');
+    const statusPoints = [
+        { label: 'พร้อมใช้งาน', value: stats.available, color: '#10B981', action: 'available' },
+        { label: 'ถูกยืม', value: stats.borrowed, color: '#FFD100', action: 'borrowed' },
+        { label: 'คืนล่าช้า', value: stats.overdueCount, color: '#EF4444', action: 'overdue' }
+    ];
 
     window.chartInstances.dashStatus = new Chart(canvas.getContext('2d'), {
         type: 'bar',
         data: {
-            labels: ['พร้อมใช้งาน', 'ถูกยืม', 'คืนล่าช้า'],
+            labels: statusPoints.map(item => item.label),
             datasets: [{
-                data: [stats.available, stats.borrowed, stats.overdueCount],
-                backgroundColor: ['#10B981', '#FFD100', '#EF4444'],
+                data: statusPoints.map(item => item.value),
+                backgroundColor: statusPoints.map(item => item.color),
                 borderRadius: 8,
                 barThickness: 32
             }]
@@ -291,6 +703,13 @@ window.renderStatusChart = function (stats) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
+            onClick(event, _elements, chart) {
+                const points = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
+                if (!points.length) return;
+                const selected = statusPoints[points[0].index];
+                if (!selected) return;
+                window.handleDashboardChartAction('status', { status: selected.action });
+            },
             scales: {
                 y: {
                     beginAtZero: true,
@@ -311,6 +730,7 @@ window.renderTopBorrowersChart = function (transactions) {
     const canvas = document.getElementById('dashBorrowersChart');
     if (!canvas) return;
     if (window.chartInstances.dashBorrowers) window.chartInstances.dashBorrowers.destroy();
+    canvas.classList.add('cursor-pointer');
 
     const isDark = document.documentElement.classList.contains('dark');
     const borrowerMap = {};
@@ -342,6 +762,13 @@ window.renderTopBorrowersChart = function (transactions) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
+            onClick(event, _elements, chart) {
+                const points = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
+                if (!points.length) return;
+                const borrower = chart.data.labels?.[points[0].index];
+                if (!borrower) return;
+                window.handleDashboardChartAction('borrowers', { borrower });
+            },
             scales: {
                 x: {
                     beginAtZero: true,
@@ -616,6 +1043,7 @@ window.renderPenaltyStatsChart = function (stats) {
     const canvas = document.getElementById('dashPenaltyChart');
     if (!canvas) return;
     if (window.chartInstances.dashPenalty) window.chartInstances.dashPenalty.destroy();
+    canvas.classList.add('cursor-pointer');
 
     const isDark = document.documentElement.classList.contains('dark');
     const labels = ['คืนล่าช้า', 'ไม่มารับของ'];
@@ -656,6 +1084,11 @@ window.renderPenaltyStatsChart = function (stats) {
                     padding: 10,
                     cornerRadius: 8
                 }
+            },
+            onClick(event, _elements, chart) {
+                const points = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
+                if (!points.length) return;
+                window.handleDashboardChartAction('penalty', { type: chart.data.labels?.[points[0].index] });
             }
         }
     });
