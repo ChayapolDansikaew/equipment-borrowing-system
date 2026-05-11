@@ -1881,7 +1881,13 @@ window.updateManageImagePreview = function () {
         return;
     }
 
+    preview.onerror = () => {
+        preview.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+    };
     preview.src = imageUrl;
+    preview.classList.remove('hidden');
+    emptyState.classList.add('hidden');
 };
 
 window.getManageModalState = function () {
