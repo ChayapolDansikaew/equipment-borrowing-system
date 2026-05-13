@@ -2102,8 +2102,8 @@
     <div id="manageModal"
         class="hidden fixed inset-0 z-50 flex items-center justify-center bg-brand-black/80 backdrop-blur-sm p-4">
         <div
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-            <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-brand-black to-gray-900 text-white">
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+            <div class="shrink-0 px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-brand-black to-gray-900 text-white">
                 <div class="flex items-start justify-between gap-4">
                     <div>
                         <div class="flex items-center gap-2">
@@ -2121,7 +2121,7 @@
                 </div>
             </div>
 
-            <div class="p-6 grid grid-cols-1 xl:grid-cols-[1.2fr_.8fr] gap-6">
+            <div class="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 grid grid-cols-1 xl:grid-cols-[1.2fr_.8fr] gap-5 sm:gap-6">
                 <div class="space-y-4">
                     <div id="manageValidationMessage" class="hidden rounded-xl px-4 py-3 text-sm font-medium"></div>
 
@@ -2173,8 +2173,8 @@
                             <h4 class="text-sm font-bold text-gray-900 dark:text-white" data-i18n="managePreviewTitle">ตัวอย่างรูปภาพ</h4>
                         </div>
                         <div class="p-4">
-                            <img id="manageImagePreview" alt="Equipment preview" class="hidden w-full h-48 object-cover rounded-xl border border-gray-200 dark:border-gray-700">
-                            <div id="manageImagePreviewEmpty" class="h-48 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-sm text-gray-400" data-i18n="manageImagePreviewEmpty">ใส่ URL รูปภาพเพื่อแสดงตัวอย่าง</div>
+                            <img id="manageImagePreview" alt="Equipment preview" class="hidden w-full h-40 lg:h-44 object-cover rounded-xl border border-gray-200 dark:border-gray-700">
+                            <div id="manageImagePreviewEmpty" class="h-40 lg:h-44 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-sm text-gray-400" data-i18n="manageImagePreviewEmpty">ใส่ URL รูปภาพเพื่อแสดงตัวอย่าง</div>
                         </div>
                     </div>
 
@@ -2217,7 +2217,7 @@
                 </div>
             </div>
 
-            <div class="px-6 pb-6 flex flex-col sm:flex-row justify-end gap-3">
+            <div class="shrink-0 px-6 py-4 border-t border-gray-100 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 flex flex-col sm:flex-row justify-end gap-3">
                 <button onclick="closeManageModal()"
                     class="px-4 py-3 rounded-xl text-gray-500 hover:bg-gray-100 font-bold transition-colors dark:text-gray-400 dark:hover:bg-gray-700">Cancel</button>
                 <button id="manageSaveBtn" onclick="saveEquipment()"
